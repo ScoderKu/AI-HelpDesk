@@ -1,4 +1,4 @@
-# AI HelpDesk – Sprint Plan
+# AI HelpDesk – Sprint Plan (Scrum framework)
 
 ## 1. Sprint-suunnitelman tarkoitus
 
