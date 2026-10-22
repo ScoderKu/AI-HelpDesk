@@ -1,4 +1,4 @@
-# AI HelpDesk – Sprint Plan (Scrum framework)
+# AI HelpDesk – Sprintin suunnitelma (Scrum framework)
 
 ## 1. Sprint-suunnitelman tarkoitus
 
@@ -253,7 +253,7 @@ Ennen Sprintin alkua kehitystiimi:
 4. Uudet vaatimukset lisätään Product Backlogiin ja priorisoidaan erikseen.
 5. Sprintin tavoitetta ei muuteta ilman yhteistä arviota muutoksen vaikutuksista.
 
-## 8.3 Sprint Review
+## 8.3 Sprintin katselmointi (Sprint Review)
 
 Sprintin lopussa tarkastellaan toteutettuja toimintoja ja niiden vastaavuutta hyväksymiskriteereihin.
 
@@ -262,7 +262,7 @@ Sprintin lopussa tarkastellaan toteutettuja toimintoja ja niiden vastaavuutta hy
 3. Kerätään palaute ja tunnistetaan tarvittavat muutokset.
 4. Päivitetään Product Backlog havaintojen perusteella.
 
-## 8.4 Sprint Retrospective
+## 8.4 Sprintin retrospektiivi (Sprint Retrospective)
 
 Kehitystiimi arvioi Sprintin lopussa:
 
