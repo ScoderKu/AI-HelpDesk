@@ -106,7 +106,7 @@ Product Backlogia ylläpidetään koko kehitysprojektin ajan.
 
 ---
 
-## 7. Definition of Done
+## 7. Definition of Ready
 
 Käyttäjätarina on valmis valittavaksi Sprintiin, kun:
 
