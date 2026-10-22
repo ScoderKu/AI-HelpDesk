@@ -126,4 +126,327 @@ Tekoälyn tuottamat vastaukset ovat ehdotuksia. Niiden oikeellisuutta ei voida t
 ---
 
 ## 3. ER-diagrammi
+
+### 3.1 Entiteetit ja niiden suhteet
+
+Järjestelmän keskeiset entiteetit ovat User, Ticket, Conversation ja Message.
+
 ![DB construction](../photos/AI_HD_db_construction.png)
+
+### 3.2 Entiteettien kuvaukset
+
+#### User
+
+Sisältää käyttäjän tunnistamiseen ja profiiliin liittyvät tiedot. Sähköpostiosoite on yksilöllinen, ja salasana tallennetaan vain turvallisesti tiivistettynä.
+
+#### Ticket
+
+Sisältää tukipyynnön otsikon, kuvauksen, tilan, prioriteetin ja omistajan. Jokainen tukipyyntö kuuluu yhdelle käyttäjälle.
+
+#### Conversation
+
+Edustaa yhtä käyttäjän keskustelukokonaisuutta. Keskustelu kuuluu yhdelle käyttäjälle ja voi sisältää useita viestejä.
+
+#### Message
+
+Sisältää keskusteluun liittyvän yksittäisen viestin. Viestin rooli kertoo, onko kyse käyttäjän viestistä vai tekoälyn vastauksesta.
+
+### 3.3 Kardinaliteetit
+
+| Suhde | Kardinaliteetti | Kuvaus |
+|---------|---------|---------|
+| User – Ticket | 1:N | Käyttäjällä voi olla useita tukipyyntöjä. |
+| User – Conversation | 1:N | Käyttäjällä voi olla useita keskusteluja. |
+| Conversation – Message | 1:N | Keskustelussa voi olla useita viestejä. |
+
+ER-diagrammi kuvaa MVP-version keskeisen tietomallin. RAG-toiminnallisuus voi myöhemmin edellyttää erillisiä dokumentti- ja hakumetatietotauluja.
+
+---
+
+# 4. Tietokannan suunnittelu
+
+## 4.1 Yleiset tietokantaperiaatteet
+
+1. Taulujen ensisijaiset avaimet ovat yksilöllisiä.
+2. Viiteavaimet varmistavat taulujen väliset suhteet.
+3. Sähköpostiosoitteelle asetetaan yksilöllisyysrajoite.
+4. Pakolliset kentät määritellään `NOT NULL` -rajoitteilla.
+5. Aikaleimat tallennetaan yhdenmukaisesti sovitulla aikavyöhykekäytännöllä, esimerkiksi UTC-ajassa.
+6. Käyttäjien salasanat tallennetaan vahvalla salasanatiivisteellä.
+7. Käyttäjän tiedot voidaan hakea sähköpostiosoitteen ja pääavaimen avulla.
+8. Tukipyynnöt ja keskustelut haetaan käyttäjäkohtaisesti.
+9. Tietokantayhteydet käyttävät parametrisoituja kyselyitä.
+
+## 4.2 Taulu: users
+
+| Sarake | Tietotyyppi | Rajoitteet | Kuvaus |
+|----------|------------|------------|---------|
+| id | BIGINT | PK, AUTO_INCREMENT | Käyttäjän tunniste |
+| name | VARCHAR(100) | NOT NULL | Käyttäjän nimi |
+| email | VARCHAR(255) | NOT NULL, UNIQUE | Sähköpostiosoite |
+| password_hash | VARCHAR(255) | NOT NULL | Salasanan tiiviste |
+| created_at | DATETIME | NOT NULL | Luontiaika |
+| updated_at | DATETIME | NOT NULL | Viimeisin päivitysaika |
+
+## 4.3 Taulu: tickets
+
+| Sarake | Tietotyyppi | Rajoitteet | Kuvaus |
+|----------|------------|------------|---------|
+| id | BIGINT | PK, AUTO_INCREMENT | Tukipyynnön tunniste |
+| user_id | BIGINT | FK, NOT NULL | Tukipyynnön omistaja |
+| title | VARCHAR(200) | NOT NULL | Tukipyynnön otsikko |
+| description | TEXT | NOT NULL | Ongelman kuvaus |
+| status | VARCHAR(20) | NOT NULL | Tukipyynnön tila |
+| priority | VARCHAR(20) | NOT NULL | Tukipyynnön prioriteetti |
+| created_at | DATETIME | NOT NULL | Luontiaika |
+| updated_at | DATETIME | NOT NULL | Viimeisin päivitysaika |
+| closed_at | DATETIME | NULL | Sulkemisaika |
+
+Tukipyynnön tilat voivat olla esimerkiksi:
+
+- `OPEN`
+- `IN_PROGRESS`
+- `CLOSED`
+
+Prioriteetit voivat olla:
+
+- `LOW`
+- `MEDIUM`
+- `HIGH`
+
+Sallitut arvot validoidaan backendissä ja tarvittaessa tietokannan rajoitteilla.
+
+## 4.4 Taulu: conversations
+
+| Sarake | Tietotyyppi | Rajoitteet | Kuvaus |
+|----------|------------|------------|---------|
+| id | BIGINT | PK, AUTO_INCREMENT | Keskustelun tunniste |
+| user_id | BIGINT | FK, NOT NULL | Keskustelun omistaja |
+| title | VARCHAR(200) | NULL | Keskustelun otsikko |
+| created_at | DATETIME | NOT NULL | Luontiaika |
+| updated_at | DATETIME | NOT NULL | Viimeisin päivitysaika |
+
+Keskustelun otsikko voidaan määritellä käyttäjän ensimmäisen viestin perusteella tai antaa käyttäjän muokattavaksi myöhemmässä versiossa.
+
+## 4.5 Taulu: messages
+
+| Sarake | Tietotyyppi | Rajoitteet | Kuvaus |
+|----------|------------|------------|---------|
+| id | BIGINT | PK, AUTO_INCREMENT | Viestin tunniste |
+| conversation_id | BIGINT | FK, NOT NULL | Viestin keskustelu |
+| role | VARCHAR(20) | NOT NULL | Viestin lähettäjän rooli |
+| content | TEXT | NOT NULL | Viestin sisältö |
+| created_at | DATETIME | NOT NULL | Viestin luontiaika |
+
+Viestin `role` voi olla esimerkiksi:
+
+- `USER`
+- `ASSISTANT`
+
+Järjestelmän sisäisiä ohjeita tai työkaluviestejä varten tarvitaan erillinen, tarkemmin määritelty käsittely, jos sellaisia tallennetaan.
+
+## 4.6 Indeksit ja viite-eheys
+
+### Suositellut indeksit
+
+| Taulu | Indeksi | Tarkoitus |
+|---------|---------|---------|
+| users | UNIQUE(email) | Nopeuttaa kirjautumista ja estää päällekkäiset sähköpostiosoitteet |
+| tickets | INDEX(user_id, created_at) | Käyttäjän tukipyyntöjen hakeminen |
+| tickets | INDEX(user_id, status) | Tukipyyntöjen haku tilan perusteella |
+| conversations | INDEX(user_id, updated_at) | Käyttäjän keskusteluhistorian hakeminen |
+| messages | INDEX(conversation_id, created_at, id) | Keskusteluviestien hakeminen järjestyksessä |
+
+Viiteavaimille määritellään tietojen poistamiseen ja päivittämiseen sopivat säännöt. Esimerkiksi käyttäjän poistamista ei tule toteuttaa siten, että siihen liittyvät tiedot jäävät tietokantaan hallitsemattomasti.
+
+Käyttäjän poistaminen ja keskusteluhistorian säilyttäminen tulee määritellä erikseen tietosuojan ja sovelluksen vaatimusten perusteella.
+
+## 4.7 Tietojen tallennuksen transaktiot
+
+Tietokantaan liittyvät toiminnot toteutetaan tarvittaessa transaktioina.
+
+Esimerkiksi tukipyynnön luomisessa järjestelmä:
+
+1. Validoi käyttäjän lähettämät tiedot.
+2. Tarkistaa käyttäjän tunnistamisen ja oikeudet.
+3. Tallentaa tukipyynnön tietokantaan.
+4. Palauttaa luodun tukipyynnön tunnisteen ja tiedot.
+
+Keskusteluviestin tallennuksessa käyttäjän viesti ja tekoälyn vastaus käsitellään erillisinä tallennettavina tapahtumina. Tekoälypalvelun virhe ei saa aiheuttaa virheellistä tai keksittyä vastausta keskusteluhistoriaan.
+
+---
+
+# 5. REST API -suunnittelu
+
+## 5.1 Yleiset periaatteet
+
+REST API toimii frontendin ja backendin välisenä rajapintana.
+
+### Rajapinnan periaatteet
+
+1. Käytetään HTTP-protokollaa ja JSON-muotoista tiedonsiirtoa.
+2. Käytetään resurssipohjaisia URL-osoitteita.
+3. Suojatut endpointit edellyttävät autentikointia.
+4. Backend validoi kaikki asiakkaalta tulevat tiedot.
+5. Käyttäjän omistajuus ja käyttöoikeudet tarkistetaan jokaisessa suojatussa resurssipyynnössä.
+6. Virhetilanteissa palautetaan tarkoituksenmukainen HTTP-statuskoodi.
+7. Rajapinnan versio voidaan sisällyttää osoitteeseen, esimerkiksi `/api/v1`.
+
+## 5.2 Endpointit
+
+### Autentikointi ja käyttäjätili
+
+| HTTP-metodi | Endpoint | Kuvaus | Autentikointi |
+|------------|----------|---------|--------------|
+| POST | `/api/v1/auth/register` | Luo käyttäjätilin | Ei |
+| POST | `/api/v1/auth/login` | Kirjaa käyttäjän sisään | Ei |
+| POST | `/api/v1/auth/logout` | Kirjaa käyttäjän ulos | Kyllä |
+| GET | `/api/v1/users/me` | Hakee kirjautuneen käyttäjän profiilin | Kyllä |
+| PATCH | `/api/v1/users/me` | Päivittää käyttäjän profiilin | Kyllä |
+
+Uloskirjautumisen toteutus riippuu autentikointimenetelmästä. Palvelinpuolen istunnossa istunto mitätöidään; token-pohjaisessa ratkaisussa toteutetaan käytetyn token-mallin mukainen mitätöinti.
+
+### Tukipyynnöt
+
+| HTTP-metodi | Endpoint | Kuvaus | Autentikointi |
+|------------|----------|---------|--------------|
+| GET | `/api/v1/tickets` | Hakee kirjautuneen käyttäjän tukipyynnöt | Kyllä |
+| POST | `/api/v1/tickets` | Luo uuden tukipyynnön | Kyllä |
+| GET | `/api/v1/tickets/{id}` | Hakee yksittäisen tukipyynnön | Kyllä |
+| PATCH | `/api/v1/tickets/{id}` | Päivittää sallitut tukipyynnön tiedot | Kyllä |
+| POST | `/api/v1/tickets/{id}/close` | Sulkee tukipyynnön | Kyllä |
+| GET | `/api/v1/tickets/summary` | Hakee käyttäjän tukipyyntöjen yhteenvedon | Kyllä |
+
+### Keskustelut ja viestit
+
+| HTTP-metodi | Endpoint | Kuvaus | Autentikointi |
+|------------|----------|---------|--------------|
+| GET | `/api/v1/conversations` | Hakee käyttäjän keskustelut | Kyllä |
+| POST | `/api/v1/conversations` | Luo uuden keskustelun | Kyllä |
+| GET | `/api/v1/conversations/{id}` | Hakee keskustelun tiedot | Kyllä |
+| GET | `/api/v1/conversations/{id}/messages` | Hakee keskustelun viestit | Kyllä |
+| POST | `/api/v1/conversations/{id}/messages` | Lähettää viestin tekoälykeskusteluun | Kyllä |
+| POST | `/api/v1/conversations/{id}/tickets` | Luo tukipyynnön keskustelun perusteella | Kyllä |
+
+### Tietopohjainen tekoälyneuvonta
+
+| HTTP-metodi | Endpoint | Kuvaus | Autentikointi |
+|------------|----------|---------|--------------|
+| POST | `/api/v1/knowledge/search` | Hakee teknistä dokumentaatiota | Kyllä |
+
+## 5.3 Esimerkkipyyntö: kirjautuminen
+
+### Request
+
+```http
+POST /api/v1/auth/login
+```
+
+```json
+{
+  "email": "user@example.com",
+  "password": "example-password"
+}
+```
+
+### Response
+
+```json
+{
+  "user": {
+    "id": 12,
+    "name": "Example User",
+    "email": "user@example.com"
+  }
+}
+```
+
+## 5.4 Esimerkkipyyntö: tukipyynnön luominen
+
+### Request
+
+```http
+POST /api/v1/tickets
+```
+
+```json
+{
+  "title": "Cannot connect to the network",
+  "description": "The computer cannot connect to the office network.",
+  "priority": "MEDIUM"
+}
+```
+
+### Response
+
+```json
+{
+  "id": 101,
+  "title": "Cannot connect to the network",
+  "description": "The computer cannot connect to the office network.",
+  "status": "OPEN",
+  "priority": "MEDIUM",
+  "created_at": "2026-10-22T14:00:00Z"
+}
+```
+
+## 5.5 Esimerkkipyyntö: keskusteluviestin lähettäminen
+
+### Request
+
+```http
+POST /api/v1/conversations/25/messages
+```
+
+```json
+{
+  "content": "My application crashes when I open it."
+}
+```
+
+### Response
+
+```json
+{
+  "message": {
+    "id": 501,
+    "role": "USER",
+    "content": "My application crashes when I open it."
+  },
+  "assistant_message": {
+    "id": 502,
+    "role": "ASSISTANT",
+    "content": "Which operating system and application version are you using?"
+  }
+}
+```
+
+## 5.6 HTTP-statuskoodit
+
+| Statuskoodi | Merkitys | Käyttötapaus |
+|-------------|-----------|-------------|
+| 200 OK | Pyyntö onnistui | Tietojen haku tai päivitys |
+| 201 Created | Resurssi luotiin | Käyttäjä, tukipyyntö tai keskustelu |
+| 204 No Content | Toiminto onnistui ilman vastaussisältöä | Uloskirjautuminen |
+| 400 Bad Request | Pyyntö on virheellinen | Virheellinen pyyntörakenne |
+| 401 Unauthorized | Käyttäjä ei ole tunnistautunut | Puuttuva tai virheellinen autentikointi |
+| 403 Forbidden | Toiminto ei ole sallittu | Käyttäjällä ei ole tarvittavia oikeuksia |
+| 404 Not Found | Resurssia ei löydy | Tuntematon resurssi |
+| 409 Conflict | Tietojen välillä on ristiriita | Käytössä oleva sähköpostiosoite |
+| 422 Unprocessable Content | Validointi epäonnistui | Virheelliset kenttäarvot |
+| 429 Too Many Requests | Pyyntöjä on liikaa | Rate limiting |
+| 500 Internal Server Error | Odottamaton palvelinvirhe | Käsittelemätön virhe |
+| 502 Bad Gateway | Ulkoisen palvelun virhe | Tekoälypalvelun virhe |
+
+## 5.7 Rajapinnan tietoturva
+
+1. Salasanat tiivistetään turvallisella salasanatiivistealgoritmilla.
+2. Autentikointi toteutetaan turvallisella istunto- tai token-mekanismilla.
+3. HTTPS on pakollinen tuotantoympäristössä.
+4. Backend tarkistaa käyttäjän oikeudet ennen resurssien palauttamista tai muuttamista.
+5. Syötteet validoidaan palvelinpuolella.
+6. Tietokantakyselyissä käytetään parametrisoituja kyselyitä.
+7. Kirjautumiseen ja tekoälypyyntöihin voidaan asettaa käyttörajoituksia.
+8. API-avaimia ja muita salaisuuksia ei tallenneta lähdekoodiin.
+9. Virhelokeihin ei tallenneta salasanoja, autentikointitunnuksia tai tarpeettomia henkilötietoja.
+10. Tekoälypalvelulle lähetetään vain pyynnön käsittelyn kannalta tarpeelliset tiedot.
