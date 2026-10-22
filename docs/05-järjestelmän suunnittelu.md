@@ -182,8 +182,10 @@ ER-diagrammi kuvaa MVP-version keskeisen tietomallin. RAG-toiminnallisuus voi my
 | Sarake | Tietotyyppi | Rajoitteet | Kuvaus |
 |----------|------------|------------|---------|
 | id | BIGINT | PK, AUTO_INCREMENT | Käyttäjän tunniste |
-| name | VARCHAR(100) | NOT NULL | Käyttäjän nimi |
-| email | VARCHAR(255) | NOT NULL, UNIQUE | Sähköpostiosoite |
+| etunimi | VARCHAR(100) | NOT NULL | Käyttäjän etunimi |
+| sukunimi | VARCHAR(100) | NOT NULL | Käyttäjän sukunimi |
+| käyttäjänimi | VARCHAR(100) | NOT NULL | Käyttäjänimi |
+| sähköposti | VARCHAR(255) | NOT NULL, UNIQUE | Sähköpostiosoite |
 | password_hash | VARCHAR(255) | NOT NULL | Salasanan tiiviste |
 | created_at | DATETIME | NOT NULL | Luontiaika |
 | updated_at | DATETIME | NOT NULL | Viimeisin päivitysaika |
@@ -194,10 +196,10 @@ ER-diagrammi kuvaa MVP-version keskeisen tietomallin. RAG-toiminnallisuus voi my
 |----------|------------|------------|---------|
 | id | BIGINT | PK, AUTO_INCREMENT | Tukipyynnön tunniste |
 | user_id | BIGINT | FK, NOT NULL | Tukipyynnön omistaja |
-| title | VARCHAR(200) | NOT NULL | Tukipyynnön otsikko |
-| description | TEXT | NOT NULL | Ongelman kuvaus |
+| otsikko | VARCHAR(200) | NOT NULL | Tukipyynnön otsikko |
+| kuvaus | TEXT | NOT NULL | Ongelman kuvaus |
 | status | VARCHAR(20) | NOT NULL | Tukipyynnön tila |
-| priority | VARCHAR(20) | NOT NULL | Tukipyynnön prioriteetti |
+| prioriteetti | VARCHAR(20) | NOT NULL | Tukipyynnön prioriteetti |
 | created_at | DATETIME | NOT NULL | Luontiaika |
 | updated_at | DATETIME | NOT NULL | Viimeisin päivitysaika |
 | closed_at | DATETIME | NULL | Sulkemisaika |
@@ -222,7 +224,7 @@ Sallitut arvot validoidaan backendissä ja tarvittaessa tietokannan rajoitteilla
 |----------|------------|------------|---------|
 | id | BIGINT | PK, AUTO_INCREMENT | Keskustelun tunniste |
 | user_id | BIGINT | FK, NOT NULL | Keskustelun omistaja |
-| title | VARCHAR(200) | NULL | Keskustelun otsikko |
+| otsikko | VARCHAR(200) | NULL | Keskustelun otsikko |
 | created_at | DATETIME | NOT NULL | Luontiaika |
 | updated_at | DATETIME | NOT NULL | Viimeisin päivitysaika |
 
