@@ -45,6 +45,10 @@ Kehittäjärooli kuvaa projektin teknistä vastuuta eikä automaattisesti tarkoi
 
 AI HelpDesk toteutetaan kerroksittaisena web-sovelluksena. Frontend vastaa käyttöliittymästä, backend liiketoimintalogiikasta ja tietoturvatarkistuksista sekä tietokanta pysyvästä tallennuksesta. Tekoälypalvelua käytetään teknisten ongelmien analysointiin ja ratkaisuehdotusten tuottamiseen.
 
+![system architecture](../photos/system%20architecture.png)
+
+Kuvassa RAG-komponentti on suunniteltu laajennus. MVP-versiossa tekoälypalveluun voidaan yhdistää suoraan keskustelupalvelusta ilman dokumentaatiohakua.
+
 ### 2.2 Frontend
 
 Frontend tarjoaa käyttäjälle visuaalisen käyttöliittymän ja välittää käyttäjän toiminnot backendille REST-rajapinnan kautta.
