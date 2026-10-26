@@ -12,8 +12,8 @@
 | Suunniteltu työmäärä | Vähintään 20 tuntia viikossa, yhteensä noin 100 tuntia |
 | Kehitysmalli | Scrumista sovellettu iteratiivinen työskentely |
 | Versionhallinta | Git ja GitHub |
-| Projektin vastuuhenkilö | Opiskelija / projektin toteuttaja |
-| Keskeiset sidosryhmät | Projektin toteuttaja, opettaja/arvioija ja sovelluksen loppukäyttäjät |
+| Projektin vastuuhenkilö | **Khoi Nguyen** |
+| Keskeiset sidosryhmät | Projektin toteuttaja, opettaja ja sovelluksen loppukäyttäjät |
 | Dokumentin tila | Elävä dokumentti; päivitetään projektin edetessä |
 
 **Nykytilanne 26.10.2026:** vaatimusmäärittely, käyttäjätarinat hyväksymiskriteereineen, Product Backlog, alustava Sprint-suunnitelma ja järjestelmän suunnitteludokumentti on laadittu. Projektin suunnitteludokumentaatiota yhtenäistetään parhaillaan; `backend`- ja `frontend`-hakemistoissa ei vielä ole sovelluksen lähdekooditiedostoja. Toteutuksen edistyminen päivitetään jatkossa seurantaan ja GitHub-tehtäviin, ei tämän tilannekuvauksen kautta.
@@ -87,7 +87,7 @@ Laajuutta ei kasvateta hiljaisesti. Muutokset kirjataan ja niiden vaikutus aikat
 
 ## 4. Roolit ja vastuut
 
-Projekti toteutetaan opiskelijaprojektina. Yksi henkilö voi hoitaa useita rooleja; roolien nimeäminen auttaa kuitenkin pitämään vastuut selkeinä.
+Projekti toteutetaan opiskelijaprojektina. Minä hoidan useita rooleja; roolien nimeäminen auttaa kuitenkin pitämään vastuut selkeinä.
 
 | Rooli | Vastuu |
 |---|---|
@@ -95,10 +95,10 @@ Projekti toteutetaan opiskelijaprojektina. Yksi henkilö voi hoitaa useita roole
 | Product Owner -vastuu | Priorisoi Product Backlogin ja tekee ehdotukset laajuuden muutoksista projektin tavoitteiden perusteella. Opiskelija hoitaa tämän vastuun, ellei opettaja määrää muuta. |
 | Scrum Master -vastuu | Suunnittelee viikoittaisen työskentelyn, seuraa esteitä ja arvioi Sprintin lopputulosta. Opiskelija soveltaa käytäntöjä omaan työskentelyynsä. |
 | Testausvastuu | Laatii testit, suorittaa ne ja kirjaa havaitut virheet sekä testitulokset. |
-| Opettaja / arvioija | Arvioi työn tehtävänannon ja sovittujen arviointikriteerien perusteella sekä antaa tarvittaessa palautetta. Ei oleteta päivittäiseksi projektin päätöksentekijäksi. |
+| Opettaja | Arvioi työn tehtävänannon ja sovittujen arviointikriteerien perusteella sekä antaa tarvittaessa palautetta. Ei oleteta päivittäiseksi projektin päätöksentekijäksi. |
 | Loppukäyttäjä | Antaa näkökulman sovelluksen käytettävyyteen ja tarpeisiin; käyttäjärooli kuvataan vaatimuksissa ja käyttäjätarinoissa. |
 
-Jos projektin toteuttaa yksi opiskelija, erillistä kehitystiimiä tai usean henkilön hyväksymisketjua ei oleteta. Git-haaroja ja Pull Requesteja käytetään mahdollisuuksien mukaan versionhallinnan ja tarkasteluprosessin harjoitteluun; käytännöt pidetään projektin kokoon nähden kevyinä.
+Git-haaroja ja Pull Requesteja käytetään mahdollisuuksien mukaan versionhallinnan ja tarkasteluprosessin harjoitteluun; käytännöt pidetään projektin kokoon nähden kevyinä.
 
 ## 5. Aikataulu ja välitavoitteet
 
