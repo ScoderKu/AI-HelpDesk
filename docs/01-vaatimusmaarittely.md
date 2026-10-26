@@ -27,7 +27,7 @@ Projektin tavoitteena on suunnitella ja toteuttaa toimiva AI HelpDesk -sovellus,
 - Sovellus tallentaa käyttäjätiedot, tukipyynnöt ja keskusteluviestit tietokantaan.
 - Sovellus tarjoaa REST-rajapinnan tietojen käsittelyä varten.
 - Projekti toteutetaan versionhallintaa ja Scrum-menetelmää hyödyntäen.
-- Sovellukseen toteutetaan valinnaisista ominaisuuksista.
+- Sovellukseen toteutetaan vähintään kolme tehtävänannossa määriteltyä valinnaista ominaisuutta.
 
 ## 4. Kohderyhmät
 
@@ -40,7 +40,7 @@ Projektin ensisijaisia kohderyhmiä ovat:
 
 Projektin laajuus rajataan siten, että sovellus voidaan toteuttaa ja testata viiden viikon opiskelijaprojektin aikana.
 
-### 5.1 Toteutukseen sisältyvät ominaisuudet*
+### 5.1 Toteutukseen sisältyvät ominaisuudet
 
 - Käyttäjän rekisteröityminen ja kirjautuminen.
 - Käyttäjäprofiilin tarkastelu ja muokkaaminen.
@@ -53,7 +53,7 @@ Projektin laajuus rajataan siten, että sovellus voidaan toteuttaa ja testata vi
 - GitHub-versionhallinta, haarat ja Pull Request -käytännöt.
 - Tekninen dokumentaatio ja sovelluksen esittely.
 
-### 5.2 Toteutuksen ulkopuolelle rajatut ominaisuudet*
+### 5.2 Toteutuksen ulkopuolelle rajatut ominaisuudet
 
 Seuraavat ominaisuudet eivät kuulu ensimmäiseen toteutusversioon, ellei niiden lisääminen ole myöhemmin tarpeellista:
 - Laajamittaisen yritystason IT-palvelunhallinnan toteuttaminen.
@@ -66,19 +66,20 @@ Seuraavat ominaisuudet eivät kuulu ensimmäiseen toteutusversioon, ellei niiden
 
 Sovelluksen on täytettävä seuraavat toiminnalliset vaatimukset.
 
-Tunnus	Vaatimus
-FR-01	Käyttäjä voi rekisteröityä ja kirjautua sisään.
-FR-02	Käyttäjä voi tarkastella ja muokata omia profiilitietojaan.
-FR-03	Käyttäjä voi luoda uuden tukipyynnön.
-FR-04	Käyttäjä voi tarkastella ja sulkea omia tukipyyntöjään.
-FR-05	Tukipyynnössä on otsikko, kuvaus, tila, prioriteetti, luontiaika ja käyttäjän tunniste.
-FR-06	Sovellus tarjoaa käyttöliittymän tekoälypohjaista keskustelua varten.
-FR-07	Tekoäly voi esittää tarkentavia kysymyksiä ja ehdottaa ongelmanratkaisuvaiheita.
-FR-08	Keskusteluviestit tallennetaan tietokantaan.
-FR-09	Sovellus voi tarjota mahdollisuuden luoda tukipyyntö, jos ongelma jää ratkaisematta.
-FR-10	Sovellus tarjoaa REST-rajapinnan tukipyyntöjen ja muiden tietojen käsittelyyn.
-FR-11	Käyttäjät, tukipyynnöt ja viestit tallennetaan MySQL- tai MariaDB-tietokantaan.
-FR-12	Projektin lähdekoodi ja kehityshistoria hallitaan GitHubissa.
+| Tunnus | Vaatimus |
+|---|---|
+| FR-01 | Käyttäjä voi rekisteröityä ja kirjautua sisään. |
+| FR-02 | Käyttäjä voi tarkastella ja muokata omia profiilitietojaan. |
+| FR-03 | Käyttäjä voi luoda uuden tukipyynnön. |
+| FR-04 | Käyttäjä voi tarkastella ja sulkea omia tukipyyntöjään. |
+| FR-05 | Tukipyynnössä on otsikko, kuvaus, tila, prioriteetti, luontiaika ja käyttäjän tunniste. |
+| FR-06 | Sovellus tarjoaa käyttöliittymän tekoälypohjaista keskustelua varten. |
+| FR-07 | Tekoäly voi esittää tarkentavia kysymyksiä ja ehdottaa ongelmanratkaisuvaiheita. |
+| FR-08 | Keskusteluviestit tallennetaan tietokantaan. |
+| FR-09 | Sovellus voi tarjota mahdollisuuden luoda tukipyyntö, jos ongelma jää ratkaisematta. |
+| FR-10 | Sovellus tarjoaa REST-rajapinnan tukipyyntöjen ja muiden tietojen käsittelyyn. |
+| FR-11 | Käyttäjät, tukipyynnöt ja viestit tallennetaan MySQL- tai MariaDB-tietokantaan. |
+| FR-12 | Projektin lähdekoodi ja kehityshistoria hallitaan GitHubissa. |
 
 ## 7. Ei-toiminnalliset vaatimukset
 
@@ -105,14 +106,15 @@ Projektin teknisten ratkaisujen on täytettävä seuraavat ehdot:
 
 Seuraavat teknologiat ovat projektin alustava ehdotus.
 
-Osa-alue	        Ehdotettu teknologia
-Frontend	        React
-Backend	            Python ja FastAPI
-Tietokanta	        MySQL
-Tekoäly	            Ollama
-API-dokumentaatio	OpenAPI / Swagger UI
-Versionhallinta	    Git ja GitHub
-Kontitus	        Docker
+| Osa-alue | Ehdotettu teknologia |
+|---|---|
+| Frontend | React |
+| Backend | Python ja FastAPI |
+| Tietokanta | MySQL |
+| Tekoäly | Ollama |
+| API-dokumentaatio | OpenAPI / Swagger UI |
+| Versionhallinta | Git ja GitHub |
+| Kontitus | Docker |
 
 Tekoälymalli valitaan sen perusteella, että se pystyy tuottamaan hyödyllisiä teknisiä ohjeita ja että sen käyttö on mahdollista projektin käytettävissä olevilla resursseilla.
 
@@ -135,5 +137,20 @@ Projekti katsotaan onnistuneeksi, kun:
 
 ## 12. Vaatimusten jäljitettävyys
 
-Jokainen vaatimus yhdistetään myöhemmissä dokumenteissa käyttäjätarinoihin, hyväksymiskriteereihin, Product Backlog -tehtäviin ja testeihin. Näin voidaan varmistaa, että kaikki pakolliset vaatimukset toteutetaan ja niiden toteutuminen voidaan osoittaa arvioinnissa.
+Seuraava taulukko yhdistää toiminnalliset vaatimukset käyttäjätarinoihin, hyväksymiskriteereihin ja todennustapaan. Testitunnukset ovat suunniteltuja tunnisteita, jotka täsmennetään testitapauksiksi toteutuksen yhteydessä.
+
+| Vaatimus | Käyttäjätarina ja hyväksymiskriteerit | Todentaminen |
+|---|---|---|
+| FR-01 | US-01 (AC-01.1–AC-01.4), US-02 (AC-02.1–AC-02.3) | TEST-01: rekisteröityminen, kirjautuminen ja käyttöoikeuden tarkistus |
+| FR-02 | US-03 (AC-03.1–AC-03.3) | TEST-02: oman profiilin haku ja sallittujen tietojen päivitys |
+| FR-03 | US-04 (AC-04.1–AC-04.3) | TEST-03: tukipyynnön luominen ja kenttien validointi |
+| FR-04 | US-05 (AC-05.1–AC-05.4) | TEST-04: omien pyyntöjen listaus, sulkeminen ja omistajuustarkistus |
+| FR-05 | US-04 (AC-04.2) | TEST-05: tukipyynnön kentät, oletusarvot ja aikaleimat |
+| FR-06 | US-06 (AC-06.1–AC-06.4) | TEST-06: kirjautuneen käyttäjän viestin lähetys ja tekoälyvastaus |
+| FR-07 | US-07 (AC-07.1–AC-07.3) | TEST-07: tarkentavan kysymyksen ja ratkaisuehdotuksen tarkistus |
+| FR-08 | US-08 (AC-08.1–AC-08.3) | TEST-08: viestien tallennus ja historian järjestys |
+| FR-09 | US-09 (AC-09.1–AC-09.3) | TEST-09: vahvistettu luonti, hylkäyksen käsittely ja keskustelun omistajuuden tarkistus |
+| FR-10 | US-10 (AC-10.1–AC-10.4) | TEST-10: API:n onnistuneet, virheelliset ja luvattomat pyynnöt |
+| FR-11 | US-11 (AC-11.1–AC-11.3) | TEST-11: pysyvä tallennus, haku ja viite-eheys |
+| FR-12 | Ei käyttäjätarinaa; projektikäytäntö | TEST-12: GitHub-repository, haarat ja Pull Request -historia |
 ./

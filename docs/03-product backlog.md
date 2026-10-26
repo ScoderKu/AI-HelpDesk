@@ -36,7 +36,7 @@ Työmääräarviot perustuvat suhteelliseen Story Point -arviointiin. Arvioinnis
 | 5 | US-12 | Käyttöliittymän käytettävyys | P1 | 5 | Sprint 1 |
 | 6 | US-04 | Tukipyynnön luominen | P1 | 5 | Sprint 2 |
 | 7 | US-05 | Omien tukipyyntöjen tarkastelu ja sulkeminen | P1 | 5 | Sprint 2 |
-| 8 | US-03 | Käyttäjäprofiilin hallinta | P2 | 3 | Sprint 2 |
+| 8 | US-03 | Käyttäjäprofiilin hallinta | P1 | 3 | Sprint 2 |
 | 9 | US-06 | Tekoälypohjainen keskustelu | P1 | 8 | Sprint 3 |
 | 10 | US-08 | Keskusteluviestien tallentaminen | P1 | 5 | Sprint 3 |
 | 11 | US-07 | Tarkentavat kysymykset ja ongelmanratkaisu | P1 | 5 | Sprint 3 |
@@ -80,6 +80,7 @@ MVP-version tavoitteena on toteuttaa AI HelpDesk -sovelluksen keskeinen käyttö
 
 - US-01: Käyttäjän rekisteröityminen
 - US-02: Käyttäjän kirjautuminen
+- US-03: Käyttäjäprofiilin hallinta
 - US-04: Tukipyynnön luominen
 - US-05: Omien tukipyyntöjen tarkastelu ja sulkeminen
 - US-06: Tekoälypohjainen keskustelu
@@ -89,7 +90,7 @@ MVP-version tavoitteena on toteuttaa AI HelpDesk -sovelluksen keskeinen käyttö
 - US-11: Tietojen pysyvä tallentaminen
 - US-12: Käyttöliittymän käytettävyys
 
-US-03 täydentää käyttäjätilin hallintaa. US-09, US-13, US-14 ja US-15 voidaan toteuttaa MVP:n jälkeen, elleivät projektin vaatimukset edellytä niitä aikaisemmin.
+US-09, US-13, US-14 ja US-15 voidaan toteuttaa MVP:n jälkeen, elleivät projektin vaatimukset edellytä niitä aikaisemmin.
 
 ---
 
