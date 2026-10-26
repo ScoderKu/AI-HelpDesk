@@ -16,7 +16,7 @@
 | Keskeiset sidosryhmät | Projektin toteuttaja, opettaja ja sovelluksen loppukäyttäjät |
 | Dokumentin tila | Elävä dokumentti; päivitetään projektin edetessä |
 
-**Nykytilanne 26.10.2026:** vaatimusmäärittely, käyttäjätarinat hyväksymiskriteereineen, Product Backlog, alustava Sprint-suunnitelma ja järjestelmän suunnitteludokumentti on laadittu. Projektin suunnitteludokumentaatiota yhtenäistetään parhaillaan; `backend`- ja `frontend`-hakemistoissa ei vielä ole sovelluksen lähdekooditiedostoja. Toteutuksen edistyminen päivitetään jatkossa seurantaan ja GitHub-tehtäviin, ei tämän tilannekuvauksen kautta.
+**Nykytilanne 26.10.2026:** vaatimusmäärittely, käyttäjätarinat hyväksymiskriteereineen, Product Backlog, Sprint-suunnitelma, järjestelmän suunnittelu ja UX/UI-suunnittelu on yhtenäistetty ennen toteutuksen aloittamista. `backend`- ja `frontend`-hakemistoissa ei vielä ole sovelluksen lähdekooditiedostoja. Toteutuksen edistyminen päivitetään jatkossa seurantaan ja GitHub-tehtäviin, ei tämän tilannekuvauksen kautta.
 
 ## 2. Projektin tarkoitus ja tavoitteet
 
@@ -28,13 +28,14 @@ Projektin tavoitteet ovat:
 2. Mahdollistaa käyttäjän rekisteröityminen, kirjautuminen ja omien profiilitietojen hallinta.
 3. Mahdollistaa tukipyyntöjen luominen, tarkastelu ja sulkeminen sekä tietojen tallentaminen tietokantaan.
 4. Tarjota tekoälypohjainen keskustelu, jossa käyttäjä voi kuvata ongelmansa ja saada ehdotuksia sen ratkaisemiseksi.
-5. Tallentaa keskusteluviestit ja mahdollistaa tukipyynnön luominen keskustelun perusteella, jos tämä saadaan toteutettua käytettävissä olevan ajan puitteissa.
-6. Toteuttaa lopulliseen julkaisuun kolme valittua lisäominaisuutta:
+5. Tallentaa keskusteluviestit ja mahdollistaa tukipyynnön luominen keskustelun perusteella käyttäjän tarkistuksen ja vahvistuksen jälkeen.
+6. Toteuttaa kirjautuneelle käyttäjälle tukipyyntöjen rajatun yhteenvedon: kokonaismäärä sekä `OPEN`- ja `CLOSED`-tilojen määrät.
+7. Toteuttaa lopulliseen julkaisuun kolme valittua lisäominaisuutta:
    - tietopohjainen tekoälyneuvonta (RAG)
    - suomen- ja englanninkielinen käyttöliittymä
-   - sovelluksen käynnistäminen Docker Composella yhdellä dokumentoidulla komennolla.
-7. Toteuttaa projekti GitHub-versionhallintaa ja soveltuvin osin Scrum-käytäntöjä hyödyntäen.
-8. Tuottaa tekninen dokumentaatio, testitulokset ja sovelluksen esittely.
+   - sovelluksen ja Ollama-tekoälypalvelun käynnistäminen Docker Composella yhdellä dokumentoidulla komennolla.
+8. Toteuttaa projekti GitHub-versionhallintaa ja soveltuvin osin Scrum-käytäntöjä hyödyntäen.
+9. Tuottaa tekninen dokumentaatio, testitulokset ja sovelluksen esittely.
 
 Projektin onnistumista arvioidaan toimivan ohjelmiston ja hyväksymiskriteerien lisäksi dokumentaation, testauksen, versionhallinnan ja projektin esittelyn perusteella.
 
@@ -51,12 +52,14 @@ Projektin suunniteltuun laajuuteen kuuluvat:
 - tekoälypohjainen chat ja tarkentavat kysymykset
 - keskusteluviestien tallentaminen
 - REST-rajapinta
-- MySQL-tietokanta nykyisen järjestelmäsuunnitelman mukaisesti; MariaDB voidaan ottaa käyttöön vaihtoehtona vain, jos valinta vahvistetaan ja tekniset dokumentit sovitetaan siihen
-- RAG-pohjainen neuvonta valitusta teknisestä dokumenttikokoelmasta; lähteet ja kokoelman rajaus täsmennetään ennen toteutusta
+- MySQL-tietokanta nykyisen järjestelmäsuunnitelman mukaisesti
+- RAG-pohjainen neuvonta rajatusta Markdown- ja TXT-dokumenttikokoelmasta avainsanahaulla; semanttinen haku voidaan lisätä vain, jos testinäyttö osoittaa avainsanahaun riittämättömäksi
 - käyttöliittymän suomen- ja englanninkieliset tekstit
-- Docker Compose -käyttöönotto frontendille, backendille ja tietokannalle
+- Docker Compose -käyttöönotto frontendille, backendille, MySQL-tietokannalle ja Ollama-tekoälypalvelulle
+- paikallisen `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`-mallin käyttö Ollama-kontissa
 - automaattiset tai toistettavat testit keskeisille toiminnoille
 - README, API-dokumentaatio, tietokantakuvaus/ER-kaavio, kuvakaappaukset ja esittely.
+- maksuttomien työkalujen ja kirjastojen käyttö sekä niiden lisenssien ja käyttöehtojen tarkistaminen ennen valintaa ja toimitusta.
 
 ### 3.2 Rajauksen ulkopuolelle jäävät asiat
 
@@ -70,20 +73,13 @@ Seuraavat ominaisuudet eivät kuulu sovittuun ydinsisältöön, ellei niitä hyv
 - täysin itsenäinen ongelmanratkaisu ilman käyttäjän osallistumista
 - laajat organisaatioiden väliset käyttöoikeudet ja integraatiot.
 
-Product Backlogin `US-14`-yhteenvetonäkymä on **ehdollinen ja toissijainen**. Sen rajattu toteutus käsittää vain kirjautuneen käyttäjän tukipyyntöjen kokonaismäärän sekä `OPEN`- ja `CLOSED`-tilojen lukumäärät; siihen eivät kuulu kaaviot, suodatukset, aikavertailut tai muiden käyttäjien tiedot. US-14 toteutetaan vain, jos pakolliset toiminnot, kolme valittua lisäominaisuutta, testaus ja dokumentaatio etenevät suunnitellusti. Sitä ei lasketa yhdeksi kolmesta valitusta lisäominaisuudesta.
+`US-09` ja `US-14` kuuluvat viralliseen toimituslaajuuteen. US-09 mahdollistaa tukipyynnön luomisen AI-keskustelusta vasta sen jälkeen, kun käyttäjä on tarkistanut ja vahvistanut ehdotetut tiedot. US-14 näyttää vain kirjautuneen käyttäjän tukipyyntöjen kokonaismäärän sekä `OPEN`- ja `CLOSED`-tilojen lukumäärät; siihen eivät kuulu kaaviot, suodatukset, aikavertailut tai muiden käyttäjien tiedot. Nämä ovat virallisia käyttäjätarinoita eivätkä valinnaisia lisäominaisuuksia.
 
-`US-16`-tarinan 5 Story Pointin arvio kattaa frontendin ja backendin kontit, MySQL:n Compose-palvelun, esimerkkikonfiguraation, tietokannan pysyvän tallennuksen, valmiustarkistukset sekä dokumentoinnin ja käynnistyksen testauksen. AI-palvelun kontitus ja tuotantoympäristön käyttöönotto eivät kuulu tähän rajaukseen.
+`US-16`-tarinan 5 Story Pointin arvio kattaa frontendin, backendin, MySQL:n ja Ollaman Compose-palvelut, valitun mallin käyttöönoton Ollama-kontissa, esimerkkikonfiguraation, pysyvän tallennuksen, valmiustarkistukset sekä dokumentoinnin ja käynnistyksen testauksen. Tuotantoympäristön käyttöönotto ja orkestrointi eivät kuulu tähän rajaukseen. Sprint 1:n sisältö ja 33 SP:n suunnitelma säilyvät ennallaan.
 
 ### 3.3 Laajuuden hallinnan periaate
 
-Viiden viikon aikaraja on kiinteämpi rajoite kuin yksittäisten lisätoimintojen määrä. Jos aikataulu uhkaa ylittyä, työ rajataan uudelleen seuraavassa järjestyksessä:
-
-1. säilytetään tietoturvan, tietojen eheyden ja ydinkäyttöpolun kannalta välttämättömät toiminnot
-2. toteutetaan kaikki tehtävänannon pakolliset vaatimukset
-3. toteutetaan kolme valittua lisäominaisuutta rajatussa mutta todennettavassa laajuudessa
-4. siirretään ensin muut valinnaiset ja viimeistelyä parantavat ominaisuudet myöhempään vaiheeseen.
-
-Laajuutta ei kasvateta hiljaisesti. Muutokset kirjataan ja niiden vaikutus aikatauluun, työmäärään ja hyväksymiskriteereihin arvioidaan.
+Viiden viikon aikaraja ja sovittu toimituslaajuus muodostavat projektin lähtökohdan. Jos aikataulu tai työmäärä uhkaa ylittyä, poikkeama kirjataan ja sen vaikutukset arvioidaan yhdessä projektin tavoitteiden ja hyväksymiskriteerien kanssa. US-09, US-14 ja kolme valittua lisäominaisuutta ovat virallisia toimitussitoumuksia; niitä ei poisteta tai rajata hiljaisesti. Mahdollinen muutos edellyttää muutostenhallinnan mukaista nimenomaista päätöstä. Sprint 1:n sisältöä ja suunnitelmaa ei muuteta.
 
 ## 4. Roolit ja vastuut
 
@@ -102,17 +98,17 @@ Git-haaroja ja Pull Requesteja käytetään mahdollisuuksien mukaan versionhalli
 
 ## 5. Aikataulu ja välitavoitteet
 
-Projektin tavoitekesto on viisi viikkoa. Alla olevat M1–M5-välitavoitteet ovat viikkokohtaisia tavoitetuloksia. Product Backlogin ja Sprint-suunnitelman viiden Sprintin jako on alustava; Sprinttien tarkka kesto ja viikkotavoitteiden suhde Sprintteihin vahvistetaan Sprint Planningissa.
+Projektin tavoitekesto on viisi viikkoa. Alla olevat M1–M5-välitavoitteet ovat viikkokohtaisia tavoitetuloksia. Product Backlogin ja Sprint-suunnitelman viiden Sprintin jako pidetään sovitun mukaisena; Sprinttien tarkka kesto ja viikkotavoitteiden suhde Sprintteihin vahvistetaan Sprint Planningissa. Viralliseen toimituslaajuuteen kuuluvia käyttäjätarinoita ei poisteta hiljaisesti kapasiteettiriskin perusteella.
 
 | Välitavoite | Ajankohta | Keskeinen työ | Valmistumisen näyttö |
 |---|---|---|---|
-| M1 – Suunnittelu ja tekninen perusta | Viikko 1 | Vaatimusten ja backlogiin tutustuminen, arkkitehtuuri- ja tietomalliratkaisujen tarkentaminen, repositoryn käytännöt, Docker Composen perusrakenne | Dokumentoidut arkkitehtuuriratkaisut ja käynnistettävä kehitysympäristö tai selkeästi kirjattu tekninen este |
+| M1 – Suunnittelu ja tekninen perusta | Viikko 1 | Vaatimusten ja backlogiin tutustuminen, arkkitehtuuri- ja tietomalliratkaisujen tarkentaminen, repositoryn käytännöt, Docker Composen perusrakenne Ollamalle ja valitulle mallille | Dokumentoidut arkkitehtuuriratkaisut ja käynnistettävä kehitysympäristö palveluineen tai selkeästi kirjattu tekninen este |
 | M2 – Backend, tietokanta ja käyttäjähallinta | Viikko 2 | Tietokantamalli, yhteys tietokantaan, REST-rajapinnan perusrakenne, rekisteröityminen ja kirjautuminen | Tietokanta toimii ja käyttäjähallinnan keskeiset testit läpäistään |
 | M3 – Tukipyyntöjen ydinkulku | Viikko 3 | Tukipyyntöjen luonti, omien pyyntöjen tarkastelu ja sulkeminen, käyttöoikeuksien tarkistukset, keskustelun tekninen perusta | Käyttäjä pystyy kirjautuneena hallitsemaan omia tukipyyntöjään |
-| M4 – AI-chat ja käyttöliittymän kielet | Viikko 4 | AI-integraatio, keskusteluviestien tallennus, tarkentavat kysymykset, suomen- ja englanninkielinen käyttöliittymä; RAG:n tekninen kokeilu | AI-chat toimii hallitusti ja kielivalinta on testattu; RAG:n lähteet ja toteutuspolku on täsmennetty |
-| M5 – RAG, integrointi ja toimitusvalmius | Viikko 5 | RAG:n viimeistely sovitulla dokumenttikokoelmalla, Docker Compose -kokonaisuuden tarkistus, regressiotestaus, dokumentaatio ja demo | Kolme valittua lisäominaisuutta on todennettu sovitussa laajuudessa; README, API-dokumentaatio, ER-kaavio ja demo ovat valmiit |
+| M4 – AI-chat ja käyttöliittymän kielet | Viikko 4 | Ollama-integraation käyttö sovelluksesta, keskusteluviestien tallennus, tarkentavat kysymykset, suomen- ja englanninkielinen käyttöliittymä; RAG:n tekninen kokeilu | AI-chat toimii hallitusti ja kielivalinta on testattu; RAG:n rajattu Markdown/TXT-lähdekokoelma on vahvistettu |
+| M5 – RAG, integrointi ja toimitusvalmius | Viikko 5 | Avainsanahaku rajatusta dokumenttikokoelmasta, Docker Compose -kokonaisuuden tarkistus, regressiotestaus, dokumentaatio ja demo | RAG, monikielisyys ja Docker Compose Ollamineen on todennettu sovitussa laajuudessa; US-09 ja US-14 sekä README, API-dokumentaatio, ER-kaavio ja demo ovat valmiit |
 
-**Aikataulun tarkennus:** Product Backlogin alustavassa jaossa `US-16` (Docker Compose) on Sprint 1:ssä, `US-13` (monikielisyys) Sprint 4:ssä ja `US-15` (RAG) Sprint 5:ssä. Dockerin perusrakenne aloitetaan aikaisin. RAG-ratkaisua voidaan kokeilla aiemmin, vaikka sen hyväksytty kokonaisuus on alustavasti sijoitettu Sprint 5:een. Tämä Sprint-jako ei yksinään määritä Sprinttien kestoa.
+**Aikataulun tarkennus:** sovitussa jaossa `US-16` (Docker Compose, mukaan lukien Ollama ja valittu malli) on Sprint 1:ssä, `US-09`, `US-13` ja `US-14` Sprint 4:ssä sekä `US-15` (RAG avainsanahaulla) Sprint 5:ssä. RAG:n lähdekokoelmaa ja testikysymyksiä voidaan valmistella aiemmin. Tämä Sprint-jako ei yksinään määritä Sprinttien kestoa.
 
 Sprintin tavoite on suunnitelma, ei lupaus siitä, että jokainen tehtävä valmistuu hinnalla millä hyvänsä. Jos työmääräarviot tai tekniset esteet muuttuvat, Product Backlog ja jäljellä olevat tavoitteet tarkistetaan.
 
@@ -123,10 +119,10 @@ Sprintin tavoite on suunnitelma, ei lupaus siitä, että jokainen tehtävä valm
 | Käyttäjähallinta | Tietomalli, tietokantayhteys, salasanan turvallinen käsittely ja autentikointi | Toteutetaan ja testataan ennen suojattujen toimintojen laajentamista |
 | Tukipyyntöjen hallinta | REST-rajapinta, tietokanta ja kirjautuneen käyttäjän tunnistaminen | Testataan sekä omistajan oikeudet että luvattoman käytön estäminen |
 | Keskusteluhistorian tallennus | Keskustelun ja viestien tietomalli sekä tietokantayhteys | Määritellään viestien ja keskustelujen väliset suhteet arkkitehtuurivaiheessa |
-| AI-chat | Backendin yhteys valittuun AI-malliin tai -palveluun | Tehdään pieni integraatiokoe varhaisessa vaiheessa ja käsitellään palveluvirheet |
-| RAG | AI-chat, rajatut lähdedokumentit, dokumenttien käsittely ja hakuratkaisu | Rajataan lähdeaineisto; testataan sekä relevantit haut että tilanne, jossa lähdettä ei löydy |
+| AI-chat | Backendin yhteys Docker Compose -ympäristössä toimivaan Ollamaan ja valittuun GGUF-malliin | Tehdään integraatiokoe varhaisessa vaiheessa; testataan mallin lataus, valmis-tila ja palveluvirheet |
+| RAG | AI-chat, ennen toteutusta rajattu Markdown/TXT-lähdekokoelma ja avainsanahaku | Määritellään testikysymykset; testataan relevantti osuma, lähdetiedot ja osumaton kysely |
 | Monikielinen käyttöliittymä | Käyttöliittymän tekstien erottaminen kieliresursseihin | Sovitaan kielivalinnan tallennustapa ja testataan tärkeimmät näkymät molemmilla kielillä |
-| Docker Compose | Frontendin, backendin ja tietokannan käynnistysasetukset, ympäristömuuttujat ja verkkoyhteydet | Testataan palvelut yhdessä ja kirjataan yksi toistettava käynnistyskomento |
+| Docker Compose | Frontendin, backendin, MySQL:n, Ollaman ja mallin käynnistysasetukset, ympäristömuuttujat, pysyvä tallennus ja verkkoyhteydet | Testataan palvelut ja backendin sisäinen Ollama-yhteys yhdessä; kirjataan yksi toistettava käynnistyskomento |
 | Lopullinen toimitus | Testitulokset, dokumentaatio ja käynnistysprosessin toimivuus | Varaa viimeiseen Sprintiin aikaa koko sovelluksen läpikäyntiin ja puuttuvien kohtien korjaamiseen |
 
 Riippuvuus ei aina tarkoita, että koko edeltävän toiminnon pitää olla valmis ennen seuraavan aloittamista. Esimerkiksi RAG:n lähdedokumentteja ja Dockerin rakennetta voidaan valmistella rinnakkain, kunhan integraatiot testataan kokonaisuutena.
@@ -138,14 +134,14 @@ Riskit arvioidaan laadullisesti vaikutuksen ja todennäköisyyden perusteella. R
 | ID | Riski | Todennäköisyys | Vaikutus | Ehkäisevä toimenpide / varasuunnitelma | Seuranta |
 |---|---|---|---|---|---|
 | R1 | AI-mallin tai -palvelun integrointi vie odotettua enemmän aikaa | Keskitaso | Korkea | Testataan yhteys ja yksi kysymys-vastaus-kierros varhain; pidetään AI-kerros erillään muusta backendistä | Tarkistetaan Sprint 1–2 aikana |
-| R2 | RAG:n hakutulokset ovat heikkoja tai lähteet eivät vastaa kysymykseen | Korkea | Korkea | Käytetään pientä, hallittua dokumenttikokoelmaa; testataan tunnetuilla kysymyksillä; näytetään lähteet ja kerrotaan, jos sopivaa lähdettä ei löydy | Tarkistetaan ennen RAG:n hyväksymistä |
-| R3 | Viiden viikon työmäärä ei riitä kaikkiin toimintoihin | Keskitaso | Korkea | Priorisoidaan pakolliset toiminnot ja kolme valittua lisäominaisuutta; jätetään ensin ehdollinen US-14 ja muut ei-välttämättömät viimeistelyt toteuttamatta | Arvioidaan viikoittain |
-| R4 | Docker-palvelut eivät toimi yhdessä tai ympäristömuuttujat puuttuvat | Keskitaso | Korkea | Aloitetaan Compose-rakenne Sprint 1:ssä; testataan puhtaalla käynnistyksellä; dokumentoidaan asetukset ja salaisuuksien käsittely | Tarkistetaan jokaisessa merkittävässä integraatiossa |
+| R2 | RAG:n avainsanahaku ei löydä kysymykseen sopivia dokumenttikohtia | Keskitaso | Korkea | Käytetään rajattua Markdown- ja TXT-kokoelmaa; testataan ennalta määritellyillä kysymyksillä ja dokumentoidaan tulokset; semanttista hakua harkitaan vain testinäytön perusteella | Tarkistetaan ennen RAG:n hyväksymistä |
+| R3 | Viiden viikon työmäärä ei riitä kaikkiin sovittuihin toimintoihin | Keskitaso | Korkea | Seurataan edistymistä viikoittain; nostetaan poikkeama päätettäväksi ja sovitaan muutoksista muodollisesti, eikä US-09:ää tai US-14:ää käsitellä automaattisesti valinnaisina | Arvioidaan viikoittain |
+| R4 | Docker-palvelut, Ollaman mallin lataus tai ympäristömuuttujat eivät toimi yhdessä | Keskitaso | Korkea | Aloitetaan Compose-rakenne Sprint 1:ssä; testataan puhtaalla käynnistyksellä, mallin saatavuudella ja backend–Ollama-yhteydellä; dokumentoidaan asetukset ja salaisuuksien käsittely | Tarkistetaan jokaisessa merkittävässä integraatiossa |
 | R5 | Käyttäjä voi nähdä tai muuttaa toisen käyttäjän tietoja | Keskitaso | Korkea | Tarkistetaan omistajuus backendissä; lisätään luvattoman käytön testit; ei luoteta pelkästään käyttöliittymän piilotuksiin | Testataan ennen toimitusta |
 | R6 | Salasanoja tai muita salaisuuksia käsitellään turvattomasti | Matala–keskitaso | Korkea | Tallennetaan salasanat vain turvallisesti tiivistettyinä; ei lisätä tunnuksia, API-avaimia tai `.env`-salaisuuksia repositoryyn | Tarkistetaan koodi ja repository ennen demoa |
 | R7 | Käyttöliittymän käännökset jäävät osittaisiksi | Keskitaso | Keskitaso | Keskitetään tekstit kieliresursseihin; testataan tärkeimmät näkymät suomeksi ja englanniksi | Tarkistetaan Sprint 4:ssä |
 | R8 | Testaus ja dokumentointi jäävät viime hetkeen | Keskitaso | Korkea | Kirjataan testit toteutuksen yhteydessä; varataan Sprint 5:een erillinen aika integraatiotestaukselle ja dokumentoinnille | Tarkistetaan Sprint-arvioinnissa |
-| R9 | Valittu AI-palvelu ei ole käytettävissä esittelyhetkellä | Keskitaso | Keskitaso–korkea | Testataan virhetilanteet ja dokumentoidaan palvelun asetukset; varmistetaan etukäteen, että esittely-ympäristö toimii | Tarkistetaan ennen lopullista esittelyä |
+| R9 | Paikallisen GGUF-mallin koko, resurssitarve tai lisenssiehdot estävät luotettavan esittelyn | Keskitaso | Korkea | Testataan mallin lataus ja käyttö projektin Docker-ympäristössä varhain; tarkistetaan mallin ja työkalujen lisenssit sekä käytön ehdot ennen toimitusta | Tarkistetaan Sprint 1:ssä ja ennen esittelyä |
 
 ### 7.1 Riskin toteutumisen toimintatapa
 
@@ -202,7 +198,7 @@ Edistymistä kuvataan ensisijaisesti todennettavilla tuloksilla, ei pelkällä p
 - keskusteluviesti tallentuu tietokantaan
 - RAG-vastaus näyttää käytetyn lähteen tai ilmoittaa, ettei sopivaa lähdettä löytynyt
 - käyttöliittymän keskeiset näkymät toimivat suomeksi ja englanniksi
-- frontend, backend ja tietokanta käynnistyvät dokumentoidulla Docker Compose -komennolla
+- frontend, backend, tietokanta ja Ollama käynnistyvät dokumentoidulla Docker Compose -komennolla ja backend saa vastauksen Ollamalta
 - README, API-dokumentaatio ja ER-kaavio vastaavat toteutunutta järjestelmää.
 
 ### 8.4 Definition of Done
@@ -246,8 +242,11 @@ Merkittävät tekniset ja projektinhallinnalliset päätökset kirjataan tähän
 |---|---|---|---|---|
 | D-01 | 26.10.2026 | Projektin kestoksi määritellään viisi viikkoa ja työmääräksi vähintään 20 tuntia viikossa | Projektin aikataulu ja käytettävissä oleva työaika | Laajuus on pidettävä rajattuna ja prioriteetit selkeinä |
 | D-02 | 26.10.2026 | Lopulliseen julkaisuun valitaan RAG, suomen- ja englanninkielinen käyttöliittymä sekä Docker Compose | Tehtävänannon lisäominaisuudet ja projektin oppimistavoitteet | Nämä kolme ominaisuutta suunnitellaan ja testataan erikseen |
-| D-03 | 26.10.2026 | `US-14`-yhteenvetonäkymä käsitellään toissijaisena | Ajan riittävyys ja valittujen lisäominaisuuksien suojaaminen | Ominaisuus toteutetaan vain, jos ydinsisältö etenee suunnitellusti |
-| D-04 | 26.10.2026 | `US-16`:n alustava arvio on 5 SP; rajaus kattaa kehitys- ja esittely-ympäristön Docker Compose -käynnistyksen | Backlogin tarkennettu toteutuslaajuus | AI-palvelun kontitus ja tuotantokäyttöönotto eivät kuulu arvioon |
+| D-03 | 26.10.2026 | US-09 ja US-14 kuuluvat viralliseen toimituslaajuuteen; US-14 sisältää vain käyttäjän kokonaismäärän sekä OPEN/CLOSED-määrät | Ryhmän vahvistama lopullinen laajuus | Tarinoita ei käsitellä valinnaisina; US-09 edellyttää käyttäjän tarkistusta ja vahvistusta |
+| D-04 | 26.10.2026 | US-16 sisältää Ollaman ja valitun GGUF-mallin Docker Compose -ympäristössä; Sprint 1 ja sen 33 SP:n suunnitelma säilyvät | Ryhmän vahvistama kontitustapa ja Sprint-päätös | Backend käyttää Ollamaa Compose-verkon kautta; tuotantokäyttöönotto ei kuulu laajuuteen |
+| D-05 | 26.10.2026 | Tekoälymallin tavoite on `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`, jota käytetään Ollaman kautta | Projektin valittu paikallinen malli | Malli käynnistetään Ollama-kontissa; mallin tiedoston sijainti ja pysyvä mallivarasto dokumentoidaan |
+| D-06 | 26.10.2026 | RAG MVP käsittelee Markdown- ja TXT-dokumentteja avainsanahaulla; semanttinen haku lisätään vain testinäytön perusteella | Rajattu ja testattava MVP-toteutus | Lähdekokoelma rajataan ennen toteutusta; ER-skeemaa ei muuteta ilman uutta pysyvää tietotarvetta |
+| D-07 | 26.10.2026 | Työkalujen ja kirjastojen tulee olla maksuttomia, ja niiden lisenssit sekä käyttöehdot tarkistetaan | Ryhmän vahvistama teknologiapäätös | Valinnat ja mahdolliset rajoitteet dokumentoidaan ennen toimitusta |
 
 ## 11. Muutosloki
 
@@ -255,6 +254,7 @@ Merkittävät tekniset ja projektinhallinnalliset päätökset kirjataan tähän
 |---|---|---|---|
 | 26.10.2026 | 0.1 | Projektinhallintadokumentin ensimmäinen versio | Projektin toteuttaja |
 | 26.10.2026 | 0.2 | Päivitetty nykytilanne, Sprint-aikataulun tarkennus sekä US-14:n ja US-16:n rajaukset; selkeytetty README:n ja hallintadokumentin vastuut | Projektin toteuttaja |
+| 26.10.2026 | 0.3 | Yhtenäistetty virallinen laajuus, RAG MVP, Ollama ja valittu malli, Docker Compose, lisenssiehtojen tarkistus sekä US-09/US-14-sitoumukset | Projektin toteuttaja |
 
 ## 12. Linkit projektin muihin dokumentteihin
 
