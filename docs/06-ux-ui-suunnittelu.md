@@ -1,4 +1,4 @@
-# UX/UI Design – AI HelpDesk
+# AI HelpDesk - UX/UI Suunnittelu
 
 **Projekt:** AI HelpDesk – Opiskelijaprojekti  
 **Dokumentti:** UX/UI-suunnittelun määrittely  
@@ -137,17 +137,7 @@ Kirjautuneen käyttäjän näkymissä käytetään yhteistä sovelluskehystä:
 
 Esimerkkirunko:
 
-```text
-┌──────────────────────────────────────────────────────────────┐
-│ AI HelpDesk                               FI / EN   Käyttäjä │
-├───────────────┬──────────────────────────────────────────────┤
-│ Etusivu       │ Sivun otsikko                                │
-│ AI-chat       │ Lyhyt kuvaus sivun tarkoituksesta            │
-│ Tukipyynnöt   │                                              │
-│ Profiili      │ Sivun sisältö ja ensisijainen toiminto       │
-│               │                                              │
-└───────────────┴──────────────────────────────────────────────┘
-```
+![UI_pc](../photos/UI_pc.png)
 
 ### 5.2 Responsiivisuus
 
@@ -248,23 +238,7 @@ Etusivu pidetään yksinkertaisena. Laaja analytiikkapaneeli, monimutkaiset kaav
 
 **Suositeltu asettelu**
 
-```text
-┌──────────────────────────────────────────────────────────────┐
-│ AI-chat                              Uusi keskustelu         │
-├────────────────┬─────────────────────────────────────────────┤
-│ Keskustelut    │ Ongelman kuvaus                             │
-│                │                                             │
-│ Keskustelu 1   │ AI: Voitko kertoa virheilmoituksen?         │
-│ Keskustelu 2   │                                             │
-│                │ Sinä: Näen virheen sovelluksen käynnistyessä│
-│                │                                             │
-│                │ AI: Kokeile seuraavia vaiheita...           │
-│                │ Lähteet: dokumentin nimi / linkki           │
-│                │                                             │
-│                │ [Kirjoita viesti...]             [Lähetä]   │
-│                │ [Luo tukipyyntö]                            │
-└────────────────┴─────────────────────────────────────────────┘
-```
+![AIchat](../photos/AIchat.png)
 
 Mobiilissa keskusteluhistoria voidaan avata erillisestä painikkeesta, jotta varsinainen keskustelualue säilyy riittävän leveänä.
 
