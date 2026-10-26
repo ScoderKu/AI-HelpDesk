@@ -12,14 +12,14 @@ Käyttäjätarinoiden yksityiskohtaiset kuvaukset ja hyväksymiskriteerit löyty
 
 | Sprintti | Tavoite | Käyttäjätarinat | SP |
 |-----------|----------|----------------|----|
-| Sprint 1 | Tekninen perusta, käyttäjän tunnistaminen ja Docker Compose | US-01, US-02, US-10, US-11, US-12, US-16 | 28 + US-16:n arvio |
+| Sprint 1 | Tekninen perusta, käyttäjän tunnistaminen ja Docker Compose | US-01, US-02, US-10, US-11, US-12, US-16 | 33 |
 | Sprint 2 | Tukipyyntöjen ja profiilin hallinta | US-03, US-04, US-05 | 13 |
 | Sprint 3 | Tekoälykeskustelu ja keskusteluhistoria | US-06, US-07, US-08 | 18 |
 | Sprint 4 | Käyttökokemuksen täydentäminen | US-09, US-13, US-14 | 9 |
 | Sprint 5 | Tietopohjainen tekoälyneuvonta | US-15 | 13 |
-| **Yhteensä** |  | **16 käyttäjätarinaa** | **81 SP + US-16:n arvio** |
+| **Yhteensä** |  | **16 käyttäjätarinaa** | **86 SP** |
 
-Story Point -määrät ovat alustavia arvioita. Viiden viikon projektin ja viiden Sprintin suunnitelma ei vielä vahvista Sprinttien kestoa eikä kehitystiimin kapasiteettia. Ennen Sprint Planningia on vahvistettava tiimin käytettävissä oleva työmäärä ja se, voidaanko suunniteltu laajuus toteuttaa projektin aikataulussa. Jos kapasiteetti ei riitä, Sprinttien sisältöä ja MVP:n jälkeisten ominaisuuksien aikataulua mukautetaan; 81 SP:n kokonaismäärää ei pidetä sitovana toimituslupauksena.
+Story Point -määrät ovat alustavia arvioita. Viiden viikon projektin ja viiden Sprintin suunnitelma ei vielä vahvista Sprinttien kestoa eikä kehitystiimin kapasiteettia. Ennen Sprint Planningia on vahvistettava tiimin käytettävissä oleva työmäärä ja se, voidaanko suunniteltu laajuus toteuttaa projektin aikataulussa. Jos kapasiteetti ei riitä, Sprinttien sisältöä ja MVP:n jälkeisten ominaisuuksien aikataulua mukautetaan; 86 SP:n kokonaismäärää ei pidetä sitovana toimituslupauksena.
 
 ---
 
@@ -40,8 +40,8 @@ Sprintin lopussa sovelluksessa on perusrakenne, johon tukipyyntöjen hallinta ja
 | US-01 | Käyttäjän rekisteröityminen | 5 |
 | US-02 | Käyttäjän kirjautuminen | 5 |
 | US-12 | Käyttöliittymän käytettävyys | 5 |
-| US-16 | Sovelluksen käynnistäminen Docker Composella | Arvioitava |
-| **Yhteensä** |  | **28 + US-16:n arvio** |
+| US-16 | Sovelluksen käynnistäminen Docker Composella | 5 |
+| **Yhteensä** |  | **33** |
 
 ## 3.3 Keskeiset kehitystehtävät
 
@@ -52,8 +52,10 @@ Sprintin lopussa sovelluksessa on perusrakenne, johon tukipyyntöjen hallinta ja
 5. Toteutetaan käyttäjän rekisteröityminen ja salasanan turvallinen tallennus.
 6. Toteutetaan kirjautuminen ja suojattujen toimintojen käyttöoikeuksien tarkistaminen.
 7. Luodaan käyttöliittymän perusrakenne, navigaatio ja lomakkeiden peruskomponentit.
-8. Määritellään Docker Compose -palvelut frontendille, backendille ja MySQL-tietokannalle sekä dokumentoidaan käynnistyskomento.
-9. Testataan keskeiset rekisteröitymis-, kirjautumis-, tietokanta- ja käynnistystoiminnot.
+8. Luodaan frontendin ja backendin Dockerfile-tiedostot sekä Compose-palvelut niille ja MySQL-tietokannalle.
+9. Lisätään ympäristömuuttujien esimerkkitiedosto, MySQL:n pysyvä tallennus ja palveluiden valmiustarkistukset.
+10. Dokumentoidaan `docker compose up --build` ja testataan palveluiden käynnistyminen sekä yhteydet.
+11. Testataan keskeiset rekisteröitymis-, kirjautumis-, tietokanta- ja käynnistystoiminnot.
 
 ## 3.4 Odotetut tulokset
 
@@ -307,7 +309,7 @@ Sprinttiä ei pidetä automaattisesti onnistuneena vain siksi, että kaikki suun
 
 # 11. Yhteenveto
 
-AI HelpDesk -sovelluksen alustava Sprint Plan koostuu viidestä Sprintistä ja 16 käyttäjätarinasta. Arvioitujen tarinoiden yhteissumma on **81 Story Pointia**, minkä lisäksi Sprint 1:ssä toteutettavan US-16:n arvio tarkennetaan erikseen.
+AI HelpDesk -sovelluksen alustava Sprint Plan koostuu viidestä Sprintistä ja 16 käyttäjätarinasta. Tarinoiden alustava kokonaisarvio on **86 Story Pointia**, sisältäen Sprint 1:een sijoitetun US-16:n 5 Story Pointin arvion.
 
 1. Sprint 1 luo sovelluksen teknisen perustan.
 2. Sprint 2 toteuttaa profiilin ja tukipyyntöjen hallinnan.
