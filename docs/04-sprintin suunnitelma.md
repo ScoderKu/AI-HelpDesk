@@ -19,7 +19,7 @@ Käyttäjätarinoiden yksityiskohtaiset kuvaukset ja hyväksymiskriteerit löyty
 | Sprint 5 | Tietopohjainen tekoälyneuvonta | US-15 | 13 |
 | **Yhteensä** |  | **15 käyttäjätarinaa** | **81 SP** |
 
-Story Point -määrät ovat alustavia arvioita. Sprinttien työmäärät eivät ole tasaisia, joten suunnitelmaa on mukautettava kehittäjän kapasiteetin mukaan.
+Story Point -määrät ovat alustavia arvioita. Viiden viikon projektin ja viiden Sprintin suunnitelma ei vielä vahvista Sprinttien kestoa eikä kehitystiimin kapasiteettia. Ennen Sprint Planningia on vahvistettava tiimin käytettävissä oleva työmäärä ja se, voidaanko suunniteltu laajuus toteuttaa projektin aikataulussa. Jos kapasiteetti ei riitä, Sprinttien sisältöä ja MVP:n jälkeisten ominaisuuksien aikataulua mukautetaan; 81 SP:n kokonaismäärää ei pidetä sitovana toimituslupauksena.
 
 ---
 

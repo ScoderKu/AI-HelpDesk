@@ -24,8 +24,9 @@ Sovelluksen kehittäjä vastaa sovelluksen teknisestä toteutuksesta, tietokanna
 **AC-01.1 – Onnistunut rekisteröityminen**
 
 - Oletetaan, että käyttäjällä ei ole vielä käyttäjätiliä.
-- Kun käyttäjä täyttää rekisteröitymislomakkeen oikein ja lähettää sen.
+- Kun käyttäjä antaa etunimen, sukunimen, käyttäjänimen, sähköpostiosoitteen ja salasanan kelvollisessa muodossa ja lähettää lomakkeen.
 - Niin järjestelmä luo käyttäjätilin ja tallentaa käyttäjän tiedot tietokantaan.
+- Salasana tiivistetään palvelinpuolella; asiakas ei voi lähettää `password_hash`-arvoa tallennettavaksi.
 
 **AC-01.2 – Virheelliset tiedot**
 
@@ -88,8 +89,9 @@ Sovelluksen kehittäjä vastaa sovelluksen teknisestä toteutuksesta, tietokanna
 **AC-03.2 – Profiilin päivittäminen**
 
 - Oletetaan, että käyttäjä on avannut profiilisivunsa.
-- Kun käyttäjä muokkaa sallittuja tietoja ja tallentaa muutokset.
+- Kun käyttäjä muokkaa etunimeään, sukunimeään tai käyttäjänimeään ja tallentaa muutokset.
 - Niin järjestelmä tallentaa muutokset tietokantaan ja näyttää päivitetyt tiedot.
+- MVP:ssä sähköpostiosoitetta ja salasanaa ei muuteta profiilin päivityksessä. Niiden mahdollinen muuttaminen edellyttää erillistä vahvistettua toimintoa.
 
 **AC-03.3 – Virheelliset profiilitiedot**
 
@@ -108,14 +110,16 @@ Sovelluksen kehittäjä vastaa sovelluksen teknisestä toteutuksesta, tietokanna
 **AC-04.1 – Tukipyynnön luominen**
 
 - Oletetaan, että käyttäjä on kirjautunut sisään.
-- Kun käyttäjä antaa tukipyynnön otsikon ja kuvauksen sekä lähettää lomakkeen.
+- Kun käyttäjä antaa tukipyynnön otsikon ja kuvauksen sekä lähettää lomakkeen; prioriteetti voidaan antaa tai jättää pois.
 - Niin järjestelmä luo tukipyynnön ja tallentaa sen tietokantaan.
+- Backend asettaa omistajan tunnistetun käyttäjän perusteella, tilaksi `OPEN` ja puuttuvaksi prioriteetiksi `MEDIUM`; asiakas ei voi asettaa omistajaa tai alkuperäistä tilaa.
 
 **AC-04.2 – Tukipyynnön perustiedot**
 
 - Oletetaan, että käyttäjä luo uuden tukipyynnön.
 - Kun tukipyyntö tallennetaan onnistuneesti.
 - Niin järjestelmä tallentaa otsikon, kuvauksen, tilan, prioriteetin, luontiajan ja pyynnön omistajan.
+- Keskustelusta luodussa tukipyynnössä tallennetaan myös lähdekeskustelun tunniste; itsenäisesti luodussa pyynnössä lähdekeskustelu on tyhjä.
 
 **AC-04.3 – Pakolliset tiedot puuttuvat**
 
@@ -148,6 +152,7 @@ Sovelluksen kehittäjä vastaa sovelluksen teknisestä toteutuksesta, tietokanna
 - Oletetaan, että käyttäjä omistaa avoimen tukipyynnön.
 - Kun käyttäjä valitsee tukipyynnön sulkemisen.
 - Niin järjestelmä muuttaa pyynnön tilan suljetuksi ja tallentaa muutoksen.
+- Sulkeminen on erillinen toiminto; käyttäjä ei voi muuttaa tilaa suoraan tukipyynnön yleisellä päivityspyynnöllä.
 
 **AC-05.4 – Käyttöoikeuksien tarkistaminen**
 
@@ -165,7 +170,7 @@ Sovelluksen kehittäjä vastaa sovelluksen teknisestä toteutuksesta, tietokanna
 
 **AC-06.1 – Viestin lähettäminen**
 
-- Oletetaan, että käyttäjä on avannut AI HelpDesk -keskustelun.
+- Oletetaan, että käyttäjä on kirjautunut sisään ja avannut oman AI HelpDesk -keskustelunsa.
 - Kun käyttäjä kirjoittaa ongelmansa ja lähettää viestin.
 - Niin järjestelmä välittää viestin käytössä olevalle tekoälymallille tai -palvelulle.
 
@@ -223,7 +228,7 @@ Sovelluksen kehittäjä vastaa sovelluksen teknisestä toteutuksesta, tietokanna
 
 **AC-08.1 – Käyttäjän viestin tallentaminen**
 
-- Oletetaan, että käyttäjä lähettää viestin keskustelussa.
+- Oletetaan, että kirjautunut käyttäjä lähettää viestin omaan keskusteluunsa.
 - Kun viesti hyväksytään tallennettavaksi.
 - Niin järjestelmä tallentaa viestin tietokantaan ja liittää sen oikeaan keskusteluun sekä käyttäjään.
 
@@ -238,6 +243,7 @@ Sovelluksen kehittäjä vastaa sovelluksen teknisestä toteutuksesta, tietokanna
 - Oletetaan, että käyttäjällä on tallennettuja keskusteluviestejä.
 - Kun käyttäjä avaa aiemman keskustelunsa.
 - Niin järjestelmä näyttää tallennetut viestit oikeassa järjestyksessä.
+- Käyttäjä ei voi tarkastella toisen käyttäjän keskusteluja tai viestejä.
 
 ### US-09: Tukipyynnön luominen keskustelusta
 
@@ -250,7 +256,7 @@ Sovelluksen kehittäjä vastaa sovelluksen teknisestä toteutuksesta, tietokanna
 **AC-09.1 – Tukipyynnön luontiehdotus**
 
 - Oletetaan, että käyttäjän ongelma ei ratkea keskustelun aikana.
-- Kun ongelma tarvitsee jatkokäsittelyä.
+- Kun ongelma tarvitsee jatkokäsittelyä ja käyttäjä on kirjautunut sisään.
 - Niin järjestelmä tarjoaa käyttäjälle mahdollisuuden luoda tukipyynnön.
 
 **AC-09.2 – Tukipyynnön luominen**
@@ -258,6 +264,7 @@ Sovelluksen kehittäjä vastaa sovelluksen teknisestä toteutuksesta, tietokanna
 - Oletetaan, että käyttäjä hyväksyy tukipyynnön luomisen.
 - Kun tarvittavat tiedot on vahvistettu.
 - Niin järjestelmä luo tukipyynnön ja tallentaa sen tietokantaan.
+- Tukipyyntö linkitetään keskusteluun vain, jos keskustelu kuuluu samalle kirjautuneelle käyttäjälle.
 
 **AC-09.3 – Käyttäjän päätöksen kunnioittaminen**
 
@@ -441,9 +448,9 @@ Seuraavat käyttäjätarinat ovat ehdotuksia valinnaisiksi ominaisuuksiksi. Lopu
 | US-14: Tukipyyntöjen yhteenvetonäkymä | P3 |
 | US-15: Tietopohjainen tekoälyneuvonta (RAG) | P2 |
 
-## 6. Yhteenveto
+## 5. Yhteenveto
 
 Tässä dokumentissa on määritelty AI HelpDesk -sovelluksen käyttäjätarinat, hyväksymiskriteerit ja erillinen prioriteettitaulukko.
 
-Seuraavassa vaiheessa käyttäjätarinat siirretään Product Backlogiin. Niille määritellään työmääräarviot, toteutustehtävät ja sprinttikohtainen suunnitelma.
+Käyttäjätarinat ja hyväksymiskriteerit on yhdistetty Product Backlogiin ja alustavaan Sprint-suunnitelmaan. Toteutuksen ja testauksen edetessä hyväksymiskriteerien täyttyminen todennetaan jäljitettävyystaulukon mukaisesti.
 ./

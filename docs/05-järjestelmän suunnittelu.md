@@ -131,7 +131,9 @@ Tekoälyn tuottamat vastaukset ovat ehdotuksia. Niiden oikeellisuutta ei voida t
 
 Järjestelmän keskeiset entiteetit ovat User, Ticket, Conversation ja Message.
 
-![DB construction](../photos/AI_HD_db_construction.png)
+![DB construction](../photos/ER_AIHD.svg)
+
+Kaavio on ylläpidetty muuttamattomana yleiskuvana tietokantatauluista ja niiden suhteista. Alla olevat taulukot täsmentävät kenttien nimet ja rajoitteet. Ne sisältävät myös `tickets.created_at`- ja `tickets.updated_at`-kentät, `conversations.created_at`- ja `conversations.updated_at`-kentät sekä `messages.created_at`-kentän, joita ei ole merkitty kaavioon. Tukipyynnön luontiaika vaaditaan FR-05:n täyttämiseksi; muut aikaleimat tukevat historian näyttämistä ja tietojen ylläpitoa.
 
 ### 3.2 Entiteettien kuvaukset
 
@@ -155,15 +157,16 @@ Sisältää keskusteluun liittyvän yksittäisen viestin. Viestin rooli kertoo, 
 
 | Suhde | Kardinaliteetti | Kuvaus |
 |---------|---------|---------|
-| User – Ticket | 1:N | Käyttäjällä voi olla useita tukipyyntöjä. |
-| User – Conversation | 1:N | Käyttäjällä voi olla useita keskusteluja. |
-| Conversation – Message | 1:N | Keskustelussa voi olla useita viestejä. |
+| User – Ticket | User 1 → 0..N Ticket; Ticket 1 → 1 User | Käyttäjällä voi olla nolla tai useita tukipyyntöjä; jokaisella tukipyynnöllä on yksi omistaja. |
+| User – Conversation | User 1 → 0..N Conversation; Conversation 1 → 1 User | Käyttäjällä voi olla nolla tai useita keskusteluja; jokainen keskustelu kuuluu yhdelle käyttäjälle. |
+| Conversation – Ticket | Conversation 1 → 0..N Ticket; Ticket 0..1 → 1 Conversation | Keskustelusta voidaan luoda useita tukipyyntöjä; tukipyyntö voi olla itsenäinen tai liittyä yhteen keskusteluun. |
+| Conversation – Message | Conversation 1 → 0..N Message; Message 1 → 1 Conversation | Keskustelussa voi olla nolla tai useita viestejä; jokainen viesti kuuluu yhteen keskusteluun. |
 
 ER-diagrammi kuvaa MVP-version keskeisen tietomallin. RAG-toiminnallisuus voi myöhemmin edellyttää erillisiä dokumentti- ja hakumetatietotauluja.
 
 ---
 
-# 4. Tietokannan suunnittelu
+## 4. Tietokannan suunnittelu
 
 ## 4.1 Yleiset tietokantaperiaatteet
 
@@ -182,10 +185,10 @@ ER-diagrammi kuvaa MVP-version keskeisen tietomallin. RAG-toiminnallisuus voi my
 | Sarake | Tietotyyppi | Rajoitteet | Kuvaus |
 |----------|------------|------------|---------|
 | id | BIGINT | PK, AUTO_INCREMENT | Käyttäjän tunniste |
-| etunimi | VARCHAR(100) | NOT NULL | Käyttäjän etunimi |
-| sukunimi | VARCHAR(100) | NOT NULL | Käyttäjän sukunimi |
-| käyttäjänimi | VARCHAR(100) | NOT NULL | Käyttäjänimi |
-| sähköposti | VARCHAR(255) | NOT NULL, UNIQUE | Sähköpostiosoite |
+| first_name | VARCHAR(100) | NOT NULL | Käyttäjän etunimi |
+| last_name | VARCHAR(100) | NOT NULL | Käyttäjän sukunimi |
+| username | VARCHAR(100) | NOT NULL | Käyttäjänimi |
+| email | VARCHAR(255) | NOT NULL, UNIQUE | Sähköpostiosoite |
 | password_hash | VARCHAR(255) | NOT NULL | Salasanan tiiviste |
 | created_at | DATETIME | NOT NULL | Luontiaika |
 | updated_at | DATETIME | NOT NULL | Viimeisin päivitysaika |
@@ -196,19 +199,21 @@ ER-diagrammi kuvaa MVP-version keskeisen tietomallin. RAG-toiminnallisuus voi my
 |----------|------------|------------|---------|
 | id | BIGINT | PK, AUTO_INCREMENT | Tukipyynnön tunniste |
 | user_id | BIGINT | FK, NOT NULL | Tukipyynnön omistaja |
-| otsikko | VARCHAR(200) | NOT NULL | Tukipyynnön otsikko |
-| kuvaus | TEXT | NOT NULL | Ongelman kuvaus |
+| conversation_id | BIGINT | FK, NULL | Tukipyynnön lähdekeskustelu, jos pyyntö luotiin keskustelusta |
+| title | VARCHAR(200) | NOT NULL | Tukipyynnön otsikko |
+| description | TEXT | NOT NULL | Ongelman kuvaus |
 | status | VARCHAR(20) | NOT NULL | Tukipyynnön tila |
-| prioriteetti | VARCHAR(20) | NOT NULL | Tukipyynnön prioriteetti |
+| priority | VARCHAR(20) | NOT NULL | Tukipyynnön prioriteetti |
 | created_at | DATETIME | NOT NULL | Luontiaika |
 | updated_at | DATETIME | NOT NULL | Viimeisin päivitysaika |
 | closed_at | DATETIME | NULL | Sulkemisaika |
 
-Tukipyynnön tilat voivat olla esimerkiksi:
+MVP:n tukipyynnön tilat ovat:
 
 - `OPEN`
-- `IN_PROGRESS`
 - `CLOSED`
+
+`IN_PROGRESS` voidaan ottaa käyttöön myöhemmin, kun tukipalvelun käsittelyrooli ja tilan muutossäännöt määritellään.
 
 Prioriteetit voivat olla:
 
@@ -224,7 +229,7 @@ Sallitut arvot validoidaan backendissä ja tarvittaessa tietokannan rajoitteilla
 |----------|------------|------------|---------|
 | id | BIGINT | PK, AUTO_INCREMENT | Keskustelun tunniste |
 | user_id | BIGINT | FK, NOT NULL | Keskustelun omistaja |
-| otsikko | VARCHAR(200) | NULL | Keskustelun otsikko |
+| title | VARCHAR(200) | NULL | Keskustelun otsikko |
 | created_at | DATETIME | NOT NULL | Luontiaika |
 | updated_at | DATETIME | NOT NULL | Viimeisin päivitysaika |
 
@@ -256,12 +261,15 @@ Järjestelmän sisäisiä ohjeita tai työkaluviestejä varten tarvitaan erillin
 | users | UNIQUE(email) | Nopeuttaa kirjautumista ja estää päällekkäiset sähköpostiosoitteet |
 | tickets | INDEX(user_id, created_at) | Käyttäjän tukipyyntöjen hakeminen |
 | tickets | INDEX(user_id, status) | Tukipyyntöjen haku tilan perusteella |
+| tickets | INDEX(conversation_id) | Keskusteluun liittyvien tukipyyntöjen hakeminen |
 | conversations | INDEX(user_id, updated_at) | Käyttäjän keskusteluhistorian hakeminen |
 | messages | INDEX(conversation_id, created_at, id) | Keskusteluviestien hakeminen järjestyksessä |
 
 Viiteavaimille määritellään tietojen poistamiseen ja päivittämiseen sopivat säännöt. Esimerkiksi käyttäjän poistamista ei tule toteuttaa siten, että siihen liittyvät tiedot jäävät tietokantaan hallitsemattomasti.
 
 Käyttäjän poistaminen ja keskusteluhistorian säilyttäminen tulee määritellä erikseen tietosuojan ja sovelluksen vaatimusten perusteella.
+
+Kun tukipyyntö luodaan keskustelusta, `tickets.conversation_id` viittaa lähdekeskusteluun. Backend varmistaa, että keskustelu kuuluu samalle kirjautuneelle käyttäjälle kuin tukipyyntö. Itsenäisesti luodun tukipyynnön `conversation_id` on `NULL`.
 
 ## 4.7 Tietojen tallennuksen transaktiot
 
@@ -278,7 +286,7 @@ Keskusteluviestin tallennuksessa käyttäjän viesti ja tekoälyn vastaus käsit
 
 ---
 
-# 5. REST API -suunnittelu
+## 5. REST API -suunnittelu
 
 ## 5.1 Yleiset periaatteet
 
@@ -293,6 +301,7 @@ REST API toimii frontendin ja backendin välisenä rajapintana.
 5. Käyttäjän omistajuus ja käyttöoikeudet tarkistetaan jokaisessa suojatussa resurssipyynnössä.
 6. Virhetilanteissa palautetaan tarkoituksenmukainen HTTP-statuskoodi.
 7. Rajapinnan versio voidaan sisällyttää osoitteeseen, esimerkiksi `/api/v1`.
+8. Istuntoevästeitä käyttävä selain lähettää pyyntöihin tunnistetiedot; backend sallii tunnistetiedot sisältävän CORS-pyynnön vain määritellystä frontend-alkuperästä eikä käytä tunnistetietojen kanssa yleistä `*`-alkuperää.
 
 ## 5.2 Endpointit
 
@@ -306,7 +315,7 @@ REST API toimii frontendin ja backendin välisenä rajapintana.
 | GET | `/api/v1/users/me` | Hakee kirjautuneen käyttäjän profiilin | Kyllä |
 | PATCH | `/api/v1/users/me` | Päivittää käyttäjän profiilin | Kyllä |
 
-Uloskirjautumisen toteutus riippuu autentikointimenetelmästä. Palvelinpuolen istunnossa istunto mitätöidään; token-pohjaisessa ratkaisussa toteutetaan käytetyn token-mallin mukainen mitätöinti.
+Autentikointi toteutetaan palvelinpuolen istunnolla. Onnistunut kirjautuminen luo istunnon ja asettaa selaimeen istuntotunnisteen sisältävän `HttpOnly`-evästeen. Tuotannossa eväste on `Secure`-suojattu ja käyttää `SameSite=Lax`-asetusta. Selaimen tilaa muuttavat pyynnöt suojataan CSRF-tarkistuksella. Uloskirjautuminen mitätöi palvelinpuolen istunnon ja poistaa evästeen. Istuntojen tallennusratkaisu kuuluu backendin konfiguraatioon eikä muuta ER-kaavion taulurakennetta.
 
 ### Tukipyynnöt
 
@@ -314,10 +323,12 @@ Uloskirjautumisen toteutus riippuu autentikointimenetelmästä. Palvelinpuolen i
 |------------|----------|---------|--------------|
 | GET | `/api/v1/tickets` | Hakee kirjautuneen käyttäjän tukipyynnöt | Kyllä |
 | POST | `/api/v1/tickets` | Luo uuden tukipyynnön | Kyllä |
-| GET | `/api/v1/tickets/{id}` | Hakee yksittäisen tukipyynnön | Kyllä |
-| PATCH | `/api/v1/tickets/{id}` | Päivittää sallitut tukipyynnön tiedot | Kyllä |
-| POST | `/api/v1/tickets/{id}/close` | Sulkee tukipyynnön | Kyllä |
 | GET | `/api/v1/tickets/summary` | Hakee käyttäjän tukipyyntöjen yhteenvedon | Kyllä |
+| GET | `/api/v1/tickets/{id}` | Hakee yksittäisen tukipyynnön | Kyllä |
+| PATCH | `/api/v1/tickets/{id}` | Päivittää avoimen tukipyynnön otsikon, kuvauksen tai prioriteetin | Kyllä |
+| POST | `/api/v1/tickets/{id}/close` | Sulkee tukipyynnön | Kyllä |
+
+Staattinen `/summary`-reitti määritellään ennen dynaamista `{id}`-reittiä, jotta reititin ei tulkitse sanaa `summary` tukipyynnön tunnisteeksi.
 
 ### Keskustelut ja viestit
 
@@ -357,11 +368,15 @@ POST /api/v1/auth/login
 {
   "user": {
     "id": 12,
-    "name": "Example User",
+    "first_name": "Example",
+    "last_name": "User",
+    "username": "exampleuser",
     "email": "user@example.com"
   }
 }
 ```
+
+Kirjautumisen vastaus sisältää lisäksi `Set-Cookie`-otsakkeen istuntoevästeen asettamista varten. Selain lähettää evästeen automaattisesti suojatuissa pyynnöissä.
 
 ## 5.4 Esimerkkipyyntö: tukipyynnön luominen
 
@@ -374,8 +389,7 @@ POST /api/v1/tickets
 ```json
 {
   "title": "Cannot connect to the network",
-  "description": "The computer cannot connect to the office network.",
-  "priority": "MEDIUM"
+  "description": "The computer cannot connect to the office network."
 }
 ```
 
@@ -391,6 +405,10 @@ POST /api/v1/tickets
   "created_at": "2026-10-22T14:00:00Z"
 }
 ```
+
+Backend johtaa omistajan kirjautuneesta istunnosta, asettaa uuden pyynnön tilaksi `OPEN` ja käyttää puuttuvalle prioriteetille oletusta `MEDIUM`. Asiakas ei voi asettaa omistajaa, alkuperäistä tilaa tai aikaleimoja. Jos pyyntö luodaan keskustelusta, backend tarkistaa keskustelun omistajuuden ja tallentaa sen tunnisteen `conversation_id`-kenttään.
+
+MVP-versiossa käyttäjä voi sulkea oman avoimen tukipyyntönsä erillisellä `/close`-toiminnolla. Tällöin backend asettaa tilaksi `CLOSED` sekä päivittää `closed_at`- ja `updated_at`-aikaleimat. `PATCH` sallii vain otsikon, kuvauksen ja prioriteetin päivittämisen avoimessa pyynnössä; se ei salli tilan, omistajan, tunnisteiden tai aikaleimojen muuttamista. `IN_PROGRESS` varataan myöhempään laajennukseen, jossa tukipalvelurooli tai muu määritelty käsittelyprosessi muuttaa tilaa.
 
 ## 5.5 Esimerkkipyyntö: keskusteluviestin lähettäminen
 
