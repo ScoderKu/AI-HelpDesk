@@ -27,7 +27,7 @@ Projektin tavoitteena on suunnitella ja toteuttaa toimiva AI HelpDesk -sovellus,
 - Sovellus tallentaa käyttäjätiedot, tukipyynnöt ja keskusteluviestit tietokantaan.
 - Sovellus tarjoaa REST-rajapinnan tietojen käsittelyä varten.
 - Projekti toteutetaan versionhallintaa ja Scrum-menetelmää hyödyntäen.
-- Sovellukseen toteutetaan vähintään kolme tehtävänannossa määriteltyä valinnaista ominaisuutta.
+- Lopulliseen julkaisuun toteutetaan kolme valittua lisäominaisuutta: tietopohjainen tekoälyneuvonta (RAG), suomen- ja englanninkielinen käyttöliittymä sekä sovelluksen käynnistäminen Docker Composella yhdellä komennolla.
 
 ## 4. Kohderyhmät
 
@@ -48,6 +48,9 @@ Projektin laajuus rajataan siten, että sovellus voidaan toteuttaa ja testata vi
 - Tukipyyntöjen tilan ja prioriteetin hallinta.
 - Tekoälypohjainen chat ja ongelmanratkaisu.
 - Keskusteluviestien tallentaminen tietokantaan.
+- Tietopohjainen tekoälyneuvonta (RAG).
+- Suomen- ja englanninkielinen käyttöliittymä.
+- Sovelluksen käynnistäminen Docker Composella yhdellä komennolla.
 - REST-rajapinta sovelluksen tietojen käsittelyyn.
 - MySQL- tai MariaDB-tietokanta.
 - GitHub-versionhallinta, haarat ja Pull Request -käytännöt.
@@ -80,6 +83,9 @@ Sovelluksen on täytettävä seuraavat toiminnalliset vaatimukset.
 | FR-10 | Sovellus tarjoaa REST-rajapinnan tukipyyntöjen ja muiden tietojen käsittelyyn. |
 | FR-11 | Käyttäjät, tukipyynnöt ja viestit tallennetaan MySQL- tai MariaDB-tietokantaan. |
 | FR-12 | Projektin lähdekoodi ja kehityshistoria hallitaan GitHubissa. |
+| FR-13 | AI HelpDesk hakee käyttäjän kysymykseen liittyvää teknistä dokumentaatiota ja välittää löydetyn sisällön tekoälylle vastauksen muodostamista varten. |
+| FR-14 | Käyttöliittymä on käytettävissä suomeksi ja englanniksi, ja käyttäjän kielivalinta säilyy. |
+| FR-15 | Frontend, backend ja MySQL-tietokanta voidaan käynnistää Docker Composella yhdellä README:ssä dokumentoidulla komennolla. |
 
 ## 7. Ei-toiminnalliset vaatimukset
 
@@ -100,7 +106,7 @@ Projektin teknisten ratkaisujen on täytettävä seuraavat ehdot:
 - Frontendin ja backendin on toimittava yhdessä.
 - Lähdekoodia hallitaan GitHubissa.
 - Kehityksessä käytetään haaroja ja Pull Request -toimintoa.
-- Sovellukseen lisätään vähintään kolme tehtävänannossa määriteltyä valinnaista ominaisuutta.
+- Lopullinen julkaisu sisältää kolme valittua lisäominaisuutta: RAG-neuvonnan, suomen- ja englanninkielisen käyttöliittymän sekä yhden komennon Docker Compose -käynnistyksen.
 
 ## 9. Alustavat teknologiset valinnat
 
@@ -121,7 +127,7 @@ Tekoälymalli valitaan sen perusteella, että se pystyy tuottamaan hyödyllisiä
 ## 10. Oletukset
 
 - Tekoälyn tuottamat vastaukset voivat olla virheellisiä, joten käyttäjälle ei luvata ongelman automaattista ratkeamista.
-- Valinnaiset ominaisuudet priorisoidaan sen jälkeen, kun pakolliset vaatimukset on toteutettu.
+- Kolme valittua lisäominaisuutta kuuluvat lopulliseen julkaisuun. Monikielinen käyttöliittymä ja RAG toteutetaan MVP:n jälkeen; Docker Compose -ympäristö perustetaan Sprint 1:ssä.
 
 ## 11. Projektin onnistumiskriteerit
 
@@ -131,7 +137,7 @@ Projekti katsotaan onnistuneeksi, kun:
 - Tukipyynnöt ja keskusteluviestit tallentuvat tietokantaan.
 - Tekoälychat toimii oikean tekoälymallin tai -palvelun avulla.
 - REST-rajapinnan keskeiset toiminnot on toteutettu ja testattu.
-- Sovellukseen on toteutettu vähintään kolme valinnaista ominaisuutta.
+- Valitut lisäominaisuudet toimivat: RAG hyödyntää dokumentaatiota, käyttöliittymä tukee suomea ja englantia, ja sovellus käynnistyy Docker Composella dokumentoidulla yhdellä komennolla.
 - Lähdekoodi, kehityshistoria ja tarvittavat Pull Requestit löytyvät GitHubista.
 - README, tietokantakuvaus, ER-kaavio, kuvakaappaukset ja API-dokumentaatio ovat saatavilla.
 
@@ -153,4 +159,6 @@ Seuraava taulukko yhdistää toiminnalliset vaatimukset käyttäjätarinoihin, h
 | FR-10 | US-10 (AC-10.1–AC-10.4) | TEST-10: API:n onnistuneet, virheelliset ja luvattomat pyynnöt |
 | FR-11 | US-11 (AC-11.1–AC-11.3) | TEST-11: pysyvä tallennus, haku ja viite-eheys |
 | FR-12 | Ei käyttäjätarinaa; projektikäytäntö | TEST-12: GitHub-repository, haarat ja Pull Request -historia |
-./
+| FR-13 | US-15 (AC-15.1–AC-15.3) | TEST-13: dokumentaation haku, lähteen näyttäminen ja tyhjän hakutuloksen käsittely |
+| FR-14 | US-13 (AC-13.1–AC-13.3) | TEST-14: suomen- ja englanninkielinen käyttöliittymä sekä kielivalinnan säilyminen |
+| FR-15 | US-16 (AC-16.1–AC-16.3) | TEST-15: sovelluksen käynnistys puhtaassa ympäristössä README:n yhdellä Docker Compose -komennolla |

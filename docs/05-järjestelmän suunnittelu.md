@@ -14,7 +14,9 @@ Suunnittelun tavoitteena on luoda selkeä ja ylläpidettävä rakenne, joka tuke
 - Tekoälypohjainen keskustelu.
 - Keskusteluviestien pysyvä tallentaminen.
 - Tukipyynnön luominen keskustelun perusteella.
-- Tietopohjainen tekoälyneuvonta (RAG) tulevana laajennuksena.
+- Tietopohjainen tekoälyneuvonta, jossa Knowledge Service hakee keskusteluun liittyvää teknistä dokumentaatiota.
+- Suomen- ja englanninkielinen käyttöliittymä.
+- Frontendin, backendin ja MySQL-tietokannan käynnistäminen Docker Composella yhdellä komennolla.
 
 ### 1.2 Järjestelmän tavoitteet
 
@@ -45,9 +47,13 @@ Kehittäjärooli kuvaa projektin teknistä vastuuta eikä automaattisesti tarkoi
 
 AI HelpDesk toteutetaan kerroksittaisena web-sovelluksena. Frontend vastaa käyttöliittymästä, backend liiketoimintalogiikasta ja tietoturvatarkistuksista sekä tietokanta pysyvästä tallennuksesta. Tekoälypalvelua käytetään teknisten ongelmien analysointiin ja ratkaisuehdotusten tuottamiseen.
 
-![system architecture](../photos/system%20architecture.png)
+![Järjestelmän looginen arkkitehtuuri: frontend, backend, tietokanta, tekoälypalvelu ja dokumentaatiohaku](../photos/system%20architecture.png)
 
-Kuvassa RAG-komponentti on suunniteltu laajennus. MVP-versiossa tekoälypalveluun voidaan yhdistää suoraan keskustelupalvelusta ilman dokumentaatiohakua.
+Arkkitehtuurikuva säilyy rakenteeltaan ennallaan. Valitut lisäominaisuudet näkyvät siinä ja toteutuksen rajauksessa seuraavasti:
+
+- **RAG:** Chat Service hyödyntää Knowledge Serviceä, joka hakee käyttäjän kysymykseen liittyvää teknistä dokumentaatiota. Löydetty sisältö välitetään AI Servicelle, ja saatavilla olevat lähdetiedot näytetään vastauksen yhteydessä. Jos sopivaa sisältöä ei löydy, vastausta ei esitetä dokumentaation vahvistamana.
+- **Monikielisyys:** Frontendin käyttöliittymätekstit ovat saatavilla suomeksi ja englanniksi. Kielivalinta säilytetään selaimessa; tekoälyn vastauskieli määräytyy keskustelun kielen ja agentin kieliohjeiden mukaan.
+- **Docker Compose:** frontend, backend ja MySQL-tietokanta käynnistetään README:ssä dokumentoidulla yhdellä komennolla. Tekoälypalvelu voi olla ulkoinen, eikä sen tarvitse kuulua Compose-kokoonpanoon.
 
 ### 2.2 Frontend
 
@@ -90,7 +96,7 @@ Backend tarjoaa REST-rajapinnan ja toteuttaa sovelluksen liiketoimintalogiikan.
 | Ticket Service | Tukipyyntöjen luominen ja päivittäminen |
 | Chat Service | Keskustelujen ja viestien käsittely |
 | AI Service | Tekoälypalvelun integraatio |
-| Knowledge Service | Dokumentaation haku RAG-laajennuksessa |
+| Knowledge Service | Teknisen dokumentaation haku RAG-vastauksia varten |
 
 Nämä ovat loogisia komponentteja, eivät välttämättä erillisiä palvelimia tai mikropalveluita.
 

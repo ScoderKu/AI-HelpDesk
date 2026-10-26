@@ -356,9 +356,9 @@ Sovelluksen kehittäjä vastaa sovelluksen teknisestä toteutuksesta, tietokanna
 - Kun pakollisia tietoja puuttuu tai tiedot ovat virheellisiä.
 - Niin käyttöliittymä kertoo, mitä tietoja käyttäjän tulee korjata.
 
-## 3. Valinnaisten ominaisuuksien käyttäjätarinat
+## 3. Valitut lisäominaisuudet
 
-Seuraavat käyttäjätarinat ovat ehdotuksia valinnaisiksi ominaisuuksiksi. Lopulliset valinnat tehdään Product Backlogin priorisoinnissa.
+Seuraavat kolme lisäominaisuutta on valittu toteutettaviksi lopulliseen julkaisuun. Monikielinen käyttöliittymä ja RAG toteutetaan MVP:n jälkeen. Docker Compose -ympäristö perustetaan Sprint 1:ssä kehitys- ja esittely-ympäristöä varten.
 
 ### US-13: Monikielinen käyttöliittymä
 
@@ -378,7 +378,15 @@ Seuraavat käyttäjätarinat ovat ehdotuksia valinnaisiksi ominaisuuksiksi. Lopu
 
 - Oletetaan, että käyttäjä on valinnut käyttöliittymän kielen.
 - Kun käyttäjä siirtyy sovelluksen toiseen näkymään.
-- Niin valittu kieli säilyy sovitun toimintatavan mukaisesti.
+- Niin valinta säilyy selaimessa näkymästä toiseen ja seuraavalla kirjautumiskerralla.
+
+**AC-13.3 – Käyttöliittymän käännösten kattavuus**
+
+- Oletetaan, että käyttäjä on valinnut suomen tai englannin.
+- Kun käyttäjä käyttää sovelluksen tuettuja näkymiä ja toimintoja.
+- Niin käyttöliittymän tekstit ja käyttäjälle näytettävät ilmoitukset ovat valitulla kielellä.
+
+Kielivalinta koskee käyttöliittymää. Tekoälyn vastauskieli määräytyy keskustelun kielen ja agentin kieliohjeiden mukaan.
 
 ### US-14: Tukipyyntöjen yhteenvetonäkymä
 
@@ -420,6 +428,40 @@ Seuraavat käyttäjätarinat ovat ehdotuksia valinnaisiksi ominaisuuksiksi. Lopu
 - Kun tekoäly muodostaa vastauksen.
 - Niin järjestelmä ei väitä vastausta löydetyn dokumentaation vahvistamaksi.
 
+**AC-15.3 – Lähteiden näyttäminen**
+
+- Oletetaan, että kyselyyn liittyvää dokumentaatiota löytyy.
+- Kun järjestelmä näyttää tekoälyn muodostaman vastauksen.
+- Niin käyttöliittymä näyttää myös saatavilla olevat lähdetiedot.
+
+### US-16: Sovelluksen käynnistäminen Docker Composella
+
+- Roolina sovelluksen kehittäjänä tai ylläpitäjänä
+- Haluan käynnistää sovelluksen dokumentoidulla yhdellä Docker Compose -komennolla.
+- Jotta kehitys- ja esittely-ympäristö voidaan ottaa käyttöön toistettavasti.
+
+**Hyväksymiskriteerit**
+
+**AC-16.1 – Käynnistys yhdellä komennolla**
+
+- Oletetaan, että Docker ja Docker Compose ovat käytettävissä ja vaaditut ympäristömuuttujat on asetettu.
+- Kun käyttäjä suorittaa README:ssä dokumentoidun käynnistyskomennon.
+- Niin sovelluksen frontend, backend ja MySQL-tietokanta käynnistyvät ilman erillisiä manuaalisia käynnistysvaiheita.
+
+**AC-16.2 – Palveluiden valmius**
+
+- Oletetaan, että Docker Compose -käynnistys on suoritettu.
+- Kun palvelut ovat valmiita vastaanottamaan pyyntöjä.
+- Niin frontend pystyy käyttämään backendia ja backend pystyy käyttämään tietokantaa.
+
+**AC-16.3 – Konfiguraatio ja salaisuudet**
+
+- Oletetaan, että sovelluksen käynnistämiseen tarvitaan konfiguraatioarvoja tai salaisuuksia.
+- Kun kehittäjä valmistelee paikallisen ympäristön.
+- Niin README ja esimerkkikonfiguraatio kertovat vaaditut arvot, eikä repository sisällä oikeita salaisuuksia.
+
+Docker Compose käynnistää sovelluksen kontitetut osat. Tekoälypalvelun käynnistys tai ulkoinen saatavuus määritellään erikseen valitun AI-palvelun konfiguraatiossa.
+
 ## 4. Prioriteettitaulukko
 
 | Prioriteetti | Kuvaus | Toteutusperiaate |
@@ -444,13 +486,13 @@ Seuraavat käyttäjätarinat ovat ehdotuksia valinnaisiksi ominaisuuksiksi. Lopu
 | US-10: REST-rajapinnan käyttäminen | P1 |
 | US-11: Tietojen pysyvä tallentaminen | P1 |
 | US-12: Käyttöliittymän käytettävyys | P1 |
-| US-13: Monikielinen käyttöliittymä | P2 |
+| US-13: Monikielinen käyttöliittymä | P2 – valittu lisäominaisuus |
 | US-14: Tukipyyntöjen yhteenvetonäkymä | P3 |
-| US-15: Tietopohjainen tekoälyneuvonta (RAG) | P2 |
+| US-15: Tietopohjainen tekoälyneuvonta (RAG) | P2 – valittu lisäominaisuus |
+| US-16: Sovelluksen käynnistäminen Docker Composella | P2 – valittu lisäominaisuus |
 
 ## 5. Yhteenveto
 
 Tässä dokumentissa on määritelty AI HelpDesk -sovelluksen käyttäjätarinat, hyväksymiskriteerit ja erillinen prioriteettitaulukko.
 
 Käyttäjätarinat ja hyväksymiskriteerit on yhdistetty Product Backlogiin ja alustavaan Sprint-suunnitelmaan. Toteutuksen ja testauksen edetessä hyväksymiskriteerien täyttyminen todennetaan jäljitettävyystaulukon mukaisesti.
-./

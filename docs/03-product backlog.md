@@ -2,11 +2,11 @@
 
 ## 1. Product Backlogin tarkoitus
 
-Tämä dokumentti määrittelee AI HelpDesk -sovelluksen priorisoidun Product Backlogin. Se sisältää käyttäjätarinoiden tunnisteet, prioriteetit, työmääräarviot, tekniset riippuvuudet ja alustavan sprinttijaon.
+Tämä dokumentti määrittelee AI HelpDesk -sovelluksen priorisoidun Product Backlogin. Se sisältää käyttäjätarinoiden tunnisteet, prioriteetit, työmääräarviot, tekniset riippuvuudet ja alustavan sprinttijaon. Lopulliseen julkaisuun valitut lisäominaisuudet ovat US-13 (suomen- ja englanninkielinen käyttöliittymä), US-15 (RAG) ja US-16 (Docker Compose -käynnistys yhdellä komennolla).
 
-Käyttäjätarinoiden täydelliset kuvaukset ja hyväksymiskriteerit on määritelty erillisessä dokumentissa `02-käyttäjätarinat ja hyväksymiskriteerit.md`. Tässä dokumentissa käyttäjätarinoihin viitataan niiden tunnisteilla US-01–US-15.
+Käyttäjätarinoiden täydelliset kuvaukset ja hyväksymiskriteerit on määritelty erillisessä dokumentissa `02-käyttäjätarinat ja hyväksymiskriteerit.md`. Tässä dokumentissa käyttäjätarinoihin viitataan niiden tunnisteilla US-01–US-16.
 
-Product Backlogin tavoitteena on varmistaa, että tärkeimmät toiminnallisuudet toteutetaan ensin ja että sovelluksen MVP-versio voidaan ottaa käyttöön ennen valinnaisten lisäominaisuuksien toteuttamista.
+Product Backlogin tavoitteena on varmistaa, että MVP:n keskeiset toiminnallisuudet toteutetaan ennen monikielistä käyttöliittymää ja RAG-toiminnallisuutta. Docker Compose -ympäristö rakennetaan Sprint 1:ssä kehitys- ja esittely-ympäristöä varten.
 
 ---
 
@@ -44,7 +44,8 @@ Työmääräarviot perustuvat suhteelliseen Story Point -arviointiin. Arvioinnis
 | 13 | US-13 | Monikielinen käyttöliittymä | P2 | 3 | Sprint 4 |
 | 14 | US-14 | Tukipyyntöjen yhteenvetonäkymä | P3 | 3 | Sprint 4 |
 | 15 | US-15 | Tietopohjainen tekoälyneuvonta (RAG) | P2 | 13 | Sprint 5 |
-| **Yhteensä** |  |  |  | **81 SP** |  |
+| 16 | US-16 | Sovelluksen käynnistäminen Docker Composella | P2 | Arvioitava | Sprint 1 |
+| **Yhteensä** |  |  |  | **81 SP + US-16:n arvio** |  |
 
 ---
 
@@ -67,6 +68,7 @@ Työmääräarviot perustuvat suhteelliseen Story Point -arviointiin. Arvioinnis
 | US-13 | Käyttöliittymän tekstien erottaminen kielikohtaisiin resursseihin |
 | US-14 | Tukipyyntöjen tallennus ja hakutoiminnot |
 | US-15 | US-06, dokumentaation käsittely, hakuratkaisu ja tekoälyintegraatio |
+| US-16 | Frontendin, backendin ja MySQL-tietokannan käynnistys- ja konfiguraatiotarpeet |
 
 Riippuvuudet eivät tarkoita, että kaikki edeltävät käyttäjätarinat on aina saatettava kokonaan valmiiksi ennen seuraavan aloittamista. Teknisiä perustöitä voidaan toteuttaa rinnakkain.
 
@@ -90,7 +92,7 @@ MVP-version tavoitteena on toteuttaa AI HelpDesk -sovelluksen keskeinen käyttö
 - US-11: Tietojen pysyvä tallentaminen
 - US-12: Käyttöliittymän käytettävyys
 
-US-09, US-13, US-14 ja US-15 voidaan toteuttaa MVP:n jälkeen, elleivät projektin vaatimukset edellytä niitä aikaisemmin.
+US-13 ja US-15 ovat MVP:n ulkopuolella mutta valittu toteutettaviksi lopulliseen julkaisuun. US-16:n Docker Compose -käynnistys toteutetaan Sprint 1:ssä kehitys- ja esittely-ympäristön perustaksi. US-09 ja US-14 voidaan priorisoida jäljellä olevan ajan ja projektin tarpeiden mukaan.
 
 ---
 
@@ -122,7 +124,6 @@ Käyttäjätarina on valmis valittavaksi Sprintiin, kun:
 
 ## 8. Yhteenveto
 
-AI HelpDesk -sovelluksen Product Backlog sisältää 15 käyttäjätarinaa ja alustavan kokonaisarvion **81 Story Pointia**.
+AI HelpDesk -sovelluksen Product Backlog sisältää 16 käyttäjätarinaa. Arvioiduista tarinoista kertyy 81 Story Pointia; US-16:n arvio lisätään, kun toteutuksen laajuus on tarkennettu.
 
 Backlogin ensimmäinen tavoite on rakentaa toimiva tekninen perusta, toteuttaa käyttäjien tunnistaminen ja tukipyyntöjen hallinta sekä mahdollistaa tekoälypohjainen keskustelu.
-./
