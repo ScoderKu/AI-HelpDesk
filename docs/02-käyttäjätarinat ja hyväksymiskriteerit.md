@@ -259,10 +259,10 @@ Sovelluksen kehittäjä vastaa sovelluksen teknisestä toteutuksesta, tietokanna
 - Kun ongelma tarvitsee jatkokäsittelyä ja käyttäjä on kirjautunut sisään.
 - Niin järjestelmä tarjoaa käyttäjälle mahdollisuuden luoda tukipyynnön.
 
-**AC-09.2 – Tukipyynnön luominen**
+**AC-09.2 – Tarkistaminen ja vahvistettu luominen**
 
-- Oletetaan, että käyttäjä hyväksyy tukipyynnön luomisen.
-- Kun tarvittavat tiedot on vahvistettu.
+- Oletetaan, että käyttäjä valitsee tukipyynnön luomisen keskustelusta.
+- Kun järjestelmä avaa keskustelun perusteella ehdotetun otsikon ja kuvauksen ja käyttäjä voi tarkistaa tai muokata niitä sekä vahvistaa luomisen.
 - Niin järjestelmä luo tukipyynnön ja tallentaa sen tietokantaan.
 - Tukipyyntö linkitetään keskusteluun vain, jos keskustelu kuuluu samalle kirjautuneelle käyttäjälle.
 
@@ -271,6 +271,12 @@ Sovelluksen kehittäjä vastaa sovelluksen teknisestä toteutuksesta, tietokanna
 - Oletetaan, että järjestelmä ehdottaa tukipyynnön luomista.
 - Kun käyttäjä hylkää ehdotuksen.
 - Niin järjestelmä ei luo tukipyyntöä automaattisesti.
+
+**AC-09.4 – Luomisen peruuttaminen**
+
+- Oletetaan, että käyttäjä tarkistaa tai muokkaa tukipyynnön ehdotettuja tietoja.
+- Kun käyttäjä peruuttaa luomisen tai poistuu vahvistamatta sitä.
+- Niin järjestelmä ei tallenna tukipyyntöä.
 
 ### US-10: REST-rajapinnan käyttäminen
 
@@ -316,7 +322,7 @@ Sovelluksen kehittäjä vastaa sovelluksen teknisestä toteutuksesta, tietokanna
 
 - Oletetaan, että käyttäjä luo tukipyynnön tai lähettää tallennettavan keskusteluviestin.
 - Kun backend käsittelee tallennuspyynnön onnistuneesti.
-- Niin tiedot tallennetaan MySQL- tai MariaDB-tietokantaan.
+- Niin tiedot tallennetaan MySQL-tietokantaan.
 
 **AC-11.2 – Tallennettujen tietojen hakeminen**
 
@@ -358,7 +364,7 @@ Sovelluksen kehittäjä vastaa sovelluksen teknisestä toteutuksesta, tietokanna
 
 ## 3. Valitut lisäominaisuudet
 
-Seuraavat kolme lisäominaisuutta on valittu toteutettaviksi lopulliseen julkaisuun. Monikielinen käyttöliittymä ja RAG toteutetaan MVP:n jälkeen. Docker Compose -ympäristö perustetaan Sprint 1:ssä kehitys- ja esittely-ympäristöä varten.
+US-09 ja US-14 kuuluvat viralliseen toimituslaajuuteen ja toteutetaan Sprint 4:ssä hyväksymiskriteeriensä mukaisesti. Lisäksi lopulliseen julkaisuun on valittu kolme lisäominaisuutta: US-13 (suomen- ja englanninkielinen käyttöliittymä), US-15 (RAG) ja US-16 (Docker Compose frontendille, backendille, MySQL:lle ja Ollamalle valittu malli mukaan lukien). US-13 ja US-15 toteutetaan perus-MVP:n jälkeen sovituissa Sprint-jaksoissa; niitä tai US-09:ää ja US-14:ää ei käsitellä valinnaisina. Docker Compose -ympäristö perustetaan Sprint 1:ssä.
 
 ### US-13: Monikielinen käyttöliittymä
 
@@ -414,7 +420,13 @@ Kielivalinta koskee käyttöliittymää. Tekoälyn vastauskieli määräytyy kes
 - Kun yhteenvetonäkymän tiedot päivitetään.
 - Niin kokonaismäärä ja tilakohtaiset määrät vastaavat käyttäjän tallennettuja tukipyyntöjä.
 
-Yhteenveto rajataan lukumääriin. Se ei sisällä kaavioita, suodatuksia, aikavertailuja eikä muiden käyttäjien tukipyyntöjä. MVP:n tilat ovat OPEN ja CLOSED.
+**AC-14.4 – Määrien johdonmukaisuus ja omistajuus**
+
+- Oletetaan, että kirjautuneella käyttäjällä ja muilla käyttäjillä on tukipyyntöjä.
+- Kun käyttäjä avaa yhteenvetonäkymän.
+- Niin yhteenveto sisältää vain kirjautuneen käyttäjän pyynnöt ja kokonaismäärä on `OPEN`- ja `CLOSED`-määrien summa.
+
+US-14 kuuluu viralliseen toimituslaajuuteen. Yhteenveto rajataan lukumääriin. Se ei sisällä kaavioita, suodatuksia, aikavertailuja eikä muiden käyttäjien tukipyyntöjä. MVP:n tilat ovat `OPEN` ja `CLOSED`.
 
 ### US-15: Tietopohjainen tekoälyneuvonta (RAG)
 
@@ -426,13 +438,13 @@ Yhteenveto rajataan lukumääriin. Se ei sisällä kaavioita, suodatuksia, aikav
 
 **AC-15.1 – Dokumentaation hakeminen**
 
-- Oletetaan, että järjestelmään on lisätty teknistä dokumentaatiota.
-- Kun käyttäjä esittää dokumentaatioon liittyvän kysymyksen.
-- Niin järjestelmä hakee kysymykseen liittyvää sisältöä ja välittää sen tekoälylle.
+- Oletetaan, että rajattuun lähdekokoelmaan on lisätty Markdown- tai TXT-dokumentti, jossa tunnettu avainsana esiintyy.
+- Kun käyttäjä esittää kyseiseen dokumenttikohtaan liittyvän kysymyksen.
+- Niin järjestelmä hakee avainsanahaulla vastaavan sisältökatkelman ja välittää sen Ollama-mallille sekä säilyttää katkelman lähdetiedon näytettäväksi.
 
-**AC-15.2 – Dokumentaation puuttuminen**
+**AC-15.2 – Sopivaa dokumentaatiota ei löydy**
 
-- Oletetaan, ettei sopivaa dokumentaatiota löydy.
+- Oletetaan, ettei avainsanahaulla löydy kysymykseen sopivaa kohtaa rajatusta dokumenttikokoelmasta.
 - Kun tekoäly muodostaa vastauksen.
 - Niin järjestelmä ei väitä vastausta löydetyn dokumentaation vahvistamaksi.
 
@@ -441,6 +453,14 @@ Yhteenveto rajataan lukumääriin. Se ei sisällä kaavioita, suodatuksia, aikav
 - Oletetaan, että kyselyyn liittyvää dokumentaatiota löytyy.
 - Kun järjestelmä näyttää tekoälyn muodostaman vastauksen.
 - Niin käyttöliittymä näyttää myös saatavilla olevat lähdetiedot.
+
+**AC-15.4 – Tuetut formaatit ja hakutapa**
+
+- Oletetaan, että järjestelmään on lisätty tuettu Markdown- tai TXT-tiedosto.
+- Kun dokumentaatiota käsitellään hakua varten.
+- Niin järjestelmä pystyy hakemaan sen tekstisisällöstä avainsanoilla. MVP ei käytä semanttista hakua.
+
+RAG MVP:n lähdedokumenttien tarkka kokoelma rajataan ennen toteutusta. Semanttista hakua voidaan ehdottaa myöhemmin vain, jos ennalta määritellyillä kysymyksillä kerätty testinäyttö osoittaa avainsanahaun riittämättömäksi.
 
 ### US-16: Sovelluksen käynnistäminen Docker Composella
 
@@ -454,23 +474,27 @@ Yhteenveto rajataan lukumääriin. Se ei sisällä kaavioita, suodatuksia, aikav
 
 - Oletetaan, että Docker ja Docker Compose ovat käytettävissä ja vaaditut ympäristömuuttujat on asetettu.
 - Kun käyttäjä suorittaa README:ssä dokumentoidun käynnistyskomennon.
-- Niin sovelluksen frontend, backend ja MySQL-tietokanta käynnistyvät ilman erillisiä manuaalisia käynnistysvaiheita.
+- Niin frontend, backend, MySQL ja Ollama käynnistyvät ilman erillisiä manuaalisia palveluiden käynnistysvaiheita, ja valittu tekoälymalli tuodaan automaattisesti Ollaman mallivarastoon, jos sitä ei vielä ole.
 
 **AC-16.2 – Palveluiden valmius**
 
 - Oletetaan, että Docker Compose -käynnistys on suoritettu.
 - Kun palvelut ovat valmiita vastaanottamaan pyyntöjä.
-- Niin frontend pystyy käyttämään backendia ja backend pystyy käyttämään tietokantaa.
+- Niin frontend pystyy käyttämään backendia, backend MySQL-tietokantaa ja backend Ollama-palvelua Compose-verkon kautta; Ollama pystyy lataamaan valitun mallin.
 
 **AC-16.3 – Konfiguraatio ja salaisuudet**
 
 - Oletetaan, että sovelluksen käynnistämiseen tarvitaan konfiguraatioarvoja tai salaisuuksia.
 - Kun kehittäjä valmistelee paikallisen ympäristön.
-- Niin README ja esimerkkikonfiguraatio kertovat vaaditut arvot, eikä repository sisällä oikeita salaisuuksia.
+- Niin README ja esimerkkikonfiguraatio kertovat vaaditut arvot, mallin lähdetiedoston sijainnin ja käynnistyksen edellytykset, eikä repository sisällä oikeita salaisuuksia.
 
-Docker Compose käynnistää sovelluksen kontitetut osat. Tekoälypalvelun käynnistys tai ulkoinen saatavuus määritellään erikseen valitun AI-palvelun konfiguraatiossa.
+**AC-16.4 – Mallin pysyvyys ja uudelleenkäynnistys**
 
-US-16:n laajuuteen kuuluvat frontendin ja backendin Dockerfile-tiedostot, frontendin, backendin ja MySQL:n Compose-palvelut, tarvittavat ympäristömuuttujat sisältävä esimerkkitiedosto ilman oikeita salaisuuksia, MySQL:n pysyvä tallennus, palveluiden valmiustarkistukset sekä käynnistyskomennon dokumentointi ja toiminnan testaus. Yhden komennon esimerkki on `docker compose up --build`. Tekoälypalvelun kontitus, tuotantoympäristön käyttöönotto ja orkestrointi eivät kuulu tarinan laajuuteen.
+- Oletetaan, että Docker Compose on käynnistänyt palvelut ja Ollama on ladannut valitun mallin.
+- Kun Compose-palvelut käynnistetään uudelleen ilman pysyvän tallennuksen poistamista.
+- Niin mallin uudelleen käyttöönotto ei edellytä käyttäjältä erillistä manuaalista mallin latausvaihetta.
+
+US-16:n laajuuteen kuuluvat frontendin, backendin ja Ollaman Docker-konfiguraatiot, Compose-palvelut frontendille, backendille, MySQL:lle ja Ollamalle, valitun GGUF-mallin automaattinen ensimmäinen käyttöönotto `Modelfile`-tiedoston avulla, tarvittavat ympäristömuuttujat sisältävä esimerkkitiedosto ilman oikeita salaisuuksia, MySQL:n ja mallivaraston pysyvä tallennus, palveluiden valmiustarkistukset sekä käynnistyskomennon dokumentointi ja toiminnan testaus. Yhden komennon esimerkki on `docker compose up --build`. Tuotantoympäristön käyttöönotto ja orkestrointi eivät kuulu tarinan laajuuteen.
 
 ## 4. Prioriteettitaulukko
 
@@ -478,7 +502,7 @@ US-16:n laajuuteen kuuluvat frontendin ja backendin Dockerfile-tiedostot, fronte
 |---|---|---|
 | P1 – Korkea | Projektin pakollisten vaatimusten täyttämisen kannalta välttämätön toiminnallisuus | Toteutetaan ensin |
 | P2 – Keskitaso | Tärkeä toiminnallisuus, joka täydentää sovelluksen käyttöä | Toteutetaan P1-toimintojen jälkeen |
-| P3 – Matala | Hyödyllinen lisäominaisuus, joka ei ole MVP-version edellytys | Toteutetaan, jos aikaa jää |
+| P3 – Matala | Arvoltaan muita tarinoita alempi toiminnallisuus | Prioriteetti ohjaa järjestystä; viralliseen toimituslaajuuteen valittua tarinaa ei jätetä pois ilman erikseen hyväksyttyä laajuusmuutosta |
 
 **Käyttäjätarinoiden alustavat prioriteetit**
 
@@ -497,7 +521,7 @@ US-16:n laajuuteen kuuluvat frontendin ja backendin Dockerfile-tiedostot, fronte
 | US-11: Tietojen pysyvä tallentaminen | P1 |
 | US-12: Käyttöliittymän käytettävyys | P1 |
 | US-13: Monikielinen käyttöliittymä | P2 – valittu lisäominaisuus |
-| US-14: Tukipyyntöjen yhteenvetonäkymä | P3 |
+| US-14: Tukipyyntöjen yhteenvetonäkymä | P3 – viralliseen toimituslaajuuteen kuuluva, rajattu toiminnallisuus |
 | US-15: Tietopohjainen tekoälyneuvonta (RAG) | P2 – valittu lisäominaisuus |
 | US-16: Sovelluksen käynnistäminen Docker Composella | P2 – valittu lisäominaisuus |
 
@@ -505,4 +529,4 @@ US-16:n laajuuteen kuuluvat frontendin ja backendin Dockerfile-tiedostot, fronte
 
 Tässä dokumentissa on määritelty AI HelpDesk -sovelluksen käyttäjätarinat, hyväksymiskriteerit ja erillinen prioriteettitaulukko.
 
-Käyttäjätarinat ja hyväksymiskriteerit on yhdistetty Product Backlogiin ja alustavaan Sprint-suunnitelmaan. Toteutuksen ja testauksen edetessä hyväksymiskriteerien täyttyminen todennetaan jäljitettävyystaulukon mukaisesti.
+Käyttäjätarinat ja hyväksymiskriteerit on yhdistetty Product Backlogiin ja sovittuun Sprint-suunnitelmaan. Toteutuksen ja testauksen edetessä hyväksymiskriteerien täyttyminen todennetaan jäljitettävyystaulukon mukaisesti.

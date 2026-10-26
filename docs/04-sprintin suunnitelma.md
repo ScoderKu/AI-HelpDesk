@@ -19,7 +19,7 @@ Käyttäjätarinoiden yksityiskohtaiset kuvaukset ja hyväksymiskriteerit löyty
 | Sprint 5 | Tietopohjainen tekoälyneuvonta | US-15 | 13 |
 | **Yhteensä** |  | **16 käyttäjätarinaa** | **86 SP** |
 
-Story Point -määrät ovat alustavia arvioita. Viiden viikon projektin ja viiden Sprintin suunnitelma ei vielä vahvista Sprinttien kestoa eikä kehitystiimin kapasiteettia. Ennen Sprint Planningia on vahvistettava tiimin käytettävissä oleva työmäärä ja se, voidaanko suunniteltu laajuus toteuttaa projektin aikataulussa. Jos kapasiteetti ei riitä, Sprinttien sisältöä ja MVP:n jälkeisten ominaisuuksien aikataulua mukautetaan; 86 SP:n kokonaismäärää ei pidetä sitovana toimituslupauksena.
+Story Point -määrät ovat sovitut suunnitteluarviot. Sprint 1 säilytetään 33 SP:n kokonaisuutena ja nykyinen Sprint-jako pidetään ennallaan. US-09, US-14, RAG ja muut lopulliseen toimituslaajuuteen valitut ominaisuudet eivät ole ehdollisia ajan riittävyydelle. Jos kapasiteettiriski toteutuu, se nostetaan päätettäväksi ja muutokset hyväksytään muutostenhallinnan kautta; sitoumuksia ei poisteta hiljaisesti.
 
 ---
 
@@ -27,7 +27,7 @@ Story Point -määrät ovat alustavia arvioita. Viiden viikon projektin ja viide
 
 ## 3.1 Sprintin tavoite
 
-Rakentaa sovelluksen tekninen perusta, tietokantayhteys, REST-rajapinnan rakenne, käyttäjän tunnistaminen ja Docker Compose -käynnistys.
+Rakentaa sovelluksen tekninen perusta, tietokantayhteys, REST-rajapinnan rakenne, käyttäjän tunnistaminen ja Docker Compose -käynnistys frontendille, backendille, MySQL:lle ja Ollamalle.
 
 Sprintin lopussa sovelluksessa on perusrakenne, johon tukipyyntöjen hallinta ja tekoälytoiminnot voidaan myöhemmin yhdistää.
 
@@ -52,9 +52,9 @@ Sprintin lopussa sovelluksessa on perusrakenne, johon tukipyyntöjen hallinta ja
 5. Toteutetaan käyttäjän rekisteröityminen ja salasanan turvallinen tallennus.
 6. Toteutetaan kirjautuminen ja suojattujen toimintojen käyttöoikeuksien tarkistaminen.
 7. Luodaan käyttöliittymän perusrakenne, navigaatio ja lomakkeiden peruskomponentit.
-8. Luodaan frontendin ja backendin Dockerfile-tiedostot sekä Compose-palvelut niille ja MySQL-tietokannalle.
-9. Lisätään ympäristömuuttujien esimerkkitiedosto, MySQL:n pysyvä tallennus ja palveluiden valmiustarkistukset.
-10. Dokumentoidaan `docker compose up --build` ja testataan palveluiden käynnistyminen sekä yhteydet.
+8. Luodaan frontendin, backendin ja Ollaman Docker-konfiguraatiot sekä Compose-palvelut niille ja MySQL-tietokannalle.
+9. Otetaan valittu GGUF-malli automaattisesti käyttöön Ollama-kontissa `Modelfile`-tiedoston avulla ja lisätään mallin sekä MySQL:n pysyvä tallennus ja palveluiden valmiustarkistukset.
+10. Lisätään ympäristömuuttujien esimerkkitiedosto ja dokumentoidaan `docker compose up --build`; testataan puhdas käynnistys, mallin saatavuus sekä backendin yhteydet MySQL:ään ja Ollamaan.
 11. Testataan keskeiset rekisteröitymis-, kirjautumis-, tietokanta- ja käynnistystoiminnot.
 
 ## 3.4 Odotetut tulokset
@@ -64,7 +64,7 @@ Sprintin lopussa sovelluksessa on perusrakenne, johon tukipyyntöjen hallinta ja
 3. Käyttäjä voi rekisteröityä ja kirjautua sisään.
 4. REST-rajapinnan perusrakenne on käytettävissä.
 5. Käyttöliittymän keskeiset näkymät ja navigaatio ovat olemassa.
-6. Frontend, backend ja MySQL-tietokanta voidaan käynnistää README:ssä dokumentoidulla Docker Compose -komennolla.
+6. Frontend, backend, MySQL ja Ollama sekä valittu tekoälymalli ovat käytettävissä README:ssä dokumentoidun Docker Compose -käynnistyksen jälkeen.
 
 ## 3.5 Sprintin hyväksyminen
 
@@ -131,8 +131,8 @@ Toteuttaa AI HelpDesk -sovelluksen keskeinen tekoälyominaisuus. Käyttäjän on
 
 ## 5.3 Keskeiset kehitystehtävät
 
-1. Valitaan ja konfiguroidaan käytettävä tekoälypalvelu.
-2. Toteutetaan backendin ja tekoälypalvelun välinen integraatio.
+1. Konfiguroidaan Docker Compose -ympäristössä toimiva Ollama ja valittu GGUF-malli.
+2. Toteutetaan backendin ja Ollama-palvelun välinen integraatio Compose-verkon kautta.
 3. Toteutetaan keskustelunäkymä ja viestin lähettäminen.
 4. Näytetään tekoälyn vastaukset käyttöliittymässä.
 5. Välitetään tarvittava keskustelukonteksti jatkokysymyksissä.
@@ -144,7 +144,7 @@ Toteuttaa AI HelpDesk -sovelluksen keskeinen tekoälyominaisuus. Käyttäjän on
 
 ## 5.4 Odotetut tulokset
 
-1. Käyttäjä voi lähettää teknistä ongelmaa koskevan viestin tekoälylle.
+1. Käyttäjä voi lähettää teknistä ongelmaa koskevan viestin Dockerissa toimivalle Ollama-palvelulle.
 2. Tekoälyn vastaus näytetään keskustelunäkymässä.
 3. Keskustelua voidaan jatkaa aiemman kontekstin perusteella.
 4. Tekoäly voi pyytää ongelman selvittämiseksi tarvittavia lisätietoja.
@@ -184,10 +184,10 @@ Laajentaa sovelluksen toiminnallisuuksia ja parantaa käyttökokemusta. Käyttä
 
 ## 6.4 Odotetut tulokset
 
-1. Käyttäjä voi siirtyä ratkaisemattomasta keskustelusta tukipyynnön luomiseen.
-2. Tukipyyntöä ei luoda ilman käyttäjän hyväksyntää.
+1. Käyttäjä voi siirtyä ratkaisemattomasta keskustelusta tukipyynnön luomiseen, tarkistaa ja muokata ehdotettua otsikkoa ja kuvausta sekä vahvistaa luomisen.
+2. Tukipyyntöä ei luoda ilman käyttäjän nimenomaista vahvistusta; hylkäys tai peruutus ei luo pyyntöä.
 3. Käyttäjä voi vaihtaa käyttöliittymän suomen ja englannin välillä.
-4. Käyttäjä voi tarkastella omien tukipyyntöjensä yhteenvetoa.
+4. Käyttäjä voi tarkastella omien tukipyyntöjensä kokonaismäärää ja `OPEN`/`CLOSED`-määriä; tyhjässä yhteenvedossa kaikki määrät ovat nollia.
 
 ## 6.5 Sprintin hyväksyminen
 
@@ -210,29 +210,28 @@ Laajentaa tekoälyneuvontaa siten, että vastauksissa voidaan hyödyntää tekni
 
 ## 7.3 Keskeiset kehitystehtävät
 
-1. Selvitetään käytettävän teknisen dokumentaation formaatit ja lähteet.
-2. Toteutetaan dokumentaation lataamisen ja käsittelyn perustoiminnot.
-3. Jaetaan dokumentaatio haettaviin tekstiosiin.
-4. Valitaan ja toteutetaan tarkoitukseen sopiva hakuratkaisu.
-5. Toteutetaan kyselyyn liittyvän dokumentaation hakeminen.
-6. Välitetään löydetty sisältö tekoälymallille vastauksen muodostamista varten.
-7. Näytetään lähdetiedot käyttöliittymässä silloin, kun niitä on saatavilla.
-8. Käsitellään tilanne, jossa sopivaa dokumentaatiota ei löydy.
-9. Testataan hakutulosten relevanssia, vastausten laatua ja virhetilanteita.
+1. Rajataan ennen toteutusta hyväksytty tekninen dokumenttikokoelma Markdown- ja TXT-tiedostoihin.
+2. Toteutetaan tiedostojen lukeminen ja käsittely avainsanahakua varten.
+3. Haetaan kyselyn avainsanoihin sopivat dokumenttikohdat ja niiden lähdetiedot.
+4. Määritellään testikysymykset ja arvioidaan avainsanahaun osuvuutta sekä tyhjän tuloksen käsittelyä.
+5. Välitetään löydetty sisältö ja todelliset lähdetiedot Ollama-mallille vastauksen muodostamista varten.
+6. Näytetään lähdetiedot käyttöliittymässä silloin, kun niitä on saatavilla.
+7. Käsitellään tilanne, jossa sopivaa dokumentaatiota ei löydy.
+8. Testataan hakutulosten relevanssia, vastausten laatua ja virhetilanteita.
 
 ## 7.4 Odotetut tulokset
 
 1. Järjestelmään voidaan lisätä teknistä dokumentaatiota.
 2. Käyttäjän kysymykseen liittyvää sisältöä voidaan hakea dokumentaatiosta.
 3. Tekoäly voi muodostaa vastauksen löydetyn sisällön perusteella.
-4. Lähteet voidaan näyttää käyttäjälle, kun tarvittavat lähdetiedot ovat saatavilla.
+4. Löydettyjen sisältöjen todelliset lähdetiedot näytetään käyttäjälle.
 5. Järjestelmä ei esitä dokumentaation puuttuessa vastausta dokumentaation vahvistamana.
 
 ## 7.5 Sprintin hyväksyminen
 
 Sprintti voidaan hyväksyä, kun dokumentaation haku ja tekoälyintegraatio toimivat määriteltyjen hyväksymiskriteerien mukaisesti.
 
-RAG-toiminnallisuuden laajuus tarkennetaan ennen Sprintin alkua, koska 13 Story Pointin arvio sisältää merkittävää teknistä epävarmuutta.
+RAG MVP:n hakutapa on avainsanahaku Markdown- ja TXT-tiedostoista. Semanttista hakua ei toteuteta oletuksena; sen lisääminen edellyttää dokumentoitua näyttöä siitä, ettei avainsanahaku täytä määriteltyjä testikriteerejä.
 
 Jos toteutus osoittautuu liian laajaksi yhden Sprintin aikana, käyttäjätarina jaetaan pienempiin osiin, esimerkiksi dokumentaation indeksointiin, haun toteutukseen ja tekoälyintegraatioon.
 

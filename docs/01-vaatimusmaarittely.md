@@ -27,7 +27,8 @@ Projektin tavoitteena on suunnitella ja toteuttaa toimiva AI HelpDesk -sovellus,
 - Sovellus tallentaa käyttäjätiedot, tukipyynnöt ja keskusteluviestit tietokantaan.
 - Sovellus tarjoaa REST-rajapinnan tietojen käsittelyä varten.
 - Projekti toteutetaan versionhallintaa ja Scrum-menetelmää hyödyntäen.
-- Lopulliseen julkaisuun toteutetaan kolme valittua lisäominaisuutta: tietopohjainen tekoälyneuvonta (RAG), suomen- ja englanninkielinen käyttöliittymä sekä sovelluksen käynnistäminen Docker Composella yhdellä komennolla.
+- Viralliseen toimituslaajuuteen kuuluvat tukipyynnön luominen AI-keskustelusta käyttäjän vahvistuksen jälkeen (US-09) ja kirjautuneen käyttäjän rajattu tukipyyntöyhteenveto (US-14).
+- Lopulliseen julkaisuun toteutetaan kolme valittua lisäominaisuutta: tietopohjainen tekoälyneuvonta (RAG), suomen- ja englanninkielinen käyttöliittymä sekä sovelluksen ja Ollaman käynnistäminen Docker Composella yhdellä komennolla.
 
 ## 4. Kohderyhmät
 
@@ -48,11 +49,13 @@ Projektin laajuus rajataan siten, että sovellus voidaan toteuttaa ja testata vi
 - Tukipyyntöjen tilan ja prioriteetin hallinta.
 - Tekoälypohjainen chat ja ongelmanratkaisu.
 - Keskusteluviestien tallentaminen tietokantaan.
-- Tietopohjainen tekoälyneuvonta (RAG).
+- Tukipyynnön luominen keskustelusta käyttäjän tarkistuksen ja vahvistuksen jälkeen.
+- Tukipyyntöjen rajattu yhteenveto: käyttäjän kokonaismäärä ja `OPEN`/`CLOSED`-määrät.
+- Tietopohjainen tekoälyneuvonta (RAG) Markdown- ja TXT-dokumenteista avainsanahaulla.
 - Suomen- ja englanninkielinen käyttöliittymä.
-- Sovelluksen käynnistäminen Docker Composella yhdellä komennolla.
+- Frontendin, backendin, MySQL:n ja Ollaman käynnistäminen Docker Composella yhdellä komennolla.
 - REST-rajapinta sovelluksen tietojen käsittelyyn.
-- MySQL- tai MariaDB-tietokanta.
+- MySQL-tietokanta.
 - GitHub-versionhallinta, haarat ja Pull Request -käytännöt.
 - Tekninen dokumentaatio ja sovelluksen esittely.
 
@@ -79,13 +82,14 @@ Sovelluksen on täytettävä seuraavat toiminnalliset vaatimukset.
 | FR-06 | Sovellus tarjoaa käyttöliittymän tekoälypohjaista keskustelua varten. |
 | FR-07 | Tekoäly voi esittää tarkentavia kysymyksiä ja ehdottaa ongelmanratkaisuvaiheita. |
 | FR-08 | Keskusteluviestit tallennetaan tietokantaan. |
-| FR-09 | Sovellus voi tarjota mahdollisuuden luoda tukipyyntö, jos ongelma jää ratkaisematta. |
+| FR-09 | Käyttäjä voi luoda tukipyynnön AI-keskustelusta vasta tarkistettuaan ja vahvistettuaan ehdotetut tiedot; ilman vahvistusta tukipyyntöä ei luoda. |
 | FR-10 | Sovellus tarjoaa REST-rajapinnan tukipyyntöjen ja muiden tietojen käsittelyyn. |
-| FR-11 | Käyttäjät, tukipyynnöt ja viestit tallennetaan MySQL- tai MariaDB-tietokantaan. |
+| FR-11 | Käyttäjät, tukipyynnöt ja viestit tallennetaan MySQL-tietokantaan. |
 | FR-12 | Projektin lähdekoodi ja kehityshistoria hallitaan GitHubissa. |
-| FR-13 | AI HelpDesk hakee käyttäjän kysymykseen liittyvää teknistä dokumentaatiota ja välittää löydetyn sisällön tekoälylle vastauksen muodostamista varten. |
+| FR-13 | AI HelpDesk hakee kysymykseen liittyviä kohtia rajatusta Markdown- ja TXT-dokumenttikokoelmasta avainsanahaulla, välittää löydetyn sisällön Ollama-mallille ja näyttää käytetyn lähteen tiedot. Jos sopivaa sisältöä ei löydy, järjestelmä ei esitä vastausta dokumentaation vahvistamana. Semanttinen haku lisätään vain, jos testinäyttö osoittaa avainsanahaun riittämättömäksi. |
 | FR-14 | Käyttöliittymä on käytettävissä suomeksi ja englanniksi, ja käyttäjän kielivalinta säilyy. |
-| FR-15 | Frontend, backend ja MySQL-tietokanta voidaan käynnistää Docker Composella yhdellä README:ssä dokumentoidulla komennolla. |
+| FR-15 | Frontend, backend, MySQL-tietokanta, Ollama-palvelu ja valittu tekoälymalli voidaan ottaa käyttöön Docker Composella yhdellä README:ssä dokumentoidulla komennolla. Backend käyttää Ollamaa Compose-verkon kautta. |
+| FR-16 | Kirjautunut käyttäjä voi tarkastella omien tukipyyntöjensä kokonaismäärää sekä `OPEN`- ja `CLOSED`-tiloissa olevien pyyntöjen määriä; muilta käyttäjiltä ei palauteta tietoja. |
 
 ## 7. Ei-toiminnalliset vaatimukset
 
@@ -95,49 +99,57 @@ Sovelluksen on täytettävä seuraavat toiminnalliset vaatimukset.
 - Ylläpidettävyys: lähdekoodin on oltava rakenteeltaan selkeä ja jaettu tarkoituksenmukaisiin osiin.
 - Luotettavuus: sovelluksen on käsiteltävä virhetilanteet hallitusti ja annettava käyttäjälle ymmärrettävä palaute.
 - Tietosuoja: käyttäjien henkilötietoja ja keskustelutietoja käsitellään vain sovelluksen toiminnan kannalta tarpeellisessa laajuudessa.
+- Teknologioiden käyttöehdot: työkalujen ja kirjastojen tulee olla maksuttomia, ja lisenssit sekä käyttöehdot tarkistetaan ennen käyttöönottoa.
 - Testattavuus: keskeisille toiminnoille on laadittava testit, joiden avulla vaatimusten toteutuminen voidaan todentaa.
 
 ## 8. Teknologiset rajoitteet ja vaatimukset
 
 Projektin teknisten ratkaisujen on täytettävä seuraavat ehdot:
-- Tietokantana käytetään MySQL- tai MariaDB-järjestelmää.
+- Tietokantana käytetään MySQL-järjestelmää.
 - Backend tarjoaa REST-rajapinnan.
-- Tekoälyintegraatio käyttää hyväksyttyä tekoälymallia tai -palvelua.
+- Tekoälyintegraatio käyttää Ollamaa Docker-kontissa ja mallia `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`.
 - Frontendin ja backendin on toimittava yhdessä.
+- Valittujen työkalujen ja kirjastojen tulee olla maksuttomia, ja niiden lisenssit sekä käyttöehdot tarkistetaan ennen käyttöönottoa.
 - Lähdekoodia hallitaan GitHubissa.
 - Kehityksessä käytetään haaroja ja Pull Request -toimintoa.
 - Lopullinen julkaisu sisältää kolme valittua lisäominaisuutta: RAG-neuvonnan, suomen- ja englanninkielisen käyttöliittymän sekä yhden komennon Docker Compose -käynnistyksen.
 
-## 9. Alustavat teknologiset valinnat
+## 9. Valitut teknologiset lähtökohdat
 
-Seuraavat teknologiat ovat projektin alustava ehdotus.
+Seuraavat teknologiat ovat sovitut lähtökohdat ennen toteutusta.
 
 | Osa-alue | Ehdotettu teknologia |
 |---|---|
 | Frontend | React |
 | Backend | Python ja FastAPI |
 | Tietokanta | MySQL |
-| Tekoäly | Ollama |
+| Tekoälypalvelu | Ollama Docker Compose -palveluna |
+| Tekoälymalli | `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf` |
 | API-dokumentaatio | OpenAPI / Swagger UI |
 | Versionhallinta | Git ja GitHub |
-| Kontitus | Docker |
+| Kontitus ja kehitysympäristö | Docker Compose: frontend, backend, MySQL ja Ollama |
 
-Tekoälymalli valitaan sen perusteella, että se pystyy tuottamaan hyödyllisiä teknisiä ohjeita ja että sen käyttö on mahdollista projektin käytettävissä olevilla resursseilla.
+Malli ja muut työkalut testataan käytettävissä olevilla resursseilla. Mallin, työkalujen ja kirjastojen lisenssit sekä käyttöehdot tarkistetaan ennen niiden sisällyttämistä toimitukseen.
 
 ## 10. Oletukset
 
 - Tekoälyn tuottamat vastaukset voivat olla virheellisiä, joten käyttäjälle ei luvata ongelman automaattista ratkeamista.
-- Kolme valittua lisäominaisuutta kuuluvat lopulliseen julkaisuun. Monikielinen käyttöliittymä ja RAG toteutetaan MVP:n jälkeen; Docker Compose -ympäristö perustetaan Sprint 1:ssä.
+- US-09 ja US-14 kuuluvat viralliseen toimituslaajuuteen; niiden toteutus ei ole ehdollinen jäljelle jäävälle ajalle.
+- RAG MVP käyttää ryhmän ennen toteutusta rajaamaa Markdown- ja TXT-dokumenttikokoelmaa sekä avainsanahakua. Semanttinen haku ei kuulu alkuperäiseen MVP-laajuuteen.
+- Ollama ja valittu GGUF-malli ajetaan Docker Compose -ympäristössä. Sprint 1:n sisältö ja suunnitelma säilyvät ennallaan.
+- ER-/tietokantaskeemaa ei muuteta RAG:n vuoksi, ellei toteutuksessa ilmene uutta pysyvää tietotarvetta.
 
 ## 11. Projektin onnistumiskriteerit
 
 Projekti katsotaan onnistuneeksi, kun:
 - Käyttäjä voi rekisteröityä, kirjautua sisään ja muokata profiiliaan.
 - Käyttäjä voi luoda, tarkastella ja sulkea tukipyyntöjä.
+- Käyttäjä voi luoda keskustelusta tukipyynnön vasta tarkistettuaan ja vahvistettuaan tiedot.
+- Käyttäjä näkee vain omien tukipyyntöjensä kokonaismäärän sekä `OPEN`- ja `CLOSED`-määrät.
 - Tukipyynnöt ja keskusteluviestit tallentuvat tietokantaan.
-- Tekoälychat toimii oikean tekoälymallin tai -palvelun avulla.
+- Tekoälychat toimii Ollama-palvelun ja valitun mallin avulla Docker Compose -ympäristössä.
 - REST-rajapinnan keskeiset toiminnot on toteutettu ja testattu.
-- Valitut lisäominaisuudet toimivat: RAG hyödyntää dokumentaatiota, käyttöliittymä tukee suomea ja englantia, ja sovellus käynnistyy Docker Composella dokumentoidulla yhdellä komennolla.
+- Valitut lisäominaisuudet toimivat: RAG hyödyntää rajattuja Markdown- ja TXT-lähteitä avainsanahaulla, käyttöliittymä tukee suomea ja englantia, ja sovellus sekä Ollama käynnistyvät Docker Composella dokumentoidulla yhdellä komennolla.
 - Lähdekoodi, kehityshistoria ja tarvittavat Pull Requestit löytyvät GitHubista.
 - README, tietokantakuvaus, ER-kaavio, kuvakaappaukset ja API-dokumentaatio ovat saatavilla.
 
@@ -155,10 +167,11 @@ Seuraava taulukko yhdistää toiminnalliset vaatimukset käyttäjätarinoihin, h
 | FR-06 | US-06 (AC-06.1–AC-06.4) | TEST-06: kirjautuneen käyttäjän viestin lähetys ja tekoälyvastaus |
 | FR-07 | US-07 (AC-07.1–AC-07.3) | TEST-07: tarkentavan kysymyksen ja ratkaisuehdotuksen tarkistus |
 | FR-08 | US-08 (AC-08.1–AC-08.3) | TEST-08: viestien tallennus ja historian järjestys |
-| FR-09 | US-09 (AC-09.1–AC-09.3) | TEST-09: vahvistettu luonti, hylkäyksen käsittely ja keskustelun omistajuuden tarkistus |
+| FR-09 | US-09 (AC-09.1–AC-09.4) | TEST-09: tietojen tarkistus, vahvistettu luonti, hylkäys/peruutus ja keskustelun omistajuuden tarkistus |
 | FR-10 | US-10 (AC-10.1–AC-10.4) | TEST-10: API:n onnistuneet, virheelliset ja luvattomat pyynnöt |
 | FR-11 | US-11 (AC-11.1–AC-11.3) | TEST-11: pysyvä tallennus, haku ja viite-eheys |
 | FR-12 | Ei käyttäjätarinaa; projektikäytäntö | TEST-12: GitHub-repository, haarat ja Pull Request -historia |
-| FR-13 | US-15 (AC-15.1–AC-15.3) | TEST-13: dokumentaation haku, lähteen näyttäminen ja tyhjän hakutuloksen käsittely |
+| FR-13 | US-15 (AC-15.1–AC-15.4) | TEST-13: Markdown/TXT-avainsanahaku, löydetyn lähteen näyttäminen ja tyhjän hakutuloksen käsittely |
 | FR-14 | US-13 (AC-13.1–AC-13.3) | TEST-14: suomen- ja englanninkielinen käyttöliittymä sekä kielivalinnan säilyminen |
-| FR-15 | US-16 (AC-16.1–AC-16.3) | TEST-15: sovelluksen käynnistys puhtaassa ympäristössä README:n yhdellä Docker Compose -komennolla |
+| FR-15 | US-16 (AC-16.1–AC-16.4) | TEST-15: frontendin, backendin, MySQL:n, Ollaman ja mallin käynnistys README:n yhdellä Docker Compose -komennolla sekä backendin Ollama-yhteys |
+| FR-16 | US-14 (AC-14.1–AC-14.4) | TEST-16: kirjautuneen käyttäjän kokonaismäärä ja OPEN/CLOSED-määrät tyhjässä ja täydessä tilanteessa sekä omistajuuden tarkistus |

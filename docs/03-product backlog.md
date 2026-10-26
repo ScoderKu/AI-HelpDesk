@@ -2,11 +2,11 @@
 
 ## 1. Product Backlogin tarkoitus
 
-Tämä dokumentti määrittelee AI HelpDesk -sovelluksen priorisoidun Product Backlogin. Se sisältää käyttäjätarinoiden tunnisteet, prioriteetit, työmääräarviot, tekniset riippuvuudet ja alustavan sprinttijaon. Lopulliseen julkaisuun valitut lisäominaisuudet ovat US-13 (suomen- ja englanninkielinen käyttöliittymä), US-15 (RAG) ja US-16 (Docker Compose -käynnistys yhdellä komennolla).
+Tämä dokumentti määrittelee AI HelpDesk -sovelluksen priorisoidun Product Backlogin. Se sisältää käyttäjätarinoiden tunnisteet, prioriteetit, työmääräarviot, tekniset riippuvuudet ja sovitun sprinttijaon. US-09 ja US-14 kuuluvat viralliseen toimituslaajuuteen. Valitut lisäominaisuudet ovat US-13 (suomen- ja englanninkielinen käyttöliittymä), US-15 (RAG) ja US-16 (Docker Compose -käynnistys yhdellä komennolla; mukana myös Ollama).
 
 Käyttäjätarinoiden täydelliset kuvaukset ja hyväksymiskriteerit on määritelty erillisessä dokumentissa `02-käyttäjätarinat ja hyväksymiskriteerit.md`. Tässä dokumentissa käyttäjätarinoihin viitataan niiden tunnisteilla US-01–US-16.
 
-Product Backlogin tavoitteena on varmistaa, että MVP:n keskeiset toiminnallisuudet toteutetaan ennen monikielistä käyttöliittymää ja RAG-toiminnallisuutta. Docker Compose -ympäristö rakennetaan Sprint 1:ssä kehitys- ja esittely-ympäristöä varten.
+MVP:n perustoiminnot sekä sovitut US-09 ja US-14 toteutetaan niiden Sprint-jaon mukaisesti. RAG ja monikielinen käyttöliittymä toteutetaan omissa Sprint-jaksoissaan. Docker Compose -ympäristö, mukaan lukien Ollama ja valittu malli, rakennetaan Sprint 1:ssä kehitys- ja esittely-ympäristöä varten.
 
 ---
 
@@ -47,7 +47,7 @@ Työmääräarviot perustuvat suhteelliseen Story Point -arviointiin. Arvioinnis
 | 16 | US-16 | Sovelluksen käynnistäminen Docker Composella | P2 | 5 | Sprint 1 |
 | **Yhteensä** |  |  |  | **86 SP** |  |
 
-US-16:n 5 SP:n arvio kattaa usean palvelun kontituksen ja konfiguroinnin, tietokannan pysyvän tallennuksen ja valmiustarkistukset sekä dokumentoinnin ja käynnistyksen integraatiotestauksen. Arvio ei sisällä AI-palvelun kontitusta tai tuotantoympäristön käyttöönottoa.
+US-16:n 5 SP:n arvio kattaa frontendin, backendin, MySQL:n ja Ollaman Compose-palvelut, GGUF-mallin käyttöönoton Ollama-kontissa, tarvittavat konfiguraatiot, tietokannan ja mallin pysyvän tallennuksen, valmiustarkistukset sekä dokumentoinnin ja käynnistyksen integraatiotestauksen. Arvio ei sisällä tuotantoympäristön käyttöönottoa tai orkestrointia.
 
 ---
 
@@ -69,8 +69,8 @@ US-16:n 5 SP:n arvio kattaa usean palvelun kontituksen ja konfiguroinnin, tietok
 | US-12 | Käyttöliittymän perusrakenne ja sovelluksen toiminnallisuudet |
 | US-13 | Käyttöliittymän tekstien erottaminen kielikohtaisiin resursseihin |
 | US-14 | Käyttäjän omien tukipyyntöjen tallennus, tilat ja niiden lukumäärät |
-| US-15 | US-06, dokumentaation käsittely, hakuratkaisu ja tekoälyintegraatio |
-| US-16 | Frontendin ja backendin Dockerfile-tiedostot, Compose-palvelut frontendille, backendille ja MySQL:lle, esimerkkikonfiguraatio, tietokannan pysyvä tallennus, valmiustarkistukset sekä dokumentointi ja käynnistyksen testaus |
+| US-15 | US-06, rajattu Markdown/TXT-dokumenttikokoelma, avainsanahaku ja tekoälyintegraatio |
+| US-16 | Frontendin, backendin ja Ollaman Docker-konfiguraatiot, Compose-palvelut frontendille, backendille, MySQL:lle ja Ollamalle, mallin käyttöönotto, esimerkkikonfiguraatio, pysyvä tallennus, valmiustarkistukset sekä dokumentointi ja käynnistyksen testaus |
 
 Riippuvuudet eivät tarkoita, että kaikki edeltävät käyttäjätarinat on aina saatettava kokonaan valmiiksi ennen seuraavan aloittamista. Teknisiä perustöitä voidaan toteuttaa rinnakkain.
 
@@ -94,7 +94,7 @@ MVP-version tavoitteena on toteuttaa AI HelpDesk -sovelluksen keskeinen käyttö
 - US-11: Tietojen pysyvä tallentaminen
 - US-12: Käyttöliittymän käytettävyys
 
-US-13 ja US-15 ovat MVP:n ulkopuolella mutta valittu toteutettaviksi lopulliseen julkaisuun. US-16:n Docker Compose -käynnistys toteutetaan Sprint 1:ssä kehitys- ja esittely-ympäristön perustaksi. US-09 ja US-14 voidaan priorisoida jäljellä olevan ajan ja projektin tarpeiden mukaan.
+US-13 ja US-15 toteutetaan MVP:n peruskäyttöpolun jälkeen niille sovituissa Sprint-jaksoissa, mutta ne kuuluvat lopulliseen toimituslaajuuteen. US-09 ja US-14 kuuluvat myös viralliseen toimituslaajuuteen ja toteutetaan Sprint 4:ssä. US-16 toteutetaan Sprint 1:ssä ja sisältää Ollaman sekä valitun mallin. Näitä käyttäjätarinoita ei käsitellä valinnaisina; laajuuden muuttaminen edellyttää erikseen sovittua päätöstä.
 
 ---
 
@@ -126,6 +126,6 @@ Käyttäjätarina on valmis valittavaksi Sprintiin, kun:
 
 ## 8. Yhteenveto
 
-AI HelpDesk -sovelluksen Product Backlog sisältää 16 käyttäjätarinaa, joiden alustavat arviot ovat yhteensä 86 Story Pointia. US-14 on rajattu käyttäjän omien tukipyyntöjen kokonaismäärään ja OPEN/CLOSED-tilajakaumaan. US-16:n 5 Story Pointin arvio kattaa dokumentoidun yhden komennon Compose-käynnistyksen kehitys- ja esittely-ympäristössä; tuotantokäyttöönotto ja tekoälypalvelun kontitus eivät sisälly arvioon.
+AI HelpDesk -sovelluksen Product Backlog sisältää 16 käyttäjätarinaa ja niiden arviot ovat yhteensä 86 Story Pointia. US-09 ja US-14 ovat virallisia toimitussitoumuksia. US-14 on rajattu käyttäjän omien tukipyyntöjen kokonaismäärään ja `OPEN`/`CLOSED`-tilajakaumaan. US-15:n RAG MVP käyttää Markdown- ja TXT-dokumentteja avainsanahaulla; semanttista hakua harkitaan vain testinäytön perusteella. US-16:n 5 Story Pointin arvio kattaa dokumentoidun yhden komennon Compose-käynnistyksen frontendille, backendille, MySQL:lle ja Ollamalle valittu malli mukaan lukien. Tuotantokäyttöönotto ja orkestrointi eivät sisälly arvioon.
 
 Backlogin ensimmäinen tavoite on rakentaa toimiva tekninen perusta, toteuttaa käyttäjien tunnistaminen ja tukipyyntöjen hallinta sekä mahdollistaa tekoälypohjainen keskustelu.

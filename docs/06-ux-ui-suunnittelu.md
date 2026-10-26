@@ -31,7 +31,7 @@ Tämä dokumentti määrittelee toiminnallisen käyttöliittymäsuunnitelman, ei
 5. **Virheistä voi palautua:** virheilmoituksen jälkeen käyttäjän kirjoittama sisältö säilyy aina, kun se on teknisesti mahdollista.
 6. **Tietosuoja ja käyttöoikeudet:** käyttäjä näkee vain omat tietonsa ja tukipyyntönsä.
 7. **Kaksikielisyys alusta lähtien:** kaikki käyttöliittymän tekstit toteutetaan käännösavaimilla.
-8. **Yksinkertainen toteutus:** käyttöliittymä pidetään projektin laajuuteen sopivana. Ei-välttämättömät ominaisuudet toteutetaan vain, jos aikaa jää.
+8. **Sovittu laajuus:** käyttöliittymä pidetään projektin laajuuteen sopivana. Viralliseen toimituslaajuuteen kuuluvia käyttäjätarinoita ei käsitellä valinnaisina; uudet ominaisuudet edellyttävät erillistä päätöstä.
 
 ## 2. Käyttäjät ja tärkeimmät käyttötapaukset
 
@@ -65,11 +65,11 @@ Tämä dokumentti määrittelee toiminnallisen käyttöliittymäsuunnitelman, ei
 8. Jos ongelma ratkeaa, käyttäjä voi päättää keskustelun tai jatkaa kysymistä.
 9. Jos ongelma ei ratkea, käyttäjä valitsee **Luo tukipyyntö**.
 10. Järjestelmä avaa lomakkeen, jossa keskustelun perusteella ehdotettu otsikko ja kuvaus ovat valmiiksi täytettyjä.
-11. Käyttäjä tarkistaa ja muokkaa tietoja, valitsee prioriteetin ja hyväksyy luomisen.
-12. Järjestelmä tallentaa tukipyynnön ja näyttää onnistumisilmoituksen sekä linkin tukipyynnön tietoihin.
+11. Käyttäjä tarkistaa ja tarvittaessa muokkaa tietoja, valitsee prioriteetin ja vahvistaa luomisen.
+12. Vasta vahvistuksen jälkeen järjestelmä tallentaa tukipyynnön ja näyttää onnistumisilmoituksen sekä linkin tukipyynnön tietoihin.
 
 **UX-vaatimukset**
-- Tukipyyntöä ei luoda ilman käyttäjän nimenomaista hyväksyntää.
+- Tukipyyntöä ei luoda ilman käyttäjän nimenomaista vahvistusta; peruminen tai lomakkeelta poistuminen ei tallenna pyyntöä.
 - Käyttäjä voi muokata automaattisesti ehdotettua otsikkoa ja kuvausta.
 - Keskustelun alkuperäiset viestit säilyvät, vaikka AI-vastaus epäonnistuu.
 - Jos tietolähdettä ei löydy, käyttöliittymä kertoo tämän selkeästi eikä esitä vastausta dokumentoidun lähteen tukemana.
@@ -200,10 +200,10 @@ Esimerkkirunko:
 - tervehdys tai lyhyt palvelun kuvaus;
 - ensisijainen **Aloita AI-keskustelu** -painike;
 - linkki omiin tukipyyntöihin;
-- ehdollinen, rajattu yhteenveto käyttäjän omien tukipyyntöjen kokonaismäärästä sekä `OPEN`- ja `CLOSED`-tilojen lukumääristä (US-14), jos se ehditään toteuttaa.
+- rajattu yhteenveto käyttäjän omien tukipyyntöjen kokonaismäärästä sekä `OPEN`- ja `CLOSED`-tilojen lukumääristä (US-14).
 
 **Priorisointi**
-Etusivu pidetään yksinkertaisena. Laaja analytiikkapaneeli, monimutkaiset kaaviot ja viimeisimpien tukipyyntöjen erillinen nosto eivät kuulu tähän määrittelyyn. US-14:n yhteenveto on ehdollinen ja toissijainen; se voidaan jättää pois, jos aikataulu ei riitä.
+Etusivu pidetään yksinkertaisena ja US-14:n yhteenveto on pakollinen osa sovittua toimituslaajuutta. Se näyttää vain kokonaismäärän sekä `OPEN`- ja `CLOSED`-määrät. Laaja analytiikkapaneeli, monimutkaiset kaaviot, suodatukset, aikavertailut ja viimeisimpien tukipyyntöjen erillinen nosto eivät kuulu tähän määrittelyyn.
 
 ### 6.4 AI-chat
 
@@ -445,6 +445,7 @@ Seuraavat kriteerit täydentävät käyttäjätarinoiden hyväksymiskriteerejä.
 | UX-13 | Tukipyyntöjen tila ja prioriteetti eivät erotu ainoastaan värin perusteella. | Tarkista tekstit ja visuaaliset tunnisteet |
 | UX-14 | Käyttäjä näkee vain omat tukipyyntönsä ja keskustelunsa. | Testaa kahdella eri testikäyttäjällä |
 | UX-15 | Käyttäjän viesti säilyy AI-palvelun virheen jälkeen, jos se on jo kirjoitettu tai lähetetty. | Simuloi AI-palvelun virhe |
+| UX-16 | Etusivu näyttää vain kirjautuneen käyttäjän tukipyyntöjen kokonaismäärän sekä `OPEN`- ja `CLOSED`-määrät; tyhjän tilin arvot ovat nollia. | Testaa käyttäjätilillä, jolla on pyyntöjä ja tyhjällä tilillä; vertaa lukumääriä tietokantaan |
 
 ## 12. Käytettävyystestaussuunnitelma
 
@@ -486,17 +487,7 @@ UX/UI-työ tehdään vaiheittain muun kehityksen rinnalla. Tarkka toteutusjärje
 | Sprint 4 | Keskustelusta tukipyyntöön -polku, kaksikielisyyden täydentäminen, käytettävyystestaus | Integrointi ja kielituki |
 | Sprint 5 | RAG-lähdekortit, lähteettömän vastauksen tila, kokonaispolun testaus | Tietopohjainen AI-neuvonta |
 
-Jos aikataulu tai tekniset riippuvuudet muuttuvat, toteutus priorisoidaan seuraavasti:
-1. kirjautuminen ja suojattu navigaatio;
-2. tukipyyntöjen luominen ja tarkastelu;
-3. AI-chat ja keskusteluhistoria;
-4. Docker Compose -käynnistys valitulle frontend-, backend- ja tietokantakokonaisuudelle;
-5. suomen- ja englanninkielisen käyttöliittymän toteutus;
-6. rajattu RAG-toiminnallisuus ja todellisten lähteiden näyttäminen;
-7. keskustelusta tukipyynnön luominen (US-09), jos aikaa ja kapasiteettia jää;
-8. ehdollinen etusivun yhteenveto (US-14) ja muut toissijaiset parannukset.
-
-Kolme valittua lisäominaisuutta (Docker Compose, suomen- ja englanninkielinen käyttöliittymä sekä RAG) ovat lopullisen julkaisun tavoitteita. Tämä käytännön toteutusjärjestys ei muuta Product Backlogin virallisia prioriteetteja tai sprinttijakoa.
+Toteutusjärjestys noudattaa sovittua Sprint-jakoa ja teknisiä riippuvuuksia. Docker Compose sisältää frontendin, backendin, MySQL:n ja Ollaman valitulla mallilla. Keskustelusta tukipyynnön luonti (US-09) edellyttää käyttäjän tietojen tarkistusta ja vahvistusta; etusivun rajattu yhteenveto (US-14) kuuluu toimitukseen. Kolme valittua lisäominaisuutta (Docker Compose Ollama-palveluineen, suomen- ja englanninkielinen käyttöliittymä sekä RAG) sekä US-09 ja US-14 ovat lopullisen toimituslaajuuden sitoumuksia.
 
 ## 14. Rajaukset ja jatkokehitys
 
@@ -508,7 +499,7 @@ Tämän UX/UI-määrittelyn ensimmäiseen versioon eivät kuulu:
 - laaja analytiikka- tai hallintapaneeli;
 - monimutkaiset käyttäjäroolit tai ylläpitäjän hallintanäkymä, ellei niitä lisätä vaatimusmäärittelyyn.
 
-Etusivun tukipyyntöyhteenveto voidaan toteuttaa, jos aikaa jää. Sen toteuttaminen ei saa vaarantaa pakollisten käyttäjäpolkujen valmistumista. Mahdolliset uudet ominaisuudet kirjataan ensin Product Backlogiin ja arvioidaan suhteessa jäljellä olevaan aikaan.
+US-14:n rajattu etusivuyhteenveto kuuluu toimituslaajuuteen. Sen ulkopuolelle jäävät laajat analytiikkaominaisuudet ja muut tässä dokumentissa rajaamattomat dashboard-laajennukset. Mahdolliset uudet ominaisuudet kirjataan ensin Product Backlogiin ja hyväksytään muutostenhallinnan kautta.
 
 ## 15. Yhteys muihin projektidokumentteihin
 

@@ -16,7 +16,8 @@ Suunnittelun tavoitteena on luoda selkeä ja ylläpidettävä rakenne, joka tuke
 - Tukipyynnön luominen keskustelun perusteella.
 - Tietopohjainen tekoälyneuvonta, jossa Knowledge Service hakee keskusteluun liittyvää teknistä dokumentaatiota.
 - Suomen- ja englanninkielinen käyttöliittymä.
-- Frontendin, backendin ja MySQL-tietokannan käynnistäminen Docker Composella yhdellä komennolla.
+- Frontendin, backendin, MySQL-tietokannan ja Ollama-tekoälypalvelun käynnistäminen Docker Composella yhdellä komennolla.
+- Tukipyynnön luominen keskustelusta vasta käyttäjän tarkistuksen ja vahvistuksen jälkeen sekä omien tukipyyntöjen rajattu yhteenveto.
 
 ### 1.2 Järjestelmän tavoitteet
 
@@ -51,9 +52,10 @@ AI HelpDesk toteutetaan kerroksittaisena web-sovelluksena. Frontend vastaa käyt
 
 Arkkitehtuurikuva säilyy rakenteeltaan ennallaan. Valitut lisäominaisuudet näkyvät siinä ja toteutuksen rajauksessa seuraavasti:
 
-- **RAG:** Chat Service hyödyntää Knowledge Serviceä, joka hakee käyttäjän kysymykseen liittyvää teknistä dokumentaatiota. Löydetty sisältö välitetään AI Servicelle, ja saatavilla olevat lähdetiedot näytetään vastauksen yhteydessä. Jos sopivaa sisältöä ei löydy, vastausta ei esitetä dokumentaation vahvistamana.
+- **RAG:** Chat Service hyödyntää Knowledge Serviceä, joka hakee avainsanoilla rajatusta Markdown- ja TXT-dokumenttikokoelmasta. Löydetty sisältö ja todelliset lähdetiedot välitetään AI Servicelle ja näytetään vastauksen yhteydessä. Jos sopivaa sisältöä ei löydy, vastausta ei esitetä dokumentaation vahvistamana. Semanttinen haku ei kuulu MVP:hen, ja sitä harkitaan vain testinäytön perusteella.
 - **Monikielisyys:** Frontendin käyttöliittymätekstit ovat saatavilla suomeksi ja englanniksi. Kielivalinta säilytetään selaimessa; tekoälyn vastauskieli määräytyy keskustelun kielen ja agentin kieliohjeiden mukaan.
-- **Docker Compose:** frontend, backend ja MySQL-tietokanta käynnistetään README:ssä dokumentoidulla yhdellä komennolla. Tekoälypalvelu voi olla ulkoinen, eikä sen tarvitse kuulua Compose-kokoonpanoon.
+- **Docker Compose:** frontend, backend, MySQL ja Ollama käynnistetään README:ssä dokumentoidulla yhdellä komennolla. Ollama käyttää valittua GGUF-mallia Docker-ympäristössä, eikä AI-palvelun suorittaminen riipu host-koneelle asennetusta Ollamasta.
+- **Toimituslaajuus:** US-09 ja US-14 ovat virallisia käyttäjätarinoita. Tukipyyntö luodaan keskustelusta vain käyttäjän tarkistuksen ja vahvistuksen jälkeen; yhteenveto näyttää vain käyttäjän omat kokonais-, `OPEN`- ja `CLOSED`-määrät.
 
 ### 2.2 Frontend
 
@@ -116,18 +118,31 @@ Tietokannan viite-eheys varmistetaan pää- ja viiteavaimilla. Käyttäjäkohtai
 
 ### 2.5 Tekoälyintegraatio
 
-AI Service välittää käyttäjän viestin ulkoiselle tekoälypalvelulle ja käsittelee saadun vastauksen.
+AI Service välittää käyttäjän viestin Compose-ympäristössä toimivalle Ollama-palvelulle ja käsittelee saadun vastauksen. Käytettävä malli on `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`, jonka konfiguraatio on [Modelfile](../agents/Modelfile)-tiedostossa. Mallin kontekstipituus on 4096 ja lämpötila 0.2.
 
 #### Tekoälyintegraation tulee
 
-- Käyttää palveluntarjoajan suojattua rajapintaa.
-- Säilyttää API-avaimet vain backendin palvelinpuolen konfiguraatiossa.
+- Kutsua Ollamaa backendistä Compose-verkon sisäisellä palvelunimellä ja rajapinnalla; selain ei kutsu Ollamaa suoraan.
+- Käynnistää Ollama Compose-palveluna ja varmistaa terveystarkistuksella, että palvelu sekä valittu malli ovat käytettävissä.
+- Tuoda mallin GGUF-tiedosto Ollama-kontin saataville dokumentoidulla tavalla. Nykyinen suunnitteluratkaisu liittää `agents`-hakemiston mallitiedoston konttiin vain luku -tilassa; `Modelfile` käyttää kontissa polkua `/models/Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`.
+- Luoda valitun mallin Ollamaan automaattisesti Compose-käynnistyksen yhteydessä `Modelfile`-tiedoston perusteella, jos mallia ei vielä ole Ollaman mallivarastossa.
+- Säilyttää Ollaman mallivaraston pysyvässä Docker-volyymissa, jotta palvelun uudelleenkäynnistys ei edellytä mallin uutta manuaalista tuontia.
 - Käsitellä aikakatkaisut, palveluvirheet ja käyttörajoitukset.
 - Rajoittaa tekoälylle lähetettävän keskustelukontekstin määrää.
 - Tallentaa keskusteluviestit sovelluksen määrittelemien tallennuskäytäntöjen mukaisesti.
-- Välttää tarpeettomien henkilötietojen lähettämistä ulkoiselle palvelulle.
+- Välttää tarpeettomien henkilötietojen lähettämistä mallille.
 
 Tekoälyn tuottamat vastaukset ovat ehdotuksia. Niiden oikeellisuutta ei voida taata kaikissa tilanteissa.
+
+### 2.6 RAG MVP ja tietolähteet
+
+Knowledge Service käsittelee ennen toteutusta ryhmän rajaamaa, käyttöön hyväksyttyä Markdown- ja TXT-dokumenttikokoelmaa. Tarkka lähdekokoelma ja sen ylläpitopaikka vahvistetaan ennen toteutusta; dokumentteja ei haeta ennalta määrittelemättömistä tai ulkoisista lähteistä.
+
+MVP:n hakutapa on avainsanahaku. Palvelu hakee kysymykseen sopivia dokumenttikohtia, välittää löydetyt tekstikatkelmat ja lähdetiedot Chat Servicen kautta AI Servicelle sekä palauttaa lähdetiedot käyttöliittymän näytettäväksi. Hakutuloksen lähdetieto perustuu todelliseen tiedostoon ja löydettyyn kohtaan. Jos sopivaa kohtaa ei löydy, mallille ei anneta keksittyä lähdettä eikä vastausta esitetä dokumentaation vahvistamana.
+
+Avainsanahaun laatua arvioidaan ennen toteutusta määritellyillä kysymyksillä ja dokumenteilla, mukaan lukien relevantin osuman ja osumattoman kyselyn testit. Semanttinen haku tai vektoritietokanta lisätään vasta, jos testitulokset osoittavat avainsanahaun riittämättömäksi ja muutos hyväksytään. RAG MVP:n dokumenttikokoelma ja hakutapa eivät edellytä ER-kaavion tai MySQL-skeeman muuttamista. Jos myöhemmin syntyy todellinen pysyvän uuden datan tarve, tietomalli ja ER-kaavio päivitetään erikseen muutoksenhallinnassa.
+
+Malli, Ollama, Docker-kuvat ja muut työkalut sekä kirjastot tarkistetaan maksuttomuuden, lisenssien ja käyttöehtojen osalta ennen toimitusta. Mahdollisia lisenssiehtoja ei oleteta täytetyiksi ilman tarkistusta.
 
 ---
 
@@ -168,7 +183,7 @@ Sisältää keskusteluun liittyvän yksittäisen viestin. Viestin rooli kertoo, 
 | Conversation – Ticket | Conversation 1 → 0..N Ticket; Ticket 0..1 → 1 Conversation | Keskustelusta voidaan luoda useita tukipyyntöjä; tukipyyntö voi olla itsenäinen tai liittyä yhteen keskusteluun. |
 | Conversation – Message | Conversation 1 → 0..N Message; Message 1 → 1 Conversation | Keskustelussa voi olla nolla tai useita viestejä; jokainen viesti kuuluu yhteen keskusteluun. |
 
-ER-diagrammi kuvaa MVP-version keskeisen tietomallin. RAG-toiminnallisuus voi myöhemmin edellyttää erillisiä dokumentti- ja hakumetatietotauluja.
+ER-diagrammi kuvaa MVP-version tietomallin ja pidetään ennallaan. RAG MVP käyttää tiedostopohjaista Markdown- ja TXT-dokumenttikokoelmaa avainsanahakuun eikä lisää tietokantaan dokumentti- tai hakutauluja. ER-skeemaa muutetaan vain, jos toteutuksessa syntyy erikseen perusteltu pysyvän uuden datan tarve.
 
 ---
 
@@ -351,7 +366,7 @@ Staattinen `/summary`-reitti määritellään ennen dynaamista `{id}`-reittiä, 
 
 | HTTP-metodi | Endpoint | Kuvaus | Autentikointi |
 |------------|----------|---------|--------------|
-| POST | `/api/v1/knowledge/search` | Hakee teknistä dokumentaatiota | Kyllä |
+| POST | `/api/v1/knowledge/search` | Hakee avainsanoilla Markdown- ja TXT-dokumenteista ja palauttaa osuman lähdetiedot | Kyllä |
 
 ## 5.3 Esimerkkipyyntö: kirjautuminen
 
