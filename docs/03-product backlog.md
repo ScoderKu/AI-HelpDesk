@@ -42,10 +42,12 @@ Työmääräarviot perustuvat suhteelliseen Story Point -arviointiin. Arvioinnis
 | 11 | US-07 | Tarkentavat kysymykset ja ongelmanratkaisu | P1 | 5 | Sprint 3 |
 | 12 | US-09 | Tukipyynnön luominen keskustelusta | P2 | 3 | Sprint 4 |
 | 13 | US-13 | Monikielinen käyttöliittymä | P2 | 3 | Sprint 4 |
-| 14 | US-14 | Tukipyyntöjen yhteenvetonäkymä | P3 | 3 | Sprint 4 |
+| 14 | US-14 | Tukipyyntöjen rajattu yhteenvetonäkymä | P3 | 3 | Sprint 4 |
 | 15 | US-15 | Tietopohjainen tekoälyneuvonta (RAG) | P2 | 13 | Sprint 5 |
-| 16 | US-16 | Sovelluksen käynnistäminen Docker Composella | P2 | Arvioitava | Sprint 1 |
-| **Yhteensä** |  |  |  | **81 SP + US-16:n arvio** |  |
+| 16 | US-16 | Sovelluksen käynnistäminen Docker Composella | P2 | 5 | Sprint 1 |
+| **Yhteensä** |  |  |  | **86 SP** |  |
+
+US-16:n 5 SP:n arvio kattaa usean palvelun kontituksen ja konfiguroinnin, tietokannan pysyvän tallennuksen ja valmiustarkistukset sekä dokumentoinnin ja käynnistyksen integraatiotestauksen. Arvio ei sisällä AI-palvelun kontitusta tai tuotantoympäristön käyttöönottoa.
 
 ---
 
@@ -66,9 +68,9 @@ Työmääräarviot perustuvat suhteelliseen Story Point -arviointiin. Arvioinnis
 | US-11 | Tietomalli, tietokantayhteys ja viite-eheys |
 | US-12 | Käyttöliittymän perusrakenne ja sovelluksen toiminnallisuudet |
 | US-13 | Käyttöliittymän tekstien erottaminen kielikohtaisiin resursseihin |
-| US-14 | Tukipyyntöjen tallennus ja hakutoiminnot |
+| US-14 | Käyttäjän omien tukipyyntöjen tallennus, tilat ja niiden lukumäärät |
 | US-15 | US-06, dokumentaation käsittely, hakuratkaisu ja tekoälyintegraatio |
-| US-16 | Frontendin, backendin ja MySQL-tietokannan käynnistys- ja konfiguraatiotarpeet |
+| US-16 | Frontendin ja backendin Dockerfile-tiedostot, Compose-palvelut frontendille, backendille ja MySQL:lle, esimerkkikonfiguraatio, tietokannan pysyvä tallennus, valmiustarkistukset sekä dokumentointi ja käynnistyksen testaus |
 
 Riippuvuudet eivät tarkoita, että kaikki edeltävät käyttäjätarinat on aina saatettava kokonaan valmiiksi ennen seuraavan aloittamista. Teknisiä perustöitä voidaan toteuttaa rinnakkain.
 
@@ -124,6 +126,6 @@ Käyttäjätarina on valmis valittavaksi Sprintiin, kun:
 
 ## 8. Yhteenveto
 
-AI HelpDesk -sovelluksen Product Backlog sisältää 16 käyttäjätarinaa. Arvioiduista tarinoista kertyy 81 Story Pointia; US-16:n arvio lisätään, kun toteutuksen laajuus on tarkennettu.
+AI HelpDesk -sovelluksen Product Backlog sisältää 16 käyttäjätarinaa, joiden alustavat arviot ovat yhteensä 86 Story Pointia. US-14 on rajattu käyttäjän omien tukipyyntöjen kokonaismäärään ja OPEN/CLOSED-tilajakaumaan. US-16:n 5 Story Pointin arvio kattaa dokumentoidun yhden komennon Compose-käynnistyksen kehitys- ja esittely-ympäristössä; tuotantokäyttöönotto ja tekoälypalvelun kontitus eivät sisälly arvioon.
 
 Backlogin ensimmäinen tavoite on rakentaa toimiva tekninen perusta, toteuttaa käyttäjien tunnistaminen ja tukipyyntöjen hallinta sekä mahdollistaa tekoälypohjainen keskustelu.

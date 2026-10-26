@@ -398,15 +398,23 @@ Kielivalinta koskee käyttöliittymää. Tekoälyn vastauskieli määräytyy kes
 
 **AC-14.1 – Yhteenvedon näyttäminen**
 
-- Oletetaan, että käyttäjällä on tallennettuja tukipyyntöjä.
+- Oletetaan, että kirjautuneella käyttäjällä on tallennettuja tukipyyntöjä.
 - Kun käyttäjä avaa yhteenvetonäkymän.
-- Niin järjestelmä näyttää tukipyyntöjen kokonaismäärän ja tilajakauman.
+- Niin järjestelmä näyttää vain käyttäjän omien tukipyyntöjen kokonaismäärän sekä OPEN- ja CLOSED-tiloissa olevien pyyntöjen määrät.
 
-**AC-14.2 – Yhteenvedon päivittäminen**
+**AC-14.2 – Tyhjä yhteenveto**
 
-- Oletetaan, että tukipyynnön tila muuttuu.
+- Oletetaan, ettei kirjautuneella käyttäjällä ole tukipyyntöjä.
+- Kun käyttäjä avaa yhteenvetonäkymän.
+- Niin järjestelmä näyttää kokonaismäärän ja molempien tilojen määrän nollana.
+
+**AC-14.3 – Yhteenvedon päivittäminen**
+
+- Oletetaan, että käyttäjä luo tai sulkee oman tukipyyntönsä.
 - Kun yhteenvetonäkymän tiedot päivitetään.
-- Niin yhteenveto vastaa tietokantaan tallennettuja tietoja.
+- Niin kokonaismäärä ja tilakohtaiset määrät vastaavat käyttäjän tallennettuja tukipyyntöjä.
+
+Yhteenveto rajataan lukumääriin. Se ei sisällä kaavioita, suodatuksia, aikavertailuja eikä muiden käyttäjien tukipyyntöjä. MVP:n tilat ovat OPEN ja CLOSED.
 
 ### US-15: Tietopohjainen tekoälyneuvonta (RAG)
 
@@ -461,6 +469,8 @@ Kielivalinta koskee käyttöliittymää. Tekoälyn vastauskieli määräytyy kes
 - Niin README ja esimerkkikonfiguraatio kertovat vaaditut arvot, eikä repository sisällä oikeita salaisuuksia.
 
 Docker Compose käynnistää sovelluksen kontitetut osat. Tekoälypalvelun käynnistys tai ulkoinen saatavuus määritellään erikseen valitun AI-palvelun konfiguraatiossa.
+
+US-16:n laajuuteen kuuluvat frontendin ja backendin Dockerfile-tiedostot, frontendin, backendin ja MySQL:n Compose-palvelut, tarvittavat ympäristömuuttujat sisältävä esimerkkitiedosto ilman oikeita salaisuuksia, MySQL:n pysyvä tallennus, palveluiden valmiustarkistukset sekä käynnistyskomennon dokumentointi ja toiminnan testaus. Yhden komennon esimerkki on `docker compose up --build`. Tekoälypalvelun kontitus, tuotantoympäristön käyttöönotto ja orkestrointi eivät kuulu tarinan laajuuteen.
 
 ## 4. Prioriteettitaulukko
 
