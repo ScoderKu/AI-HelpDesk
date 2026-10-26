@@ -1,4 +1,4 @@
-FROM /models/Llama-Poro-2-8B-Instruct.Q4_K_M.gguf
+FROM /Llama-Poro-2-8B-Instruct.Q4_K_M.gguf
 
 PARAMETER num_ctx 4096
 PARAMETER temperature 0.2
