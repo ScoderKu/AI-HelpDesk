@@ -1,7 +1,8 @@
-*.gguf
-.ollama/
-
-# Environment variables and secrets
 .env
-.env.*
-!.env.example
+**/.env
+**/node_modules/
+**/__pycache__/
+**/.pytest_cache/
+
+# Large local AI model files
+ollama/models/*.gguf
