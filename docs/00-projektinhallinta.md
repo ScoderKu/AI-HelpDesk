@@ -201,6 +201,10 @@ Edistymistä kuvataan ensisijaisesti todennettavilla tuloksilla, ei pelkällä p
 - frontend, backend, tietokanta ja Ollama käynnistyvät dokumentoidulla Docker Compose -komennolla ja backend saa vastauksen Ollamalta
 - README, API-dokumentaatio ja ER-kaavio vastaavat toteutunutta järjestelmää.
 
+**Tilanne 27.10.2026:** Projektin tekninen perusrakenne ja Docker-ympäristö on aloitettu. Frontendille on luotu React- ja TypeScript-pohja, backendille FastAPI-perusrakenne ja riippuvuudet. Frontendille ja backendille on lisätty Docker-konfiguraatiot. Docker Composeen on määritelty frontend-, backend-, MySQL-, phpMyAdmin- ja Ollama-palvelut sekä Ollama-mallin alustava käyttöönotto. GGUF-mallin `Modelfile` ja sen sijainti `ollama`-hakemistossa on päivitetty.
+
+**Tämänhetkinen rajaus:** Kyseessä on tekninen runko ja käyttöönottopohja; varsinaisten sovellustoimintojen valmistumista tai koko palvelukokonaisuuden toimivuutta ei ole näiden muutosten perusteella vahvistettu.
+
 ### 8.4 Definition of Done
 
 Käyttäjätarina tai toiminto voidaan merkitä valmiiksi, kun:
