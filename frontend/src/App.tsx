@@ -131,26 +131,26 @@ function App() {
         </a>
 
         <div className="sidebar-language">
-            <span className="language-label"><Icon name="globe" />{text.language}</span>
-            <div className="language-switch" role="group" aria-label={text.language}>
-              <button
-                aria-pressed={language === 'fi'}
-                className={language === 'fi' ? 'selected' : ''}
-                onClick={() => changeLanguage('fi')}
-                type="button"
+          <span className="language-label"><Icon name="globe" />{text.language}</span>
+          <div className="language-switch" role="group" aria-label={text.language}>
+            <button
+              aria-pressed={language === 'fi'}
+              className={language === 'fi' ? 'selected' : ''}
+              onClick={() => changeLanguage('fi')}
+              type="button"
               >
-                FI
-              </button>
-              <button
-                aria-pressed={language === 'en'}
-                className={language === 'en' ? 'selected' : ''}
-                onClick={() => changeLanguage('en')}
-                type="button"
-              >
-                EN
-              </button>
-            </div>
+              FI
+            </button>
+            <button
+              aria-pressed={language === 'en'}
+              className={language === 'en' ? 'selected' : ''}
+              onClick={() => changeLanguage('en')}
+              type="button"
+            >
+              EN
+            </button>
           </div>
+        </div>
           
         <div className="sidebar-section-label">{text.workspace}</div>
         <nav className="main-nav" aria-label={text.workspace}>
