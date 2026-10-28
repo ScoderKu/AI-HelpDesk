@@ -130,6 +130,28 @@ function App() {
           <span className="brand-name">AI <strong>HelpDesk</strong></span>
         </a>
 
+        <div className="sidebar-language">
+            <span className="language-label"><Icon name="globe" />{text.language}</span>
+            <div className="language-switch" role="group" aria-label={text.language}>
+              <button
+                aria-pressed={language === 'fi'}
+                className={language === 'fi' ? 'selected' : ''}
+                onClick={() => changeLanguage('fi')}
+                type="button"
+              >
+                FI
+              </button>
+              <button
+                aria-pressed={language === 'en'}
+                className={language === 'en' ? 'selected' : ''}
+                onClick={() => changeLanguage('en')}
+                type="button"
+              >
+                EN
+              </button>
+            </div>
+          </div>
+          
         <div className="sidebar-section-label">{text.workspace}</div>
         <nav className="main-nav" aria-label={text.workspace}>
           <a className="nav-link active" href="#home" aria-current="page">
@@ -154,27 +176,6 @@ function App() {
             <Icon name="user" />
             <span>{text.profile}</span>
           </button>
-          <div className="sidebar-language">
-            <span className="language-label"><Icon name="globe" />{text.language}</span>
-            <div className="language-switch" role="group" aria-label={text.language}>
-              <button
-                aria-pressed={language === 'fi'}
-                className={language === 'fi' ? 'selected' : ''}
-                onClick={() => changeLanguage('fi')}
-                type="button"
-              >
-                FI
-              </button>
-              <button
-                aria-pressed={language === 'en'}
-                className={language === 'en' ? 'selected' : ''}
-                onClick={() => changeLanguage('en')}
-                type="button"
-              >
-                EN
-              </button>
-            </div>
-          </div>
         </div>
         <div className="sidebar-brand-note">Teknistä apua, selkeästi.</div>
       </aside>
