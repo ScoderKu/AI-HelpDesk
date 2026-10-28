@@ -208,7 +208,7 @@ ER-diagrammi kuvaa MVP-version tietomallin ja pidetään ennallaan. RAG MVP käy
 | id | BIGINT | PK, AUTO_INCREMENT | Käyttäjän tunniste |
 | first_name | VARCHAR(100) | NOT NULL | Käyttäjän etunimi |
 | last_name | VARCHAR(100) | NOT NULL | Käyttäjän sukunimi |
-| username | VARCHAR(100) | NOT NULL | Käyttäjänimi |
+| username | VARCHAR(100) | NOT NULL, UNIQUE | Käyttäjänimi |
 | email | VARCHAR(255) | NOT NULL, UNIQUE | Sähköpostiosoite |
 | password_hash | VARCHAR(255) | NOT NULL | Salasanan tiiviste |
 | created_at | DATETIME | NOT NULL | Luontiaika |

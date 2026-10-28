@@ -4,11 +4,17 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.hmr
     ports:
-      - "127.0.0.1:8088:80"
+      - "127.0.0.1:8088:5173"
+    volumes:
+    - ./frontend:/app
+    - /app/node_modules
+    environment:
+    - CHOKIDAR_USEPOLLING=true
+    command: npm run dev -- --host 0.0.0.0 --port 5173
     depends_on:
-      - backend
+    - backend
     restart: unless-stopped
 
   backend:
