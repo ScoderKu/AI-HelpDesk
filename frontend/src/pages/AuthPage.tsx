@@ -23,6 +23,8 @@ export function AuthPage({
 }: AuthPageProps) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [notice, setNotice] = useState('')
+  const [noticeIsSuccess, setNoticeIsSuccess] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const isRegister = mode === 'register'
 
   const updateField = (field: string) => {
@@ -33,19 +35,26 @@ export function AuthPage({
       return next
     })
     setNotice('')
+    setNoticeIsSuccess(false)
   }
 
-  const submitForm = (event: FormEvent<HTMLFormElement>) => {
+  const submitForm = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const formData = new FormData(event.currentTarget)
-    const values = Object.fromEntries(
-      Array.from(formData.entries(), ([key, value]) => [
-        key,
-        key === 'password' ? String(value) : String(value).trim(),
-      ]),
-    )
+    const form = event.currentTarget
+    const formData = new FormData(form)
+    const getValue = (name: string) => {
+      const value = formData.get(name)
+      return typeof value === 'string' ? value : ''
+    }
+    const values = {
+      firstName: getValue('firstName').trim(),
+      lastName: getValue('lastName').trim(),
+      username: getValue('username').trim(),
+      email: getValue('email').trim(),
+      password: getValue('password'),
+    }
     const nextErrors: Record<string, string> = {}
-    const requiredFields = isRegister
+    const requiredFields: (keyof typeof values)[] = isRegister
       ? ['firstName', 'lastName', 'username', 'email', 'password']
       : ['email', 'password']
 
@@ -63,13 +72,105 @@ export function AuthPage({
     }
 
     setErrors(nextErrors)
-    setNotice(Object.keys(nextErrors).length === 0 ? text.authUnavailable : '')
+    setNotice(
+      isRegister && Object.keys(nextErrors).length > 0
+        ? text.registrationValidationError
+        : '',
+    )
+    setNoticeIsSuccess(false)
+    if (Object.keys(nextErrors).length > 0) return
+
+    if (!isRegister) {
+      setNotice(text.authUnavailable)
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'}/api/v1/auth/register`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            first_name: values.firstName,
+            last_name: values.lastName,
+            username: values.username,
+            email: values.email,
+            password: values.password,
+          }),
+        },
+      )
+
+      if (response.status === 201) {
+        form.reset()
+        setNotice(text.registrationSuccess)
+        setNoticeIsSuccess(true)
+      } else if (response.status === 409) {
+        const payload: unknown = await response.json()
+        const detail =
+          typeof payload === 'object' && payload !== null && 'detail' in payload
+            ? payload.detail
+            : ''
+        const detailText = typeof detail === 'string' ? detail.toLowerCase() : ''
+        const conflictErrors: Record<string, string> = {}
+        if (detailText.includes('email')) {
+          conflictErrors.email = text.registrationConflict
+        }
+        if (detailText.includes('username')) {
+          conflictErrors.username = text.registrationConflict
+        }
+        if (Object.keys(conflictErrors).length === 0) {
+          conflictErrors.email = text.registrationConflict
+          conflictErrors.username = text.registrationConflict
+        }
+        setErrors(conflictErrors)
+        setNotice(text.registrationConflict)
+      } else if (response.status === 422) {
+        const payload: unknown = await response.json()
+        const detail =
+          typeof payload === 'object' && payload !== null && 'detail' in payload
+            ? payload.detail
+            : undefined
+        const fieldMap: Record<string, keyof typeof values> = {
+          first_name: 'firstName',
+          last_name: 'lastName',
+          username: 'username',
+          email: 'email',
+          password: 'password',
+        }
+        const validationErrors: Record<string, string> = {}
+        if (Array.isArray(detail)) {
+          detail.forEach((item: unknown) => {
+            if (typeof item !== 'object' || item === null || !('loc' in item)) return
+            const location = item.loc
+            if (!Array.isArray(location)) return
+            const field = location.findLast(
+              (part: unknown) => typeof part === 'string' && part in fieldMap,
+            )
+            if (typeof field === 'string') {
+              const formField = fieldMap[field]
+              validationErrors[formField] = text.registrationValidationError
+            }
+          })
+        }
+        setErrors(validationErrors)
+        setNotice(text.registrationValidationError)
+      } else {
+        setNotice(text.registrationError)
+      }
+    } catch {
+      setNotice(text.registrationNetworkError)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const fieldError = (name: string) => errors[name]
   const changeAuthLanguage = (nextLanguage: Language) => {
     setErrors({})
     setNotice(onLanguageChange(nextLanguage))
+    setNoticeIsSuccess(false)
   }
 
   return (
@@ -101,7 +202,12 @@ export function AuthPage({
             <p>{isRegister ? text.registerDescription : text.loginDescription}</p>
           </div>
 
-          <form className="auth-form" noValidate onSubmit={submitForm}>
+          <form
+            aria-busy={isSubmitting}
+            className="auth-form"
+            noValidate
+            onSubmit={submitForm}
+          >
             {isRegister && (
               <div className="auth-name-grid">
                 <label className="auth-field">
@@ -111,6 +217,7 @@ export function AuthPage({
                     aria-describedby={fieldError('firstName') ? 'firstName-error' : undefined}
                     aria-invalid={Boolean(fieldError('firstName'))}
                     name="firstName"
+                    maxLength={100}
                     onChange={() => updateField('firstName')}
                     required
                   />
@@ -123,6 +230,7 @@ export function AuthPage({
                     aria-describedby={fieldError('lastName') ? 'lastName-error' : undefined}
                     aria-invalid={Boolean(fieldError('lastName'))}
                     name="lastName"
+                    maxLength={100}
                     onChange={() => updateField('lastName')}
                     required
                   />
@@ -139,6 +247,7 @@ export function AuthPage({
                   aria-describedby={fieldError('username') ? 'username-error' : undefined}
                   aria-invalid={Boolean(fieldError('username'))}
                   name="username"
+                  maxLength={100}
                   onChange={() => updateField('username')}
                   required
                 />
@@ -153,6 +262,7 @@ export function AuthPage({
                 aria-describedby={fieldError('email') ? 'email-error' : undefined}
                 aria-invalid={Boolean(fieldError('email'))}
                 name="email"
+                maxLength={255}
                 onChange={() => updateField('email')}
                 required
                 type="email"
@@ -170,6 +280,7 @@ export function AuthPage({
                 ].filter(Boolean).join(' ') || undefined}
                 aria-invalid={Boolean(fieldError('password'))}
                 minLength={8}
+                maxLength={128}
                 name="password"
                 onChange={() => updateField('password')}
                 required
@@ -179,9 +290,17 @@ export function AuthPage({
               {fieldError('password') && <span className="field-error" id="password-error">{fieldError('password')}</span>}
             </label>
 
-            <button className="button button-primary auth-submit" type="submit">
-              {isRegister ? text.registerSubmit : text.loginSubmit}
-              <Icon name="arrow" />
+            <button
+              className="button button-primary auth-submit"
+              disabled={isSubmitting}
+              type="submit"
+            >
+              {isSubmitting
+                ? text.registerSubmitting
+                : isRegister
+                  ? text.registerSubmit
+                  : text.loginSubmit}
+              {!isSubmitting && <Icon name="arrow" />}
             </button>
             <p className="auth-switch">
               {isRegister ? text.hasAccount : text.noAccount}{' '}
@@ -189,7 +308,14 @@ export function AuthPage({
                 {isRegister ? text.signIn : text.createAccount}
               </button>
             </p>
-            {notice && <p className="auth-notice" role="alert">{notice}</p>}
+            {notice && (
+              <p
+                className={`auth-notice${noticeIsSuccess ? ' auth-notice-success' : ''}`}
+                role={noticeIsSuccess ? 'status' : 'alert'}
+              >
+                {notice}
+              </p>
+            )}
           </form>
         </section>
         <div className="lab-signature">Developed by ScoderKu Lab</div>

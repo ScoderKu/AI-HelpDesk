@@ -368,6 +368,36 @@ Staattinen `/summary`-reitti määritellään ennen dynaamista `{id}`-reittiä, 
 |------------|----------|---------|--------------|
 | POST | `/api/v1/knowledge/search` | Hakee avainsanoilla Markdown- ja TXT-dokumenteista ja palauttaa osuman lähdetiedot | Kyllä |
 
+### Rekisteröityminen
+
+```http
+POST /api/v1/auth/register
+```
+
+```json
+{
+  "first_name": "Example",
+  "last_name": "User",
+  "username": "exampleuser",
+  "email": "user@example.com",
+  "password": "example-password"
+}
+```
+
+Onnistunut rekisteröityminen palauttaa HTTP 201 -vastauksen. Vastaus ei sisällä salasanaa eikä sen tiivistettä.
+
+```json
+{
+  "user": {
+    "id": 12,
+    "first_name": "Example",
+    "last_name": "User",
+    "username": "exampleuser",
+    "email": "user@example.com"
+  }
+}
+```
+
 ## 5.3 Esimerkkipyyntö: kirjautuminen
 
 ### Request
