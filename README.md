@@ -4,7 +4,7 @@
 
 AI HelpDesk on kehitteillä oleva verkkopohjainen tukipalvelusovellus. Käyttäjä voi keskustella tekoälyn kanssa tietotekniikkaan ja ohjelmistokehitykseen liittyvistä ongelmista sekä hallita omia tukipyyntöjään.
 
-> **Projektin tila:** suunnitteludokumentaatio on laadittu. Sovelluksen toteutus, tarkat asennusohjeet ja testikomennot täydennetään koodauksen edetessä.
+> **Projektin tila:** Docker Compose -ympäristö frontendille, backendille, MySQL:lle ja Ollamalle on testattu ja toimii vakaasti. Frontendin kirjautumis- ja rekisteröitymisnäkymät on toteutettu käyttöliittymäprototyyppinä, mutta autentikointia ei ole vielä yhdistetty backendiin.
 
 ### Keskeiset ominaisuudet
 
@@ -60,17 +60,25 @@ Suunniteltu käynnistystapa edellyttää Dockeria ja Docker Composea. Valittu GG
 
 ### Asennus ja käynnistäminen
 
-Tavoitteena on käynnistää frontend, backend, MySQL ja Ollama yhdellä komennolla:
+Käynnistä frontend, backend, MySQL ja Ollama yhdellä komennolla:
 
 ```powershell
 docker compose up --build
 ```
 
-Komennon toimivuus, palveluiden asetukset ja tarvittavat ympäristömuuttujat vahvistetaan, kun Docker Compose -toteutus valmistuu. Älä käsittele tätä ohjetta vielä valmiiksi testattuna asennusohjeena.
+Varmista ennen käynnistystä, että paikallinen `.env` sisältää `.env.example`-tiedoston mukaiset asetukset. Compose-ympäristö ja sen käynnistys on testattu projektin kehitysympäristössä.
 
 ### Testaus
 
-Keskeisten toimintojen hyväksymiskriteerit ja suunnitellut testit on kuvattu käyttäjätarinoissa ja vaatimusmäärittelyssä. Testien suorituskomennot lisätään tähän, kun sovelluksen testityökalut ja koodirakenne on toteutettu.
+Frontendin tyypitys, tuotantobuild ja lint-tarkistukset voi suorittaa näin:
+
+```powershell
+cd frontend
+npm run build
+npm run lint
+```
+
+Keskeisten toimintojen hyväksymiskriteerit ja suunnitellut testit on kuvattu käyttäjätarinoissa ja vaatimusmäärittelyssä. Autentikointi- ja liiketoimintatoimintojen frontend-näkymät odottavat backend-integraatiota.
 
 ### Kuvat
 
@@ -86,7 +94,7 @@ Projektin lisenssiä ei ole vielä määritelty. Myös kolmannen osapuolen malli
 
 AI HelpDesk is a web-based support application under development. Users can discuss IT and software development issues with an AI assistant and manage their own support tickets.
 
-> **Project status:** the design documentation has been prepared. The application implementation, exact setup instructions, and test commands will be completed as development progresses.
+> **Project status:** the Docker Compose environment for the frontend, backend, MySQL, and Ollama has been tested and runs stably. The frontend sign-in and registration screens are implemented as UI prototypes, but authentication has not yet been connected to the backend.
 
 ### Main features
 
@@ -142,17 +150,25 @@ The planned setup requires Docker and Docker Compose. The selected GGUF model fi
 
 ### Installation and running
 
-The intended command for starting the frontend, backend, MySQL, and Ollama is:
+Start the frontend, backend, MySQL, and Ollama with:
 
 ```powershell
 docker compose up --build
 ```
 
-The command, service configuration, and required environment variables will be verified when the Docker Compose implementation is complete. This should not yet be treated as a fully tested setup guide.
+Before starting, ensure the local `.env` contains the settings described in `.env.example`. The Compose environment and startup have been tested in the project development environment.
 
 ### Testing
 
-Acceptance criteria and planned tests for the key features are described in the user stories and requirements specification. Test commands will be added here once the application's test tooling and code structure have been implemented.
+Run the frontend type-check/production build and lint checks with:
+
+```powershell
+cd frontend
+npm run build
+npm run lint
+```
+
+Acceptance criteria and planned tests for key features are described in the user stories and requirements specification. Frontend authentication and business-feature screens still need backend integration.
 
 ### Screenshots
 
