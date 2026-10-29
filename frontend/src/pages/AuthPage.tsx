@@ -115,14 +115,14 @@ export function AuthPage({
         const detailText = typeof detail === 'string' ? detail.toLowerCase() : ''
         const conflictErrors: Record<string, string> = {}
         if (detailText.includes('email')) {
-          conflictErrors.email = text.registrationConflict
+          conflictErrors.email = text.registrationConflictEmail
         }
         if (detailText.includes('username')) {
-          conflictErrors.username = text.registrationConflict
+          conflictErrors.username = text.registrationConflictUsername
         }
         if (Object.keys(conflictErrors).length === 0) {
-          conflictErrors.email = text.registrationConflict
-          conflictErrors.username = text.registrationConflict
+          conflictErrors.email = text.registrationConflictEmail
+          conflictErrors.username = text.registrationConflictUsername
         }
         setErrors(conflictErrors)
         setNotice(text.registrationConflict)

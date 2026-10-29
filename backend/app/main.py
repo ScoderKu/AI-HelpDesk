@@ -67,8 +67,12 @@ def register_user(
     registration: UserRegistrationRequest,
     db: Session = Depends(get_db),
 ) -> UserRegistrationResponse:
+    # Check both fields before returning a conflict
     existing_email = db.scalar(
         select(User.id).where(User.email == registration.email)
+    )
+    existing_username = db.scalar(
+            select(User.id).where(User.username == registration.username)
     )
     if existing_email is not None:
         raise HTTPException(
@@ -76,9 +80,7 @@ def register_user(
             detail="Email address is already registered.",
         )
 
-    existing_username = db.scalar(
-        select(User.id).where(User.username == registration.username)
-    )
+    
     if existing_username is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
