@@ -997,6 +997,7 @@ a:focus-visible {
 
 .auth-field input[aria-invalid="true"] {
   border-color: #c94b57;
+  background: #fff4f4;
 }
 
 .field-hint,
@@ -1017,6 +1018,12 @@ a:focus-visible {
 .auth-submit {
   width: 100%;
   margin-top: 3px;
+}
+
+.auth-submit:disabled {
+  cursor: wait;
+  opacity: 0.75;
+  transform: none;
 }
 
 .auth-switch {
@@ -1047,6 +1054,18 @@ a:focus-visible {
   background: #f7f6ff;
   font-size: 13px;
   line-height: 1.5;
+}
+
+.auth-notice-success {
+  border-color: #cce8d7;
+  color: #22653b;
+  background: #f1faf4;
+}
+
+.auth-notice:not(.auth-notice-success) {
+  border-color: #f0c5c8;
+  color: #a52e3b;
+  background: #fff3f3;
 }
 
 .auth-back:focus-visible,

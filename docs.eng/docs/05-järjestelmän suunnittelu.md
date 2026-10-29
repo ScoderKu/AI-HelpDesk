@@ -208,7 +208,7 @@ The ER diagram describes the MVP data model and will be kept unchanged. The RAG 
 | id | BIGINT | PK, AUTO_INCREMENT | User identifier |
 | first_name | VARCHAR(100) | NOT NULL | User's first name |
 | last_name | VARCHAR(100) | NOT NULL | User's last name |
-| username | VARCHAR(100) | NOT NULL | Username |
+| username | VARCHAR(100) | NOT NULL, UNIQUE | Username |
 | email | VARCHAR(255) | NOT NULL, UNIQUE | Email address |
 | password_hash | VARCHAR(255) | NOT NULL | Password hash |
 | created_at | DATETIME | NOT NULL | Creation time |
@@ -367,6 +367,36 @@ The static `/summary` route is defined before the dynamic `{id}` route so that t
 | HTTP Method | Endpoint | Description | Authentication |
 |------------|----------|---------|--------------|
 | POST | `/api/v1/knowledge/search` | Searches Markdown and TXT documents by keywords and returns source information for matches | Yes |
+
+### Registration
+
+```http
+POST /api/v1/auth/register
+```
+
+```json
+{
+  "first_name": "Example",
+  "last_name": "User",
+  "username": "exampleuser",
+  "email": "user@example.com",
+  "password": "example-password"
+}
+```
+
+A successful registration returns HTTP 201. The response does not include the password or its hash.
+
+```json
+{
+  "user": {
+    "id": 12,
+    "first_name": "Example",
+    "last_name": "User",
+    "username": "exampleuser",
+    "email": "user@example.com"
+  }
+}
+```
 
 ## 5.3 Example Request: Login
 

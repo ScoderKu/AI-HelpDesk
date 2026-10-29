@@ -2,7 +2,10 @@
 from collections.abc import Generator
 
 from sqlalchemy import URL, create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+
+class Base(DeclarativeBase):
+    pass
 
 
 database_url = URL.create(
@@ -25,7 +28,6 @@ SessionLocal = sessionmaker(
     autoflush=False,
     autocommit=False,
 )
-
 
 def get_db() -> Generator[Session, None, None]:
     db = SessionLocal()
