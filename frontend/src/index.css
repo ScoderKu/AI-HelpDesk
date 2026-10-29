@@ -20,14 +20,28 @@
 }
 
 html {
-  min-width: 320px;
+  min-width: 0;
   min-height: 100%;
 }
 
 body {
-  min-width: 320px;
+  min-width: 0;
   min-height: 100vh;
   margin: 0;
+}
+
+a {
+  color: #464feb;
+  text-decoration: none;
+}
+
+tr th,
+tr td {
+  border: 1px solid #e6e6e6;
+}
+
+tr th {
+  background-color: #f5f5f5;
 }
 
 button,
