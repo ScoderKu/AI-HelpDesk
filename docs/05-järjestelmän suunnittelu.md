@@ -16,7 +16,7 @@ Suunnittelun tavoitteena on luoda selkeä ja ylläpidettävä rakenne, joka tuke
 - Tukipyynnön luominen keskustelun perusteella.
 - Tietopohjainen tekoälyneuvonta, jossa Knowledge Service hakee keskusteluun liittyvää teknistä dokumentaatiota.
 - Suomen- ja englanninkielinen käyttöliittymä.
-- Frontendin, backendin, MySQL-tietokannan ja Ollama-tekoälypalvelun käynnistäminen Docker Composella yhdellä komennolla.
+- Frontendin, backendin, MySQL-tietokannan, Redisin ja Ollama-tekoälypalvelun käynnistäminen Docker Composella yhdellä komennolla.
 - Tukipyynnön luominen keskustelusta vasta käyttäjän tarkistuksen ja vahvistuksen jälkeen sekä omien tukipyyntöjen rajattu yhteenveto.
 
 ### 1.2 Järjestelmän tavoitteet
@@ -55,6 +55,7 @@ Arkkitehtuurikuva säilyy rakenteeltaan ennallaan. Valitut lisäominaisuudet nä
 - **RAG:** Chat Service hyödyntää Knowledge Serviceä, joka hakee avainsanoilla rajatusta Markdown- ja TXT-dokumenttikokoelmasta. Löydetty sisältö ja todelliset lähdetiedot välitetään AI Servicelle ja näytetään vastauksen yhteydessä. Jos sopivaa sisältöä ei löydy, vastausta ei esitetä dokumentaation vahvistamana. Semanttinen haku ei kuulu MVP:hen, ja sitä harkitaan vain testinäytön perusteella.
 - **Monikielisyys:** Frontendin käyttöliittymätekstit ovat saatavilla suomeksi ja englanniksi. Kielivalinta säilytetään selaimessa; tekoälyn vastauskieli määräytyy keskustelun kielen ja agentin kieliohjeiden mukaan.
 - **Docker Compose:** frontend, backend, MySQL ja Ollama käynnistetään README:ssä dokumentoidulla yhdellä komennolla. Ollama käyttää valittua GGUF-mallia Docker-ympäristössä, eikä AI-palvelun suorittaminen riipu host-koneelle asennetusta Ollamasta.
+- **Autentikointi:** rekisteröityminen sekä kirjautuminen ja uloskirjautuminen ovat käytössä. Kirjautumisistunnot tallennetaan MySQL:ään ja kirjautumisyritysten käyttörajat Redisissä.
 - **Toimituslaajuus:** US-09 ja US-14 ovat virallisia käyttäjätarinoita. Tukipyyntö luodaan keskustelusta vain käyttäjän tarkistuksen ja vahvistuksen jälkeen; yhteenveto näyttää vain käyttäjän omat kokonais-, `OPEN`- ja `CLOSED`-määrät.
 
 ### 2.2 Frontend
@@ -109,6 +110,7 @@ Järjestelmän ensisijaisena relaatiotietokantana käytetään MySQL-tietokantaa
 Tietokanta tallentaa:
 
 - Käyttäjien tiedot.
+- Aktiiviset kirjautumisistunnot ja niiden voimassaoloajat.
 - Tukipyynnöt ja niiden tilat.
 - Keskustelut.
 - Keskusteluviestit.
@@ -213,6 +215,8 @@ ER-diagrammi kuvaa MVP-version tietomallin ja pidetään ennallaan. RAG MVP käy
 | password_hash | VARCHAR(255) | NOT NULL | Salasanan tiiviste |
 | created_at | DATETIME | NOT NULL | Luontiaika |
 | updated_at | DATETIME | NOT NULL | Viimeisin päivitysaika |
+
+Kirjautumisistunnot tallennetaan lisäksi tekniseen `auth_sessions`-tauluun. Taulussa on istunnon satunnainen tunniste, käyttäjän viiteavain sekä luonti- ja vanhenemisajat. Uloskirjautuminen poistaa kyseisen istunnon, jolloin myös kopioitu istuntoeväste lakkaa toimimasta. Tämä tekninen taulu ei kuulu nykyiseen käsitteelliseen ER-kaavioon.
 
 ## 4.3 Taulu: tickets
 
@@ -326,17 +330,24 @@ REST API toimii frontendin ja backendin välisenä rajapintana.
 
 ## 5.2 Endpointit
 
+Alla olevista autentikointireiteistä rekisteröityminen, kirjautuminen, uloskirjautuminen ja nykyisen käyttäjän haku on toteutettu. Tukipyyntö-, keskustelu-, haku- ja profiilireitit kuvaavat suunniteltua rajapintaa eivätkä ole vielä toteutettuja.
+
 ### Autentikointi ja käyttäjätili
 
 | HTTP-metodi | Endpoint | Kuvaus | Autentikointi |
 |------------|----------|---------|--------------|
 | POST | `/api/v1/auth/register` | Luo käyttäjätilin | Ei |
 | POST | `/api/v1/auth/login` | Kirjaa käyttäjän sisään | Ei |
-| POST | `/api/v1/auth/logout` | Kirjaa käyttäjän ulos | Kyllä |
-| GET | `/api/v1/users/me` | Hakee kirjautuneen käyttäjän profiilin | Kyllä |
-| PATCH | `/api/v1/users/me` | Päivittää käyttäjän profiilin | Kyllä |
+| POST | `/api/v1/auth/logout` | Kirjaa käyttäjän ulos ja mitätöi nykyisen istunnon, jos eväste on voimassa | Istuntoeväste |
+| GET | `/api/v1/auth/me` | Palauttaa nykyisen kirjautuneen käyttäjän | Kyllä |
+| GET | `/api/v1/users/me` | Hakee kirjautuneen käyttäjän profiilin | Suunniteltu |
+| PATCH | `/api/v1/users/me` | Päivittää käyttäjän profiilin | Suunniteltu |
 
-Autentikointi toteutetaan palvelinpuolen istunnolla. Onnistunut kirjautuminen luo istunnon ja asettaa selaimeen istuntotunnisteen sisältävän `HttpOnly`-evästeen. Tuotannossa eväste on `Secure`-suojattu ja käyttää `SameSite=Lax`-asetusta. Selaimen tilaa muuttavat pyynnöt suojataan CSRF-tarkistuksella. Uloskirjautuminen mitätöi palvelinpuolen istunnon ja poistaa evästeen. Istuntojen tallennusratkaisu kuuluu backendin konfiguraatioon eikä muuta ER-kaavion taulurakennetta.
+Autentikointi käyttää MySQL:ään tallennettua palvelinpuolen istuntoa. Sovelluksen käynnistyksessä SQLAlchemy luo puuttuvat mallien taulut riippuvuusjärjestyksessä, joten `users` luodaan ennen sitä viittaavaa `auth_sessions`-taulua. Eväste sisältää HMAC-allekirjoitetun käyttäjä-, vanhenemis- ja istuntotunnisteen; eväste on `HttpOnly` ja `SameSite=Lax`, ja sen voimassaolo on kahdeksan tuntia. `AUTH_COOKIE_SECURE` määrittää `Secure`-attribuutin: Compose käyttää oletuksena arvoa `true`; vain paikallisessa HTTP-kehityksessä `.env`-tiedostossa asetetaan `AUTH_COOKIE_SECURE=false`. HTTPS-tuotannossa asetus pidetään arvossa `true`. Uloskirjautuminen poistaa istunnon MySQL:stä ja evästeen selaimesta. Lisäksi uloskirjautumispyynnön `Origin`-otsakkeen on vastattava täsmälleen jotakin `FRONTEND_ORIGINS`-asetuksen alkuperää; puuttuva tai tuntematon alkuperä hylätään. Erillistä CSRF-tokenia ei käytetä.
+
+Frontend käyttää oletuksena suhteellista `/api`-polkua. Viten kehityspalvelin proxyaa pyynnöt backendille, ja tuotanto-Nginx proxyaa saman polun backendille. Jos backend tarjotaan eri alkuperästä, `VITE_API_BASE_URL` voidaan asettaa build-vaiheessa backendin alkuperäosoitteeksi ilman `/api`-polkua.
+
+Kirjautumista rajoitetaan Redisissä yhteisillä, atomisilla laskureilla: enintään viisi yritystä sähköpostiosoitetta kohti 15 minuutissa ja 20 yritystä IP-osoitetta kohti minuutissa. Rajan ylitys palauttaa `429 Too Many Requests`-vastauksen ja `Retry-After`-otsakkeen. Rajat tarkistetaan ennen salasanatiivisteen laskentaa; Redis-yhteyden virheessä kirjautuminen estetään ja palautetaan `503`. `X-Forwarded-For`-otsaketta käytetään IP:n tunnistamiseen vain, kun yhteys tulee `TRUSTED_PROXY_IPS`-asetuksessa nimetystä luotetusta proxysta.
 
 ### Tukipyynnöt
 
@@ -417,17 +428,15 @@ POST /api/v1/auth/login
 
 ```json
 {
-  "user": {
-    "id": 12,
-    "first_name": "Example",
-    "last_name": "User",
-    "username": "exampleuser",
-    "email": "user@example.com"
-  }
+  "id": 12,
+  "first_name": "Example",
+  "last_name": "User",
+  "username": "exampleuser",
+  "email": "user@example.com"
 }
 ```
 
-Kirjautumisen vastaus sisältää lisäksi `Set-Cookie`-otsakkeen istuntoevästeen asettamista varten. Selain lähettää evästeen automaattisesti suojatuissa pyynnöissä.
+Onnistunut kirjautuminen palauttaa HTTP 200 -vastauksen ja `Set-Cookie`-otsakkeen. Virheelliset tunnukset palauttavat yleisen HTTP 401 -vastauksen; käyttörajan ylitys palauttaa HTTP 429 -vastauksen. `GET /api/v1/auth/me` palauttaa saman käyttäjäobjektin vain voimassa olevalle istunnolle.
 
 ## 5.4 Esimerkkipyyntö: tukipyynnön luominen
 
@@ -517,7 +526,7 @@ POST /api/v1/conversations/25/messages
 4. Backend tarkistaa käyttäjän oikeudet ennen resurssien palauttamista tai muuttamista.
 5. Syötteet validoidaan palvelinpuolella.
 6. Tietokantakyselyissä käytetään parametrisoituja kyselyitä.
-7. Kirjautumiseen ja tekoälypyyntöihin voidaan asettaa käyttörajoituksia.
+7. Kirjautumisyrityksiä rajoitetaan Redisissä IP-osoitteen ja normalisoidun sähköpostiosoitteen perusteella; raja palauttaa HTTP 429 -vastauksen ja `Retry-After`-otsakkeen.
 8. API-avaimia ja muita salaisuuksia ei tallenneta lähdekoodiin.
 9. Virhelokeihin ei tallenneta salasanoja, autentikointitunnuksia tai tarpeettomia henkilötietoja.
 10. Tekoälypalvelulle lähetetään vain pyynnön käsittelyn kannalta tarpeelliset tiedot.
