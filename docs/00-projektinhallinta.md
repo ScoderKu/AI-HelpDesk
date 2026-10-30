@@ -142,6 +142,8 @@ Riskit arvioidaan laadullisesti vaikutuksen ja todennäköisyyden perusteella. R
 | R7 | Käyttöliittymän käännökset jäävät osittaisiksi | Keskitaso | Keskitaso | Keskitetään tekstit kieliresursseihin; testataan tärkeimmät näkymät suomeksi ja englanniksi | Tarkistetaan Sprint 4:ssä |
 | R8 | Testaus ja dokumentointi jäävät viime hetkeen | Keskitaso | Korkea | Kirjataan testit toteutuksen yhteydessä; varataan Sprint 5:een erillinen aika integraatiotestaukselle ja dokumentoinnille | Tarkistetaan Sprint-arvioinnissa |
 | R9 | Paikallisen GGUF-mallin koko, resurssitarve tai lisenssiehdot estävät luotettavan esittelyn | Keskitaso | Korkea | Testataan mallin lataus ja käyttö projektin Docker-ympäristössä varhain; tarkistetaan mallin ja työkalujen lisenssit sekä käytön ehdot ennen toimitusta | Tarkistetaan Sprint 1:ssä ja ennen esittelyä |
+| R10 | Kirjautumisen IP-kohtainen käyttöraja tunnistaa Docker-proxyn eikä todellista asiakasta tai luottaa virheelliseen välitystietoon | Keskitaso | Keskitaso | Määritetään frontend-proxylle kiinteä IP erillisessä Compose-verkossa; luetaan `X-Forwarded-For` vain luotetulta proxylta ja valitaan ketjusta ensimmäinen luottamaton osoite oikealta alkaen; testataan myös väärät ja virheelliset otsakkeet | Yksikkötestit läpäisty; varmennetaan todellisessa LAN-käytössä ennen sen käyttöönottoa |
+| R11 | Samanaikaiset kirjautumiset aiheuttavat MySQL-deadlockin istuntojen siivouksen ja lisäyksen välillä | Matala–keskitaso | Keskitaso | Siirretään vanhentuneiden istuntojen siivous kirjautumistransaktion ulkopuoliseen määräajoin ajettavaan tehtävään; poistetaan löydetyt rivit erissä ensisijaisavaimen perusteella | Siivouskyselyn yksikkötesti; rinnakkaistesti MySQL:llä ennen toimitusta |
 
 ### 7.1 Riskin toteutumisen toimintatapa
 
@@ -205,6 +207,8 @@ Edistymistä kuvataan ensisijaisesti todennettavilla tuloksilla, ei pelkällä p
 
 **Tämänhetkinen rajaus:** Kyseessä on tekninen runko ja käyttöönottopohja; varsinaisten sovellustoimintojen valmistumista tai koko palvelukokonaisuuden toimivuutta ei ole näiden muutosten perusteella vahvistettu.
 
+**Tilanne 31.10.2026:** Kirjautumisyritysten IP-kohtaisen käyttörajan proxy-käsittelyä ja kirjautumisen istuntosiivousta on korjattu. Frontendille on määritetty osoite `172.30.0.2` Dockerin erillisessä proxy-verkossa; se käyttää backendin verkkoaliasta `backend-proxy` osoitteessa `172.30.0.3` eikä liity backendin kanssa jaettuun oletusverkkoon. Kontit luotiin uudelleen ja frontendin `/api/health`-pyyntö backendille palautti HTTP 200. Vanhentuneet istunnot siivotaan erillisessä taustatehtävässä tunnin välein ja poistetaan erissä ensisijaisavaimen kautta, ei kirjautumistransaktion yhteydessä. Seitsemän backendin yksikkötestiä sekä Compose-konfiguraation tarkistus läpäistiin. Kahden LAN-laitteen välistä IP-välitystä tai rinnakkaisia kirjautumisia todellisella MySQL-palvelulla ei ole vielä varmennettu. Nykyinen Compose-porttisidonta on edelleen `127.0.0.1`, joten palvelu ei tällä asetuksella ole muiden LAN-laitteiden käytettävissä.
+
 ### 8.4 Definition of Done
 
 Käyttäjätarina tai toiminto voidaan merkitä valmiiksi, kun:
@@ -251,6 +255,9 @@ Merkittävät tekniset ja projektinhallinnalliset päätökset kirjataan tähän
 | D-05 | 26.10.2026 | Tekoälymallin tavoite on `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`, jota käytetään Ollaman kautta | Projektin valittu paikallinen malli | Malli käynnistetään Ollama-kontissa; mallin tiedoston sijainti ja pysyvä mallivarasto dokumentoidaan |
 | D-06 | 26.10.2026 | RAG MVP käsittelee Markdown- ja TXT-dokumentteja avainsanahaulla; semanttinen haku lisätään vain testinäytön perusteella | Rajattu ja testattava MVP-toteutus | Lähdekokoelma rajataan ennen toteutusta; ER-skeemaa ei muuteta ilman uutta pysyvää tietotarvetta |
 | D-07 | 26.10.2026 | Työkalujen ja kirjastojen tulee olla maksuttomia, ja niiden lisenssit sekä käyttöehdot tarkistetaan | Ryhmän vahvistama teknologiapäätös | Valinnat ja mahdolliset rajoitteet dokumentoidaan ennen toimitusta |
+| D-08 | 31.10.2026 | Backend luottaa vain Compose-verkossa määritettyyn frontend-proxyyn ja käyttää luotetulta proxylta välitetyn osoiteketjun ensimmäistä luottamatonta hopia IP-käyttörajan avaimena | Jaetun proxy-IP:n aiheuttaman käyttäjien ristiinrajoittamisen ja välitetyn otsakkeen väärinkäytön ehkäisy | Frontendin osoite on `172.30.0.2`, luotettu verkko määritetään `TRUSTED_PROXY_IPS`-asetuksella ja logiikka testataan automaattisesti; todellinen LAN-välitys varmennetaan myöhemmin |
+| D-09 | 31.10.2026 | Frontend käyttää vain proxy-verkkoa ja kutsuu backendia verkkoaliaksella `backend-proxy` | Varmistetaan, että proxyn ja backendin välinen yhteys käyttää sitä verkkoa, jolla proxyn IP on luotettu | Frontendin ja backendin proxy-verkon osoitteet sekä `/api/health`-reitti varmennettiin konttien uudelleenluonnin jälkeen |
+| D-10 | 31.10.2026 | Vanhentuneiden istuntojen siivous suoritetaan kirjautumisesta riippumattomassa tunnin välein ajettavassa tehtävässä; poisto tehdään erissä tunnisteiden perusteella | Vältetään MySQL:n `expires_at`-aluepoiston gap lock -lukkojen ja kirjautumisen sessionlisäyksen välinen deadlock | Kirjautumistransaktio luo vain uuden session; siivoustehtävä kirjaa tietokantavirheet ja jatkaa seuraavalla jaksolla |
 
 ## 11. Muutosloki
 
@@ -259,6 +266,8 @@ Merkittävät tekniset ja projektinhallinnalliset päätökset kirjataan tähän
 | 26.10.2026 | 0.1 | Projektinhallintadokumentin ensimmäinen versio | Projektin toteuttaja |
 | 26.10.2026 | 0.2 | Päivitetty nykytilanne, Sprint-aikataulun tarkennus sekä US-14:n ja US-16:n rajaukset; selkeytetty README:n ja hallintadokumentin vastuut | Projektin toteuttaja |
 | 26.10.2026 | 0.3 | Yhtenäistetty virallinen laajuus, RAG MVP, Ollama ja valittu malli, Docker Compose, lisenssiehtojen tarkistus sekä US-09/US-14-sitoumukset | Projektin toteuttaja |
+| 31.10.2026 | 0.4 | Dokumentoitu proxy-pohjaisen kirjautumisen IP-rajoituksen muutos, testitulokset ja LAN-varmennuksen avoin tarve | Projektin toteuttaja |
+| 31.10.2026 | 0.5 | Pakotettu frontendin backend-reititys luotetun proxy-verkon kautta ja siirretty vanhentuneiden istuntojen siivous kirjautumistransaktion ulkopuolelle | Projektin toteuttaja |
 
 ## 12. Linkit projektin muihin dokumentteihin
 
