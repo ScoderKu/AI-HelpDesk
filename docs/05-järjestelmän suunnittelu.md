@@ -56,6 +56,7 @@ Arkkitehtuurikuva säilyy rakenteeltaan ennallaan. Valitut lisäominaisuudet nä
 - **Monikielisyys:** Frontendin käyttöliittymätekstit ovat saatavilla suomeksi ja englanniksi. Kielivalinta säilytetään selaimessa; tekoälyn vastauskieli määräytyy keskustelun kielen ja agentin kieliohjeiden mukaan.
 - **Docker Compose:** frontend, backend, MySQL ja Ollama käynnistetään README:ssä dokumentoidulla yhdellä komennolla. Ollama käyttää valittua GGUF-mallia Docker-ympäristössä, eikä AI-palvelun suorittaminen riipu host-koneelle asennetusta Ollamasta.
 - **Autentikointi:** rekisteröityminen sekä kirjautuminen ja uloskirjautuminen ovat käytössä. Kirjautumisistunnot tallennetaan MySQL:ään ja kirjautumisyritysten käyttörajat Redisissä.
+- **Proxy ja IP-käyttöraja:** kehityksen Compose-ympäristössä frontend välittää `/api`-pyynnöt backendille kiinteästä osoitteesta `172.30.0.2` erillisessä Docker-verkossa. Backend lukee `X-Forwarded-For`-otsakkeen vain, kun suora yhteyden peer-osoite kuuluu `TRUSTED_PROXY_IPS`-asetuksella määritettyyn luotettuun IP-verkkoon. Ketjua käsitellään oikealta vasemmalle; luotetut proxy-hopit ohitetaan ja ensimmäistä luottamatonta osoitetta käytetään asiakkaan IP-osoitteena. Muiden peerien välittämää otsaketta ei käytetä.
 - **Toimituslaajuus:** US-09 ja US-14 ovat virallisia käyttäjätarinoita. Tukipyyntö luodaan keskustelusta vain käyttäjän tarkistuksen ja vahvistuksen jälkeen; yhteenveto näyttää vain käyttäjän omat kokonais-, `OPEN`- ja `CLOSED`-määrät.
 
 ### 2.2 Frontend
@@ -347,7 +348,7 @@ Autentikointi käyttää MySQL:ään tallennettua palvelinpuolen istuntoa. Sovel
 
 Frontend käyttää oletuksena suhteellista `/api`-polkua. Viten kehityspalvelin proxyaa pyynnöt backendille, ja tuotanto-Nginx proxyaa saman polun backendille. Jos backend tarjotaan eri alkuperästä, `VITE_API_BASE_URL` voidaan asettaa build-vaiheessa backendin alkuperäosoitteeksi ilman `/api`-polkua.
 
-Kirjautumista rajoitetaan Redisissä yhteisillä, atomisilla laskureilla: enintään viisi yritystä sähköpostiosoitetta kohti 15 minuutissa ja 20 yritystä IP-osoitetta kohti minuutissa. Rajan ylitys palauttaa `429 Too Many Requests`-vastauksen ja `Retry-After`-otsakkeen. Rajat tarkistetaan ennen salasanatiivisteen laskentaa; Redis-yhteyden virheessä kirjautuminen estetään ja palautetaan `503`. `X-Forwarded-For`-otsaketta käytetään IP:n tunnistamiseen vain, kun yhteys tulee `TRUSTED_PROXY_IPS`-asetuksessa nimetystä luotetusta proxysta.
+Kirjautumista rajoitetaan Redisissä yhteisillä, atomisilla laskureilla: enintään viisi yritystä sähköpostiosoitetta kohti 15 minuutissa ja 20 yritystä IP-osoitetta kohti minuutissa. Rajan ylitys palauttaa `429 Too Many Requests`-vastauksen ja `Retry-After`-otsakkeen. Rajat tarkistetaan ennen salasanatiivisteen laskentaa; Redis-yhteyden virheessä kirjautuminen estetään ja palautetaan `503`. `X-Forwarded-For`-otsaketta käytetään IP:n tunnistamiseen vain, kun yhteys tulee `TRUSTED_PROXY_IPS`-asetuksessa määritetystä luotetusta proxysta. Ketjua luetaan oikealta vasemmalle luotetut proxy-hopit ohittaen; ensimmäinen luottamaton osoite toimii asiakkaan IP:nä.
 
 ### Tukipyynnöt
 
@@ -526,7 +527,7 @@ POST /api/v1/conversations/25/messages
 4. Backend tarkistaa käyttäjän oikeudet ennen resurssien palauttamista tai muuttamista.
 5. Syötteet validoidaan palvelinpuolella.
 6. Tietokantakyselyissä käytetään parametrisoituja kyselyitä.
-7. Kirjautumisyrityksiä rajoitetaan Redisissä IP-osoitteen ja normalisoidun sähköpostiosoitteen perusteella; raja palauttaa HTTP 429 -vastauksen ja `Retry-After`-otsakkeen.
+7. Kirjautumisyrityksiä rajoitetaan Redisissä asiakkaan IP-osoitteen ja normalisoidun sähköpostiosoitteen perusteella; raja palauttaa HTTP 429 -vastauksen ja `Retry-After`-otsakkeen. IP-osoite otetaan välitetystä otsakkeesta vain suoraan yhdistetyn, erikseen luotetuksi määritetyn proxyn tapauksessa. Luotetut proxy-verkot määritetään `TRUSTED_PROXY_IPS`-ympäristömuuttujassa pilkuin eroteltuina IP-osoitteina tai CIDR-verkkoina. Proxy-ketjussa luotetut hopit ohitetaan oikealta vasemmalle, ja ensimmäistä luottamatonta osoitetta käytetään asiakkaana. Proxyn on lisättävä tai korvattava välitystieto turvallisesti; luottamattoman yhteyden lähettämää `X-Forwarded-For`-otsaketta ei pidä hyväksyä asiakkaan IP:nä.
 8. API-avaimia ja muita salaisuuksia ei tallenneta lähdekoodiin.
 9. Virhelokeihin ei tallenneta salasanoja, autentikointitunnuksia tai tarpeettomia henkilötietoja.
 10. Tekoälypalvelulle lähetetään vain pyynnön käsittelyn kannalta tarpeelliset tiedot.
