@@ -116,6 +116,8 @@ export function AuthPage({
         setNoticeIsSuccess(true)
       } else if (response.status === 401 && !isRegister) {
         setNotice(text.loginInvalidCredentials)
+      } else if (response.status === 429 && !isRegister) {
+        setNotice(text.loginRateLimited)
       } else if (response.status === 409) {
         const payload: unknown = await response.json()
         const detail =
