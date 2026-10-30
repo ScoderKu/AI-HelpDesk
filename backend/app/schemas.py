@@ -35,6 +35,18 @@ class UserRegistrationRequest(BaseModel):
         return self
 
 
+class UserLoginRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=255)
+    password: SecretStr = Field(min_length=1, max_length=128)
+
+    @model_validator(mode="after")
+    def normalize_and_validate(self) -> Self:
+        self.email = self.email.strip().lower()
+        if not EMAIL_PATTERN.fullmatch(self.email):
+            raise ValueError("Enter a valid email address.")
+        return self
+
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

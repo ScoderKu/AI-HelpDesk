@@ -1,7 +1,10 @@
-from datetime import datetime, timezone
+﻿from datetime import datetime, timezone
+import hashlib
+import hmac
 import os
+import time
 
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,11 +16,74 @@ from sqlalchemy.orm import Session
 from app.database import engine, get_db
 from app.models import User
 from app.schemas import (
+    UserLoginRequest,
     UserRegistrationRequest,
     UserRegistrationResponse,
     UserResponse,
 )
-from app.security import hash_password
+from app.security import hash_password, verify_password
+
+SESSION_COOKIE_NAME = "ai_helpdesk_session"
+SESSION_COOKIE_MAX_AGE = 60 * 60 * 8
+SESSION_COOKIE_SECURE = os.getenv("AUTH_COOKIE_SECURE", "true").lower() == "true"
+DUMMY_PASSWORD_HASH = hash_password("invalid-login-dummy-secret")
+
+
+def get_session_secret() -> bytes:
+    secret = os.getenv("JWT_SECRET_KEY", "").encode("utf-8")
+    if len(secret) < 32:
+        raise RuntimeError("JWT_SECRET_KEY must contain at least 32 characters.")
+    return secret
+
+
+def create_session_token(user_id: int) -> str:
+    expires_at = int(time.time()) + SESSION_COOKIE_MAX_AGE
+    payload = f"{user_id}.{expires_at}"
+    signature = hmac.new(
+        get_session_secret(),
+        payload.encode("ascii"),
+        hashlib.sha256,
+    ).hexdigest()
+    return f"{payload}.{signature}"
+
+
+def get_session_user_id(token: str | None) -> int | None:
+    if not token:
+        return None
+
+    try:
+        user_id_text, expires_at_text, signature = token.split(".")
+        user_id = int(user_id_text)
+        expires_at = int(expires_at_text)
+    except ValueError:
+        return None
+
+    if user_id < 1 or expires_at <= int(time.time()):
+        return None
+
+    payload = f"{user_id}.{expires_at}"
+    expected_signature = hmac.new(
+        get_session_secret(),
+        payload.encode("ascii"),
+        hashlib.sha256,
+    ).hexdigest()
+    if not hmac.compare_digest(signature, expected_signature):
+        return None
+    return user_id
+
+
+def get_authenticated_user(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> User:
+    user_id = get_session_user_id(request.cookies.get(SESSION_COOKIE_NAME))
+    user = db.get(User, user_id) if user_id is not None else None
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required.",
+        )
+    return user
 
 app = FastAPI(
     title="AI HelpDesk API",
@@ -40,7 +106,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 @app.exception_handler(RequestValidationError)
 async def validation_error_handler(
     _request: Request,
@@ -58,6 +123,72 @@ async def validation_error_handler(
 
 
 @app.post(
+    "/api/v1/auth/login",
+    response_model=UserResponse,
+    tags=["Authentication"],
+)
+def login_user(
+    credentials: UserLoginRequest,
+    response: Response,
+    db: Session = Depends(get_db),
+) -> UserResponse:
+    user = db.scalar(select(User).where(User.email == credentials.email))
+    password_hash = user.password_hash if user is not None else DUMMY_PASSWORD_HASH
+    password_is_valid = verify_password(
+        credentials.password.get_secret_value(),
+        password_hash,
+    )
+    if user is None or not password_is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password.",
+        )
+
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=create_session_token(user.id),
+        max_age=SESSION_COOKIE_MAX_AGE,
+        httponly=True,
+        secure=SESSION_COOKIE_SECURE,
+        samesite="lax",
+        path="/",
+    )
+    response.headers["Cache-Control"] = "no-store"
+    return UserResponse.model_validate(user)
+
+
+@app.get(
+    "/api/v1/auth/me",
+    response_model=UserResponse,
+    tags=["Authentication"],
+)
+def get_current_user(
+    response: Response,
+    user: User = Depends(get_authenticated_user),
+) -> UserResponse:
+    response.headers["Cache-Control"] = "no-store"
+    return UserResponse.model_validate(user)
+
+
+@app.post(
+    "/api/v1/auth/logout",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["Authentication"],
+)
+def logout_user(response: Response) -> Response:
+    response.headers["Cache-Control"] = "no-store"
+    response.delete_cookie(
+        key=SESSION_COOKIE_NAME,
+        httponly=True,
+        secure=SESSION_COOKIE_SECURE,
+        samesite="lax",
+        path="/",
+    )
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
+
+
+@app.post(
     "/api/v1/auth/register",
     response_model=UserRegistrationResponse,
     status_code=status.HTTP_201_CREATED,
@@ -72,19 +203,18 @@ def register_user(
         select(User.id).where(User.email == registration.email)
     )
     existing_username = db.scalar(
-            select(User.id).where(User.username == registration.username)
+        select(User.id).where(User.username == registration.username)
     )
+    conflicts = []
     if existing_email is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Email address is already registered.",
-        )
-
-    
+        conflicts.append("Email address")
     if existing_username is not None:
+        conflicts.append("Username")
+    if conflicts:
+        verb = "are" if len(conflicts) > 1 else "is"
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Username is already taken.",
+            detail=f"{' and '.join(conflicts)} {verb} already registered.",
         )
 
     now = datetime.now(timezone.utc).replace(tzinfo=None)

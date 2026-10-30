@@ -1,14 +1,18 @@
 import { Icon } from '../components/Icon'
 import { LanguageSwitch } from '../components/LanguageSwitch'
 import type { Copy } from '../i18n/copy'
-import type { AuthMode, Language } from '../types'
+import type { AuthMode, AuthenticatedUser, Language } from '../types'
 
 type HomePageProps = {
   language: Language
   text: Copy
   notice: string
+  currentUser: AuthenticatedUser | null
+  authLoading: boolean
+  isSigningOut: boolean
   onLanguageChange: (language: Language) => void
   onOpenAuth: (mode: AuthMode) => void
+  onSignOut: () => void
   onShowPreviewNotice: () => void
 }
 
@@ -16,8 +20,12 @@ export function HomePage({
   language,
   text,
   notice,
+  currentUser,
+  authLoading,
+  isSigningOut,
   onLanguageChange,
   onOpenAuth,
+  onSignOut,
   onShowPreviewNotice,
 }: HomePageProps) {
   return (
@@ -52,7 +60,11 @@ export function HomePage({
         </nav>
 
         <div className="sidebar-bottom">
-          <div className="sidebar-section-label">{text.account}</div>
+          <div className={`sidebar-section-label${currentUser ? ' sidebar-user-name' : ''}`}>
+            {currentUser
+              ? `${currentUser.first_name} ${currentUser.last_name}`
+              : text.account}
+          </div>
           <button className="nav-link" onClick={onShowPreviewNotice} type="button">
             <Icon name="user" />
             <span>{text.profile}</span>
@@ -65,8 +77,28 @@ export function HomePage({
           <div className="breadcrumb"><span>HelpDesk</span><span className="breadcrumb-divider">/</span>{text.home}</div>
           <div className="topbar-actions">
             <div className="topbar-status"><span className="status-dot" />{text.preview}</div>
-            <button className="topbar-auth-link" onClick={() => onOpenAuth('login')} type="button">{text.signIn}</button>
-            <button className="topbar-auth-link topbar-auth-primary" onClick={() => onOpenAuth('register')} type="button">{text.createAccount}</button>
+            {currentUser ? (
+              <>
+                <span className="signed-in-user" title={currentUser.email}>
+                  {text.signedInAs} {currentUser.username}
+                </span>
+                <button
+                  className="topbar-auth-link"
+                  disabled={isSigningOut}
+                  onClick={onSignOut}
+                  type="button"
+                >
+                  {isSigningOut ? text.signingOut : text.signOut}
+                </button>
+              </>
+            ) : authLoading ? (
+              <span className="topbar-auth-loading">{text.checkingSession}</span>
+            ) : (
+              <>
+                <button className="topbar-auth-link" onClick={() => onOpenAuth('login')} type="button">{text.signIn}</button>
+                <button className="topbar-auth-link topbar-auth-primary" onClick={() => onOpenAuth('register')} type="button">{text.createAccount}</button>
+              </>
+            )}
           </div>
         </header>
 
