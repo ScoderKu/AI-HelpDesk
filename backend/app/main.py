@@ -1,9 +1,11 @@
-﻿from collections.abc import AsyncIterator
+import asyncio
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 import hashlib
 import hmac
 import ipaddress
+import logging
 import os
 import secrets
 import time
@@ -19,7 +21,7 @@ from sqlalchemy import delete, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.database import Base, engine, get_db
+from app.database import Base, SessionLocal, engine, get_db
 from app.models import AuthSession, User
 from app.schemas import (
     UserLoginRequest,
@@ -31,6 +33,8 @@ from app.security import hash_password, verify_password
 
 SESSION_COOKIE_NAME = "ai_helpdesk_session"
 SESSION_COOKIE_MAX_AGE = 60 * 60 * 8
+SESSION_CLEANUP_INTERVAL_SECONDS = 60 * 60
+SESSION_CLEANUP_BATCH_SIZE = 500
 SESSION_COOKIE_SECURE = os.getenv("AUTH_COOKIE_SECURE", "true").lower() == "true"
 FRONTEND_ORIGINS = tuple(
     origin.strip()
@@ -66,6 +70,7 @@ TRUSTED_PROXY_NETWORKS = tuple(
     for value in os.getenv("TRUSTED_PROXY_IPS", "").split(",")
     if value.strip()
 )
+logger = logging.getLogger(__name__)
 redis_client: Redis = Redis.from_url(
     os.getenv("REDIS_URL", "redis://localhost:6379/0"),
     decode_responses=True,
@@ -145,6 +150,33 @@ def get_session_secret() -> bytes:
     return secret
 
 
+def cleanup_expired_sessions() -> None:
+    with SessionLocal() as db:
+        while True:
+            expiration_cutoff = datetime.now(timezone.utc).replace(tzinfo=None)
+            expired_session_ids = db.scalars(
+                select(AuthSession.id)
+                .where(AuthSession.expires_at <= expiration_cutoff)
+                .limit(SESSION_CLEANUP_BATCH_SIZE)
+            ).all()
+            if not expired_session_ids:
+                return
+
+            db.execute(
+                delete(AuthSession).where(AuthSession.id.in_(expired_session_ids))
+            )
+            db.commit()
+
+
+async def cleanup_expired_sessions_periodically() -> None:
+    while True:
+        try:
+            await asyncio.to_thread(cleanup_expired_sessions)
+        except SQLAlchemyError:
+            logger.exception("Failed to clean up expired authentication sessions.")
+        await asyncio.sleep(SESSION_CLEANUP_INTERVAL_SECONDS)
+
+
 def create_session_token(user_id: int, expires_at: int, session_id: str) -> str:
     payload = f"{user_id}.{expires_at}.{session_id}"
     signature = hmac.new(
@@ -214,9 +246,17 @@ def get_authenticated_user(
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     Base.metadata.create_all(bind=engine)
     redis_client.ping()
+    session_cleanup_task = asyncio.create_task(
+        cleanup_expired_sessions_periodically()
+    )
     try:
         yield
     finally:
+        session_cleanup_task.cancel()
+        try:
+            await session_cleanup_task
+        except asyncio.CancelledError:
+            pass
         redis_client.close()
 
 
@@ -278,7 +318,6 @@ def login_user(
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     expires_at = int(time.time()) + SESSION_COOKIE_MAX_AGE
     session_id = secrets.token_hex(16)
-    db.execute(delete(AuthSession).where(AuthSession.expires_at <= now))
     db.add(
         AuthSession(
             id=session_id,

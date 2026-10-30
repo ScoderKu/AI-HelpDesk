@@ -12,10 +12,9 @@ services:
     - /app/node_modules
     environment:
     - CHOKIDAR_USEPOLLING=true
-    - API_PROXY_TARGET=http://backend:8000
+    - API_PROXY_TARGET=http://backend-proxy:8000
     command: npm run dev -- --host 0.0.0.0 --port 5173
     networks:
-      default: {}
       proxy:
         ipv4_address: 172.30.0.2
     depends_on:
@@ -40,7 +39,10 @@ services:
       TRUSTED_PROXY_IPS: "${TRUSTED_PROXY_IPS:-172.30.0.2/32}"
     networks:
       default: {}
-      proxy: {}
+      proxy:
+        ipv4_address: 172.30.0.3
+        aliases:
+          - backend-proxy
     depends_on:
       mysql:
         condition: service_healthy
