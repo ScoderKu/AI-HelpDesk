@@ -72,7 +72,7 @@ Käynnistä frontend, backend, MySQL, Redis ja Ollama yhdellä komennolla:
 docker compose up --build
 ```
 
-Paikalliseen HTTP-kehitykseen aseta `.env`-tiedostossa `AUTH_COOKIE_SECURE=false`. Tämä Compose-asetus rajaa frontendin ja backendin `127.0.0.1`-osoitteeseen; sovellus ei tällä asetuksella ole muiden lähiverkon laitteiden käytettävissä. Frontend välittää `/api`-pyynnöt samalle alkuperälle: Viten kehityspalvelin välittää ne backendille ja tuotannon Nginx proxyaa ne backendille. HTTPS-tuotannossa käytä `AUTH_COOKIE_SECURE=true`, aseta `FRONTEND_ORIGINS` sisältämään sovelluksen tarkka HTTPS-alkuperä ja käytä HTTPS:ää tarjoavaa reverse proxyä. Aseta `VITE_API_BASE_URL` vain, jos backendin API on eri alkuperässä; arvon tulee olla backendin alkuperäosoite ilman `/api`-polkua.
+Paikalliseen HTTP-kehitykseen aseta `.env`-tiedostossa `AUTH_COOKIE_SECURE=false`. Tämä Compose-asetus rajaa frontendin ja backendin `127.0.0.1`-osoitteeseen; sovellus ei tällä asetuksella ole muiden lähiverkon laitteiden käytettävissä. Frontend välittää `/api`-pyynnöt samalle alkuperälle: Viten kehityspalvelin välittää ne backendille ja tuotannon Nginx proxyaa ne backendille. Compose-ympäristössä frontend-proxylla on kiinteä osoite `172.30.0.2` erillisessä verkossa; `TRUSTED_PROXY_IPS`-asetuksen oletusarvo rajaa luottamuksen tähän osoitteeseen. Backend käyttää asiakkaan IP:nä luotetulta proxylta välitetyn ketjun ensimmäistä luottamatonta osoitetta. Jos muutat Compose-verkon tai proxyn osoitetta, päivitä myös `TRUSTED_PROXY_IPS`. Nykyistä IP-välitystä ei ole vielä varmennettu kahdella oikealla LAN-laitteella. HTTPS-käyttöönotossa käytä `AUTH_COOKIE_SECURE=true`, aseta `FRONTEND_ORIGINS` sisältämään sovelluksen tarkka HTTPS-alkuperä ja käytä HTTPS:ää tarjoavaa reverse proxyä; määritä myös kyseisen proxyn luottamus erikseen. Aseta `VITE_API_BASE_URL` vain, jos backendin API on eri alkuperässä; arvon tulee olla backendin alkuperäosoite ilman `/api`-polkua.
 
 ### Testaus
 
@@ -84,7 +84,13 @@ npm run build
 npm run lint
 ```
 
-Keskeisten toimintojen hyväksymiskriteerit ja suunnitellut testit on kuvattu käyttäjätarinoissa ja vaatimusmäärittelyssä. Rekisteröityminen ja istuntopohjainen kirjautuminen toimivat; chat- ja tukipyyntötoiminnot odottavat backend-integraatiota.
+Backendin asiakkaan IP:n proxy-käsittelyn yksikkötestit voi ajaa projektin juuresta Dockerilla:
+
+```powershell
+docker compose run --build --rm --no-deps backend python -m unittest discover -s tests -v
+```
+
+Testit kattavat luotetun ja luottamattoman proxyn, proxy-ketjun, asiakkaiden erilliset IP-avaimet sekä puuttuvat ja virheelliset välitysotsakkeet. Ne eivät korvaa oikeassa LAN-verkossa tehtävää välitystestiä. Keskeisten toimintojen hyväksymiskriteerit ja muut suunnitellut testit on kuvattu käyttäjätarinoissa ja vaatimusmäärittelyssä. Rekisteröityminen ja istuntopohjainen kirjautuminen toimivat; chat- ja tukipyyntötoiminnot odottavat backend-integraatiota.
 
 ### Kuvat
 
@@ -168,7 +174,7 @@ Start the frontend, backend, MySQL, Redis, and Ollama with:
 docker compose up --build
 ```
 
-For local HTTP development, set `AUTH_COOKIE_SECURE=false` in `.env`. Compose binds the frontend and backend to `127.0.0.1`, so this setup is not accessible from other devices on the LAN. The frontend sends `/api` requests through the same-origin proxy: Vite forwards them to the backend in development, and production Nginx proxies them to the backend. For HTTPS production, use `AUTH_COOKIE_SECURE=true`, set `FRONTEND_ORIGINS` to include the exact HTTPS application origin, and use an HTTPS reverse proxy. Set frontend `VITE_API_BASE_URL` only when the backend API uses a different origin; its value must be the backend origin without an `/api` path.
+For local HTTP development, set `AUTH_COOKIE_SECURE=false` in `.env`. Compose binds the frontend and backend to `127.0.0.1`, so this setup is not accessible from other devices on the LAN. The frontend sends `/api` requests through the same-origin proxy: Vite forwards them to the backend in development, and production Nginx proxies them to the backend. In Compose, the frontend proxy has the fixed address `172.30.0.2` on a separate network; the default `TRUSTED_PROXY_IPS` value limits trust to that address. The backend uses the first untrusted address in the chain forwarded by a trusted proxy as the client IP. If you change the Compose network or proxy address, update `TRUSTED_PROXY_IPS` as well. Forwarding has not yet been verified using two real LAN devices. For an HTTPS deployment, use `AUTH_COOKIE_SECURE=true`, set `FRONTEND_ORIGINS` to include the exact HTTPS application origin, and use an HTTPS reverse proxy; configure trust for that proxy separately. Set frontend `VITE_API_BASE_URL` only when the backend API uses a different origin; its value must be the backend origin without an `/api` path.
 
 ### Testing
 
@@ -180,7 +186,13 @@ npm run build
 npm run lint
 ```
 
-Acceptance criteria and planned tests for key features are described in the user stories and requirements specification. Registration and session-based sign-in are implemented; chat and support-ticket features still need backend integration.
+Run the backend unit tests for proxy client-IP handling from the project root using Docker:
+
+```powershell
+docker compose run --build --rm --no-deps backend python -m unittest discover -s tests -v
+```
+
+The tests cover trusted and untrusted proxies, proxy chains, distinct client IP keys, and missing or malformed forwarded headers. They do not replace a forwarding test on a real LAN. Acceptance criteria and other planned tests for key features are described in the user stories and requirements specification. Registration and session-based sign-in are implemented; chat and support-ticket features still need backend integration.
 
 ### Screenshots
 

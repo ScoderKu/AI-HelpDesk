@@ -61,8 +61,8 @@ return {
     redis.call('TTL', KEYS[2])
 }
 """
-TRUSTED_PROXY_IPS = frozenset(
-    ipaddress.ip_address(value.strip())
+TRUSTED_PROXY_NETWORKS = tuple(
+    ipaddress.ip_network(value.strip(), strict=False)
     for value in os.getenv("TRUSTED_PROXY_IPS", "").split(",")
     if value.strip()
 )
@@ -78,7 +78,7 @@ def get_client_ip(request: Request) -> str:
     peer_ip = ipaddress.ip_address(
         request.client.host if request.client is not None else "0.0.0.0"
     )
-    if peer_ip not in TRUSTED_PROXY_IPS:
+    if not any(peer_ip in network for network in TRUSTED_PROXY_NETWORKS):
         return str(peer_ip)
 
     forwarded_for = request.headers.get("x-forwarded-for")
@@ -90,8 +90,12 @@ def get_client_ip(request: Request) -> str:
             ]
         except ValueError:
             return str(peer_ip)
-        if forwarded_ips:
-            return str(forwarded_ips[-1])
+
+        for forwarded_ip in reversed(forwarded_ips):
+            if not any(
+                forwarded_ip in network for network in TRUSTED_PROXY_NETWORKS
+            ):
+                return str(forwarded_ip)
     return str(peer_ip)
 
 

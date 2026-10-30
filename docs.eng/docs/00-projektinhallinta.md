@@ -142,6 +142,7 @@ Risks are assessed qualitatively based on impact and likelihood. The register is
 | R7 | User interface translations remain incomplete | Medium | Medium | Centralize text in language resources; test key views in Finnish and English | Review in Sprint 4 |
 | R8 | Testing and documentation are left until the last minute | Medium | High | Record tests alongside implementation; reserve dedicated time in Sprint 5 for integration testing and documentation | Review during Sprint Review |
 | R9 | The size, resource requirements, or license terms of the local GGUF model prevent a reliable demo | Medium | High | Test model loading and use in the project's Docker environment early; check the model and tools' licenses and terms of use before delivery | Review in Sprint 1 and before the presentation |
+| R10 | The login IP limit identifies the Docker proxy instead of the actual client, or trusts incorrect forwarded address data | Medium | Medium | Assign the frontend proxy a fixed IP on a separate Compose network; read `X-Forwarded-For` only from a trusted proxy and select the first untrusted address from the right; also test forged and malformed headers | Unit tests passed; verify with real LAN clients before LAN deployment |
 
 ### 7.1 Procedure When a Risk Materializes
 
@@ -201,6 +202,8 @@ Progress is described primarily through verifiable outcomes, not merely a percen
 - the frontend, backend, database, and Ollama start with the documented Docker Compose command, and the backend receives a response from Ollama
 - the README, API documentation, and ER diagram reflect the implemented system.
 
+**Status on 31.10.2026:** Proxy handling for the login IP rate limit has been clarified. The frontend has a fixed address on a dedicated Docker proxy network, and the backend processes the `X-Forwarded-For` chain only when the peer is trusted. Six backend unit tests cover trusted and untrusted peers, single and chained proxy hops, distinct client addresses, and malformed or missing headers. The tests and Compose configuration validation passed. Forwarding between two actual LAN devices has not yet been tested and must be verified before LAN use. The current Compose port binding remains `127.0.0.1`, so this configuration is not accessible from other LAN devices.
+
 ### 8.4 Definition of Done
 
 A user story or function can be marked complete when:
@@ -247,6 +250,7 @@ Significant technical and project management decisions are recorded in this tabl
 | D-05 | 26.10.2026 | The target AI model is `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`, used through Ollama | The project's selected local model | The model is started in an Ollama container; the model file location and persistent model storage are documented |
 | D-06 | 26.10.2026 | The RAG MVP processes Markdown and TXT documents using keyword search; semantic search is added only based on test evidence | A limited and testable MVP implementation | The source collection is limited before implementation; the ER schema is not changed without a new persistent data need |
 | D-07 | 26.10.2026 | Tools and libraries must be free, and their licenses and terms of use are checked | Technology decision confirmed by the group | Choices and possible limitations are documented before delivery |
+| D-08 | 31.10.2026 | The backend trusts only the frontend proxy defined on the Compose network and uses the first untrusted hop in the trusted proxy's forwarded address chain as the login IP-rate-limit key | Prevent shared-proxy IPs from cross-limiting users and prevent misuse of forwarded headers | The frontend address is `172.30.0.2`, the trusted network is configured through `TRUSTED_PROXY_IPS`, and the logic is tested automatically; actual LAN forwarding will be verified later |
 
 ## 11. Change Log
 
@@ -255,6 +259,7 @@ Significant technical and project management decisions are recorded in this tabl
 | 26.10.2026 | 0.1 | First version of the project management document | Project implementer |
 | 26.10.2026 | 0.2 | Updated current status, clarified the Sprint schedule and the scope of US-14 and US-16; clarified the responsibilities of the README and governance document | Project implementer |
 | 26.10.2026 | 0.3 | Aligned the official scope, RAG MVP, Ollama and selected model, Docker Compose, license term checks, and US-09/US-14 commitments | Project implementer |
+| 31.10.2026 | 0.4 | Documented the proxy-based login IP rate-limit change, test results, and outstanding LAN verification | Project implementer |
 
 ## 12. Links to Other Project Documents
 

@@ -56,6 +56,7 @@ The architecture diagram will remain structurally unchanged. The selected additi
 - **Multilingual support:** Frontend user interface text is available in Finnish and English. The language selection is retained in the browser; the AI response language is determined by the conversation language and the agent's language instructions.
 - **Docker Compose:** the frontend, backend, MySQL, and Ollama are started with one command documented in the README. Ollama uses the selected GGUF model in the Docker environment, and running the AI service does not depend on Ollama being installed on the host machine.
 - **Authentication:** registration, sign-in, and sign-out are implemented. Login sessions are stored in MySQL and login-attempt limits are shared through Redis.
+- **Proxy and IP rate limit:** in the Compose development environment, the frontend forwards `/api` requests to the backend from the fixed address `172.30.0.2` on a separate Docker network. The backend reads the `X-Forwarded-For` header only when the direct peer address belongs to the trusted IP network configured through `TRUSTED_PROXY_IPS`. The chain is processed from right to left; trusted proxy hops are skipped and the first untrusted address is used as the client IP. Forwarded headers from other peers are ignored.
 - **Delivery scope:** US-09 and US-14 are official user stories. A support ticket is created from a conversation only after the user has reviewed and confirmed it; the summary shows only the user's own total, `OPEN`, and `CLOSED` counts.
 
 ### 2.2 Frontend
@@ -347,7 +348,7 @@ Authentication uses a server-side session stored in MySQL. At startup, SQLAlchem
 
 The frontend defaults to the relative `/api` path. The Vite development server proxies requests to the backend, and production Nginx proxies the same path to the backend. If the backend is served from a different origin, `VITE_API_BASE_URL` can be set at build time to the backend origin without an `/api` path.
 
-Login attempts are limited using shared atomic Redis counters: at most five attempts per email address per 15 minutes and 20 attempts per IP address per minute. Exceeding a limit returns `429 Too Many Requests` with a `Retry-After` header. Limits are checked before password hashing; if Redis is unavailable, login fails closed with `503`. `X-Forwarded-For` is used to identify the client IP only when the connection comes from a proxy listed in `TRUSTED_PROXY_IPS`.
+Login attempts are limited using shared atomic Redis counters: at most five attempts per email address per 15 minutes and 20 attempts per IP address per minute. Exceeding a limit returns `429 Too Many Requests` with a `Retry-After` header. Limits are checked before password hashing; if Redis is unavailable, login fails closed with `503`. `X-Forwarded-For` is used to identify the client IP only when the connection comes from a proxy configured in `TRUSTED_PROXY_IPS`. The chain is read from right to left, skipping trusted proxy hops; the first untrusted address is used as the client IP.
 
 ### Support Tickets
 
@@ -526,7 +527,7 @@ POST /api/v1/conversations/25/messages
 4. The backend checks the user's permissions before returning or modifying resources.
 5. Inputs are validated on the server side.
 6. Parameterized queries are used for database queries.
-7. Login attempts are limited in Redis by client IP and normalized email address; exceeding a limit returns HTTP 429 with a `Retry-After` header.
+7. Login attempts are limited in Redis by client IP and normalized email address; exceeding a limit returns HTTP 429 with a `Retry-After` header. The forwarded address is used only when the direct peer is a specifically trusted proxy. Trusted proxy networks are configured through the comma-separated IP addresses or CIDR networks in the `TRUSTED_PROXY_IPS` environment variable. In a proxy chain, trusted hops are skipped from right to left and the first untrusted address is used as the client. The proxy must add or replace forwarding data safely; `X-Forwarded-For` sent by an untrusted connection must not be accepted as the client IP.
 8. API keys and other secrets are not stored in source code.
 9. Passwords, authentication tokens, or unnecessary personal data are not stored in error logs.
 10. Only information necessary to process the request is sent to the AI service.
