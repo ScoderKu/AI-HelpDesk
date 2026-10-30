@@ -1,14 +1,16 @@
 import { useState, type FormEvent } from 'react'
 import { Icon } from '../components/Icon'
 import { LanguageSwitch } from '../components/LanguageSwitch'
+import { API_BASE_URL } from '../api'
 import type { Copy } from '../i18n/copy'
-import type { AuthMode, Language } from '../types'
+import type { AuthMode, AuthenticatedUser, Language } from '../types'
 
 type AuthPageProps = {
   mode: AuthMode
   language: Language
   text: Copy
   onLanguageChange: (language: Language) => string
+  onLoginSuccess: (user: AuthenticatedUser) => void
   onModeChange: (mode: AuthMode) => void
   onBack: () => void
 }
@@ -18,6 +20,7 @@ export function AuthPage({
   language,
   text,
   onLanguageChange,
+  onLoginSuccess,
   onModeChange,
   onBack,
 }: AuthPageProps) {
@@ -73,39 +76,48 @@ export function AuthPage({
 
     setErrors(nextErrors)
     setNotice(
-      isRegister && Object.keys(nextErrors).length > 0
-        ? text.registrationValidationError
+      Object.keys(nextErrors).length > 0
+        ? isRegister
+          ? text.registrationValidationError
+          : text.loginValidationError
         : '',
     )
     setNoticeIsSuccess(false)
     if (Object.keys(nextErrors).length > 0) return
 
-    if (!isRegister) {
-      setNotice(text.authUnavailable)
-      return
-    }
-
     setIsSubmitting(true)
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'}/api/v1/auth/register`,
+        `${API_BASE_URL}/api/v1/auth/${isRegister ? 'register' : 'login'}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            first_name: values.firstName,
-            last_name: values.lastName,
-            username: values.username,
-            email: values.email,
-            password: values.password,
-          }),
+          credentials: 'include',
+          body: JSON.stringify(
+            isRegister
+              ? {
+                  first_name: values.firstName,
+                  last_name: values.lastName,
+                  username: values.username,
+                  email: values.email,
+                  password: values.password,
+                }
+              : { email: values.email, password: values.password },
+          ),
         },
       )
 
-      if (response.status === 201) {
+      if (response.status === 200 && !isRegister) {
+        const user: AuthenticatedUser = await response.json()
+        onLoginSuccess(user)
+      } else if (response.status === 201 && isRegister) {
         form.reset()
         setNotice(text.registrationSuccess)
         setNoticeIsSuccess(true)
+      } else if (response.status === 401 && !isRegister) {
+        setNotice(text.loginInvalidCredentials)
+      } else if (response.status === 429 && !isRegister) {
+        setNotice(text.loginRateLimited)
       } else if (response.status === 409) {
         const payload: unknown = await response.json()
         const detail =
@@ -155,12 +167,14 @@ export function AuthPage({
           })
         }
         setErrors(validationErrors)
-        setNotice(text.registrationValidationError)
+        setNotice(
+          isRegister ? text.registrationValidationError : text.loginValidationError,
+        )
       } else {
-        setNotice(text.registrationError)
+        setNotice(isRegister ? text.registrationError : text.loginError)
       }
     } catch {
-      setNotice(text.registrationNetworkError)
+      setNotice(isRegister ? text.registrationNetworkError : text.loginNetworkError)
     } finally {
       setIsSubmitting(false)
     }
@@ -296,7 +310,9 @@ export function AuthPage({
               type="submit"
             >
               {isSubmitting
-                ? text.registerSubmitting
+                ? isRegister
+                  ? text.registerSubmitting
+                  : text.loginSubmitting
                 : isRegister
                   ? text.registerSubmit
                   : text.loginSubmit}
