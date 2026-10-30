@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator
+﻿from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 import hashlib
@@ -19,7 +19,7 @@ from sqlalchemy import delete, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.database import engine, get_db
+from app.database import Base, engine, get_db
 from app.models import AuthSession, User
 from app.schemas import (
     UserLoginRequest,
@@ -32,6 +32,14 @@ from app.security import hash_password, verify_password
 SESSION_COOKIE_NAME = "ai_helpdesk_session"
 SESSION_COOKIE_MAX_AGE = 60 * 60 * 8
 SESSION_COOKIE_SECURE = os.getenv("AUTH_COOKIE_SECURE", "true").lower() == "true"
+FRONTEND_ORIGINS = tuple(
+    origin.strip()
+    for origin in os.getenv(
+        "FRONTEND_ORIGINS",
+        "http://localhost:8088,http://127.0.0.1:8088",
+    ).split(",")
+    if origin.strip()
+)
 DUMMY_PASSWORD_HASH = hash_password("invalid-login-dummy-secret")
 LOGIN_IP_ATTEMPT_LIMIT = 20
 LOGIN_IP_WINDOW_SECONDS = 60
@@ -200,7 +208,7 @@ def get_authenticated_user(
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    AuthSession.__table__.create(bind=engine, checkfirst=True)
+    Base.metadata.create_all(bind=engine)
     redis_client.ping()
     try:
         yield
@@ -217,14 +225,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        origin.strip()
-        for origin in os.getenv(
-            "FRONTEND_ORIGINS",
-            "http://localhost:8088,http://127.0.0.1:8088",
-        ).split(",")
-        if origin.strip()
-    ],
+    allow_origins=list(FRONTEND_ORIGINS),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -322,6 +323,12 @@ def logout_user(
     response: Response,
     db: Session = Depends(get_db),
 ) -> Response:
+    if request.headers.get("origin") not in FRONTEND_ORIGINS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Request origin is not allowed.",
+        )
+
     response.headers["Cache-Control"] = "no-store"
     claims = get_session_claims(request.cookies.get(SESSION_COOKIE_NAME))
     if claims is not None:

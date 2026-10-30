@@ -16,7 +16,7 @@ The design aims to create a clear and maintainable structure that supports the a
 - Creating a support ticket based on a conversation.
 - Knowledge-based AI assistance, in which the Knowledge Service retrieves technical documentation related to the conversation.
 - A Finnish- and English-language user interface.
-- Starting the frontend, backend, MySQL database, and Ollama AI service with a single Docker Compose command.
+- Starting the frontend, backend, MySQL database, Redis, and Ollama AI service with a single Docker Compose command.
 - Creating a support ticket from a conversation only after the user has reviewed and confirmed it, and a limited summary of the user's own support tickets.
 
 ### 1.2 System Objectives
@@ -55,6 +55,7 @@ The architecture diagram will remain structurally unchanged. The selected additi
 - **RAG:** Chat Service uses Knowledge Service, which searches a limited collection of Markdown and TXT documents by keywords. The found content and actual source information are passed to AI Service and displayed with the response. If no suitable content is found, the response is not presented as being supported by documentation. Semantic search is not part of the MVP and will be considered only on the basis of test evidence.
 - **Multilingual support:** Frontend user interface text is available in Finnish and English. The language selection is retained in the browser; the AI response language is determined by the conversation language and the agent's language instructions.
 - **Docker Compose:** the frontend, backend, MySQL, and Ollama are started with one command documented in the README. Ollama uses the selected GGUF model in the Docker environment, and running the AI service does not depend on Ollama being installed on the host machine.
+- **Authentication:** registration, sign-in, and sign-out are implemented. Login sessions are stored in MySQL and login-attempt limits are shared through Redis.
 - **Delivery scope:** US-09 and US-14 are official user stories. A support ticket is created from a conversation only after the user has reviewed and confirmed it; the summary shows only the user's own total, `OPEN`, and `CLOSED` counts.
 
 ### 2.2 Frontend
@@ -109,6 +110,7 @@ The system uses a MySQL database as its primary relational database.
 The database stores:
 
 - User information.
+- Active login sessions and their expiration times.
 - Support tickets and their statuses.
 - Conversations.
 - Conversation messages.
@@ -213,6 +215,8 @@ The ER diagram describes the MVP data model and will be kept unchanged. The RAG 
 | password_hash | VARCHAR(255) | NOT NULL | Password hash |
 | created_at | DATETIME | NOT NULL | Creation time |
 | updated_at | DATETIME | NOT NULL | Last update time |
+
+Login sessions are also stored in the technical `auth_sessions` table. It contains a random session identifier, a user foreign key, and creation and expiration timestamps. Signing out deletes the session so a copied session cookie can no longer be used. This operational table is not part of the current conceptual ER diagram.
 
 ## 4.3 Table: tickets
 
@@ -326,17 +330,24 @@ The REST API serves as the interface between the frontend and backend.
 
 ## 5.2 Endpoints
 
+Registration, login, logout, and current-user lookup in the authentication routes below are implemented. Ticket, conversation, search, and profile routes describe the planned API and are not implemented yet.
+
 ### Authentication and User Account
 
 | HTTP Method | Endpoint | Description | Authentication |
 |------------|----------|---------|--------------|
 | POST | `/api/v1/auth/register` | Creates a user account | No |
 | POST | `/api/v1/auth/login` | Logs the user in | No |
-| POST | `/api/v1/auth/logout` | Logs the user out | Yes |
-| GET | `/api/v1/users/me` | Retrieves the logged-in user's profile | Yes |
-| PATCH | `/api/v1/users/me` | Updates the user's profile | Yes |
+| POST | `/api/v1/auth/logout` | Signs the user out and revokes the current session when a valid cookie is present | Session cookie |
+| GET | `/api/v1/auth/me` | Returns the current signed-in user | Yes |
+| GET | `/api/v1/users/me` | Retrieves the logged-in user's profile | Planned |
+| PATCH | `/api/v1/users/me` | Updates the user's profile | Planned |
 
-Authentication is implemented with a server-side session. A successful login creates a session and sets a browser cookie containing the session identifier with the `HttpOnly` attribute. In production, the cookie is protected with `Secure` and uses the `SameSite=Lax` setting. Browser requests that change state are protected with a CSRF check. Logging out invalidates the server-side session and removes the cookie. The session storage solution is part of the backend configuration and does not change the ER diagram's table structure.
+Authentication uses a server-side session stored in MySQL. At startup, SQLAlchemy creates missing model tables in dependency order, so `users` is created before the referencing `auth_sessions` table. The cookie contains an HMAC-signed user ID, expiration time, and session ID; it is `HttpOnly`, uses `SameSite=Lax`, and expires after eight hours. `AUTH_COOKIE_SECURE` controls the `Secure` attribute: Compose defaults it to `true`; set `AUTH_COOKIE_SECURE=false` only in `.env` for local HTTP development. Keep it `true` in HTTPS production. Sign-out deletes the MySQL session and the browser cookie. The logout request's `Origin` header must exactly match an origin configured in `FRONTEND_ORIGINS`; missing or unrecognized origins are rejected. A separate CSRF token is not used.
+
+The frontend defaults to the relative `/api` path. The Vite development server proxies requests to the backend, and production Nginx proxies the same path to the backend. If the backend is served from a different origin, `VITE_API_BASE_URL` can be set at build time to the backend origin without an `/api` path.
+
+Login attempts are limited using shared atomic Redis counters: at most five attempts per email address per 15 minutes and 20 attempts per IP address per minute. Exceeding a limit returns `429 Too Many Requests` with a `Retry-After` header. Limits are checked before password hashing; if Redis is unavailable, login fails closed with `503`. `X-Forwarded-For` is used to identify the client IP only when the connection comes from a proxy listed in `TRUSTED_PROXY_IPS`.
 
 ### Support Tickets
 
@@ -417,17 +428,15 @@ POST /api/v1/auth/login
 
 ```json
 {
-  "user": {
-    "id": 12,
-    "first_name": "Example",
-    "last_name": "User",
-    "username": "exampleuser",
-    "email": "user@example.com"
-  }
+  "id": 12,
+  "first_name": "Example",
+  "last_name": "User",
+  "username": "exampleuser",
+  "email": "user@example.com"
 }
 ```
 
-The login response also includes a `Set-Cookie` header to set the session cookie. The browser automatically sends the cookie with protected requests.
+A successful login returns HTTP 200 and a `Set-Cookie` header. Invalid credentials return a generic HTTP 401 response; exceeding a limit returns HTTP 429. `GET /api/v1/auth/me` returns the same user object only for a valid session.
 
 ## 5.4 Example Request: Creating a Support Ticket
 
@@ -517,7 +526,7 @@ POST /api/v1/conversations/25/messages
 4. The backend checks the user's permissions before returning or modifying resources.
 5. Inputs are validated on the server side.
 6. Parameterized queries are used for database queries.
-7. Usage limits may be set for login and AI requests.
+7. Login attempts are limited in Redis by client IP and normalized email address; exceeding a limit returns HTTP 429 with a `Retry-After` header.
 8. API keys and other secrets are not stored in source code.
 9. Passwords, authentication tokens, or unnecessary personal data are not stored in error logs.
 10. Only information necessary to process the request is sent to the AI service.
