@@ -21,7 +21,7 @@ from sqlalchemy import delete, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.database import Base, SessionLocal, engine, get_db
+from app.database import SessionLocal, engine, get_db
 from app.models import AuthSession, User
 from app.schemas import (
     UserLoginRequest,
@@ -47,23 +47,27 @@ FRONTEND_ORIGINS = tuple(
 DUMMY_PASSWORD_HASH = hash_password("invalid-login-dummy-secret")
 LOGIN_IP_ATTEMPT_LIMIT = 20
 LOGIN_IP_WINDOW_SECONDS = 60
-LOGIN_ACCOUNT_ATTEMPT_LIMIT = 5
+LOGIN_ACCOUNT_FAILURE_LIMIT = 5
 LOGIN_ACCOUNT_WINDOW_SECONDS = 15 * 60
-LOGIN_RATE_LIMIT_SCRIPT = """
+LOGIN_ATTEMPT_CHECK_SCRIPT = """
 local ip_count = redis.call('INCR', KEYS[1])
 if ip_count == 1 then
     redis.call('EXPIRE', KEYS[1], ARGV[1])
 end
-local account_count = redis.call('INCR', KEYS[2])
-if account_count == 1 then
-    redis.call('EXPIRE', KEYS[2], ARGV[2])
-end
+local account_failures = tonumber(redis.call('GET', KEYS[2]) or '0')
 return {
     ip_count,
-    account_count,
+    account_failures,
     redis.call('TTL', KEYS[1]),
     redis.call('TTL', KEYS[2])
 }
+"""
+RECORD_LOGIN_FAILURE_SCRIPT = """
+local account_failures = redis.call('INCR', KEYS[1])
+if account_failures == 1 then
+    redis.call('EXPIRE', KEYS[1], ARGV[1])
+end
+return {account_failures, redis.call('TTL', KEYS[1])}
 """
 TRUSTED_PROXY_NETWORKS = tuple(
     ipaddress.ip_network(value.strip(), strict=False)
@@ -106,20 +110,15 @@ def get_client_ip(request: Request) -> str:
 
 def enforce_login_rate_limit(request: Request, email: str) -> None:
     client_ip_hash = hashlib.sha256(get_client_ip(request).encode()).hexdigest()
-    account_hash = hmac.new(
-        get_session_secret(),
-        email.encode("utf-8"),
-        hashlib.sha256,
-    ).hexdigest()
+    account_key = get_login_account_key(email)
 
     try:
         counts = redis_client.eval(
-            LOGIN_RATE_LIMIT_SCRIPT,
+            LOGIN_ATTEMPT_CHECK_SCRIPT,
             2,
             f"login-limit:ip:{client_ip_hash}",
-            f"login-limit:account:{account_hash}",
+            account_key,
             LOGIN_IP_WINDOW_SECONDS,
-            LOGIN_ACCOUNT_WINDOW_SECONDS,
         )
     except RedisError as error:
         raise HTTPException(
@@ -127,19 +126,55 @@ def enforce_login_rate_limit(request: Request, email: str) -> None:
             detail="Sign-in is temporarily unavailable.",
         ) from error
 
-    ip_count, account_count, ip_ttl, account_ttl = (
+    ip_count, account_failures, ip_ttl, account_ttl = (
         int(value) for value in counts
     )
     retry_after = 0
     if ip_count > LOGIN_IP_ATTEMPT_LIMIT:
-        retry_after = max(retry_after, ip_ttl)
-    if account_count > LOGIN_ACCOUNT_ATTEMPT_LIMIT:
-        retry_after = max(retry_after, account_ttl)
+        retry_after = max(retry_after, ip_ttl, 1)
+    if account_failures >= LOGIN_ACCOUNT_FAILURE_LIMIT:
+        retry_after = max(retry_after, account_ttl, 1)
     if retry_after:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Too many sign-in attempts. Please try again later.",
             headers={"Retry-After": str(retry_after)},
+        )
+
+
+def get_login_account_key(email: str) -> str:
+    account_hash = hmac.new(
+        get_session_secret(),
+        email.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    return f"login-limit:account:{account_hash}"
+
+
+def record_failed_login(email: str) -> None:
+    try:
+        failures, ttl = (
+            int(value)
+            for value in redis_client.eval(
+                RECORD_LOGIN_FAILURE_SCRIPT,
+                1,
+                get_login_account_key(email),
+                LOGIN_ACCOUNT_WINDOW_SECONDS,
+            )
+        )
+    except RedisError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Sign-in is temporarily unavailable.",
+        ) from error
+
+    # Normally the pre-check blocks at the threshold. This catches concurrent
+    # failures that passed the pre-check before another request reached it.
+    if failures > LOGIN_ACCOUNT_FAILURE_LIMIT:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many sign-in attempts. Please try again later.",
+            headers={"Retry-After": str(max(ttl, 1))},
         )
 
 
@@ -244,7 +279,6 @@ def get_authenticated_user(
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    Base.metadata.create_all(bind=engine)
     redis_client.ping()
     session_cleanup_task = asyncio.create_task(
         cleanup_expired_sessions_periodically()
@@ -310,6 +344,7 @@ def login_user(
         password_hash,
     )
     if user is None or not password_is_valid:
+        record_failed_login(credentials.email)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password.",

@@ -108,6 +108,7 @@ Projektin teknisten ratkaisujen on täytettävä seuraavat ehdot:
 - Tietokantana käytetään MySQL-järjestelmää.
 - Backend tarjoaa REST-rajapinnan.
 - Tekoälyintegraatio käyttää Ollamaa Docker-kontissa ja mallia `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`.
+- Ollama-ympäristö testataan NVIDIA-GPU:lla. Muiden GPU-valmistajien tai -tyyppien yhteensopivuutta ei varmenneta; niitä käyttävä testaa yhteensopivuuden itse.
 - Frontendin ja backendin on toimittava yhdessä.
 - Valittujen työkalujen ja kirjastojen tulee olla maksuttomia, ja niiden lisenssit sekä käyttöehdot tarkistetaan ennen käyttöönottoa.
 - Lähdekoodia hallitaan GitHubissa.
@@ -129,7 +130,7 @@ Seuraavat teknologiat ovat sovitut lähtökohdat ennen toteutusta.
 | Versionhallinta | Git ja GitHub |
 | Kontitus ja kehitysympäristö | Docker Compose: frontend, backend, MySQL ja Ollama |
 
-Malli ja muut työkalut testataan käytettävissä olevilla resursseilla. Mallin, työkalujen ja kirjastojen lisenssit sekä käyttöehdot tarkistetaan ennen niiden sisällyttämistä toimitukseen.
+Malli ja muut työkalut testataan käytettävissä olevilla resursseilla. Ollama-testaus rajataan NVIDIA-GPU:hun; muiden GPU:iden yhteensopivuutta ei varmenneta projektissa. Mallin, työkalujen ja kirjastojen lisenssit sekä käyttöehdot tarkistetaan ennen niiden sisällyttämistä toimitukseen.
 
 ## 10. Oletukset
 
