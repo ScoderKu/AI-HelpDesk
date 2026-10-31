@@ -83,7 +83,13 @@ export function AuthPage({
         : '',
     )
     setNoticeIsSuccess(false)
-    if (Object.keys(nextErrors).length > 0) return
+    if (Object.keys(nextErrors).length > 0) {
+      const firstInvalidField = requiredFields.find((field) => nextErrors[field])
+      if (firstInvalidField) {
+        form.querySelector<HTMLInputElement>(`[name="${firstInvalidField}"]`)?.focus()
+      }
+      return
+    }
 
     setIsSubmitting(true)
     try {
@@ -170,6 +176,10 @@ export function AuthPage({
         setNotice(
           isRegister ? text.registrationValidationError : text.loginValidationError,
         )
+        const firstInvalidField = Object.keys(validationErrors)[0]
+        if (firstInvalidField) {
+          form.querySelector<HTMLInputElement>(`[name="${firstInvalidField}"]`)?.focus()
+        }
       } else {
         setNotice(isRegister ? text.registrationError : text.loginError)
       }
