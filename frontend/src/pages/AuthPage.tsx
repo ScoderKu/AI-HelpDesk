@@ -176,6 +176,10 @@ export function AuthPage({
         setNotice(
           isRegister ? text.registrationValidationError : text.loginValidationError,
         )
+        const firstInvalidField = Object.keys(validationErrors)[0]
+        if (firstInvalidField) {
+          form.querySelector<HTMLInputElement>(`[name="${firstInvalidField}"]`)?.focus()
+        }
       } else {
         setNotice(isRegister ? text.registrationError : text.loginError)
       }
