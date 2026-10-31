@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export type IconName = 'home' | 'message' | 'ticket' | 'user' | 'sparkle' | 'arrow' | 'layers' | 'circle' | 'check' | 'globe'
+export type IconName = 'home' | 'message' | 'ticket' | 'user' | 'sparkle' | 'arrow' | 'layers' | 'circle' | 'check' | 'globe' | 'logout'
 
 const iconPaths: Record<IconName, ReactNode> = {
   home: <><path d="m3 10 9-7 9 7" /><path d="M5 9v11h14V9M9 20v-6h6v6" /></>,
@@ -13,6 +13,7 @@ const iconPaths: Record<IconName, ReactNode> = {
   circle: <><circle cx="12" cy="12" r="8" /></>,
   check: <><path d="m5 12 4 4L19 6" /></>,
   globe: <><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" /></>,
+  logout: <><path d="M10 17l5-5-5-5M15 12H3" /><path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" /></>,
 }
 
 export function Icon({ name, className = '' }: { name: IconName; className?: string }) {
