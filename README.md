@@ -98,6 +98,7 @@ docker compose exec backend python -m unittest discover -s tests -v
 
 Testit kattavat luotetun ja luottamattoman proxyn, proxy-ketjun, asiakkaiden erilliset IP-avaimet, puuttuvat ja virheelliset välitysotsakkeet sekä sen, että vanhentuneet istunnot poistetaan erillisellä ensisijavainkyselyllä. Ne eivät korvaa oikeassa LAN-verkossa tehtävää välitystestiä tai rinnakkaisten kirjautumisten testiä MySQL:llä. Keskeisten toimintojen hyväksymiskriteerit ja muut suunnitellut testit on kuvattu käyttäjätarinoissa ja vaatimusmäärittelyssä. Rekisteröityminen ja istuntopohjainen kirjautuminen toimivat; chat- ja tukipyyntötoiminnot odottavat backend-integraatiota.
 Uudet rate limiting -testit tarkistavat IP-yritysten laskennan, sähköpostin epäonnistumislaskurin, rajat, Redis-virheen sekä sen, ettei onnistunut kirjautuminen kasvata sähköpostin virhelaskuria.
+Ticket API -testit tarkistavat omistajuusrajauksen, server-side oletukset, sallitut muutokset, virhetilat sekä request-validaation.
 
 ### Kuvat
 
@@ -207,6 +208,7 @@ docker compose exec backend python -m unittest discover -s tests -v
 
 The tests cover trusted and untrusted proxies, proxy chains, distinct client IP keys, missing or malformed forwarded headers, and cleanup by primary key outside the login transaction. They do not replace a forwarding test on a real LAN or a concurrent sign-in test against MySQL. Acceptance criteria and other planned tests for key features are described in the user stories and requirements specification. Registration and session-based sign-in are implemented; chat and support-ticket features still need backend integration.
 The new rate limiting tests cover IP attempt counting, the email failure counter, both limits, Redis errors, and that successful login does not increment the email failure counter.
+Ticket API tests cover owner scoping, server-side defaults, allowed updates, error responses, and request validation.
 
 ### Screenshots
 
