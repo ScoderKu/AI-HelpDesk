@@ -13,7 +13,7 @@ type HomePageProps = {
   isSigningOut: boolean
   onLanguageChange: (language: Language) => void
   onOpenAuth: (mode: AuthMode) => void
-  onSignOut: () => void
+  onSignOut: () => Promise<boolean>
   onShowPreviewNotice: () => void
 }
 
@@ -32,6 +32,16 @@ export function HomePage({
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
   const accountMenuRef = useRef<HTMLDivElement>(null)
   const accountTriggerRef = useRef<HTMLButtonElement>(null)
+  const signOutButtonRef = useRef<HTMLButtonElement>(null)
+  const pageTitleRef = useRef<HTMLHeadingElement>(null)
+  const [focusPageTitleAfterSignOut, setFocusPageTitleAfterSignOut] = useState(false)
+
+  useEffect(() => {
+    if (focusPageTitleAfterSignOut && !currentUser) {
+      pageTitleRef.current?.focus()
+      setFocusPageTitleAfterSignOut(false)
+    }
+  }, [currentUser, focusPageTitleAfterSignOut])
 
   useEffect(() => {
     if (!isAccountMenuOpen) return
@@ -41,6 +51,13 @@ export function HomePage({
         event.target instanceof Node &&
         !accountMenuRef.current?.contains(event.target)
       ) {
+        if (accountMenuRef.current?.contains(document.activeElement)) {
+          const target = event.target
+          const targetCanReceiveFocus = target instanceof HTMLElement && target.closest(
+            'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          )
+          if (!targetCanReceiveFocus) accountTriggerRef.current?.focus()
+        }
         setIsAccountMenuOpen(false)
       }
     }
@@ -112,12 +129,12 @@ export function HomePage({
                 </span>
                 <span className="account-chevron" aria-hidden="true">⌃</span>
               </button>
-              {isAccountMenuOpen && (
-                <div className="account-menu-panel" id="account-menu-panel">
+              <div className="account-menu-panel" hidden={!isAccountMenuOpen} id="account-menu-panel">
                   <button
                     className="account-menu-item"
                     onClick={() => {
                       setIsAccountMenuOpen(false)
+                      accountTriggerRef.current?.focus()
                       onShowPreviewNotice()
                     }}
                     type="button"
@@ -127,18 +144,24 @@ export function HomePage({
                   </button>
                   <button
                     className="account-menu-item"
-                    disabled={isSigningOut}
-                    onClick={() => {
-                      setIsAccountMenuOpen(false)
-                      onSignOut()
+                    aria-disabled={isSigningOut}
+                    ref={signOutButtonRef}
+                    onClick={async () => {
+                      if (isSigningOut) return
+                      const succeeded = await onSignOut()
+                      if (succeeded) {
+                        setIsAccountMenuOpen(false)
+                        setFocusPageTitleAfterSignOut(true)
+                      } else {
+                        signOutButtonRef.current?.focus()
+                      }
                     }}
                     type="button"
                   >
                     <Icon name="logout" />
                     <span>{isSigningOut ? text.signingOut : text.signOut}</span>
                   </button>
-                </div>
-              )}
+              </div>
             </div>
           </div>
         )}
@@ -176,7 +199,7 @@ export function HomePage({
           <section className="welcome-section" aria-labelledby="page-title">
             <div className="welcome-copy">
               <div className="eyebrow"><span className="eyebrow-line" />{text.eyebrow}</div>
-              <h1 id="page-title">{text.title}</h1>
+              <h1 id="page-title" ref={pageTitleRef} tabIndex={-1}>{text.title}</h1>
               <p>{text.subtitle}</p>
             </div>
             <div className="welcome-decoration" aria-hidden="true">
