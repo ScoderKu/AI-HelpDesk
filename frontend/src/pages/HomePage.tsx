@@ -57,6 +57,11 @@ export function HomePage({
             <span>{text.tickets}</span>
             <span className="nav-soon">›</span>
           </button>
+          <button className="nav-link" onClick={onShowPreviewNotice} type="button">
+            <Icon name="user" />
+            <span>{text.profile}</span>
+            <span className="nav-soon">›</span>
+          </button>
         </nav>
 
         <div className="sidebar-bottom">
@@ -65,10 +70,6 @@ export function HomePage({
               ? `${currentUser.first_name} ${currentUser.last_name}`
               : text.account}
           </div>
-          <button className="nav-link" onClick={onShowPreviewNotice} type="button">
-            <Icon name="user" />
-            <span>{text.profile}</span>
-          </button>
         </div>
       </aside>
 
