@@ -1255,6 +1255,10 @@ a:focus-visible {
   box-shadow: 0 8px 28px #29294a18;
 }
 
+.account-menu-panel[hidden] {
+  display: none;
+}
+
 .account-menu-item {
   width: 100%;
   min-height: 42px;
@@ -1277,7 +1281,7 @@ a:focus-visible {
   background: #f7f7fc;
 }
 
-.account-menu-item:disabled {
+.account-menu-item[aria-disabled="true"] {
   opacity: 0.55;
   cursor: wait;
 }
