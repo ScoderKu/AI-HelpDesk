@@ -177,7 +177,7 @@ export function HomePage({
             </div>
           </section>
 
-          <div aria-live="polite" className="action-feedback">
+          <div aria-live="polite" className="action-feedback" role="status">
             {notice && <span>{notice}</span>}
           </div>
 
