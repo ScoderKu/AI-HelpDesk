@@ -31,6 +31,7 @@ export function HomePage({
 }: HomePageProps) {
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
   const accountMenuRef = useRef<HTMLDivElement>(null)
+  const accountTriggerRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     if (!isAccountMenuOpen) return
@@ -47,6 +48,7 @@ export function HomePage({
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setIsAccountMenuOpen(false)
+        accountTriggerRef.current?.focus()
       }
     }
 
@@ -123,8 +125,8 @@ export function HomePage({
               <button
                 aria-controls="account-menu-panel"
                 aria-expanded={isAccountMenuOpen}
-                aria-haspopup="menu"
                 className="account-trigger"
+                ref={accountTriggerRef}
                 onClick={() => setIsAccountMenuOpen((open) => !open)}
                 type="button"
               >
