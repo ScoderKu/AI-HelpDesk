@@ -95,6 +95,23 @@ export function HomePage({
         {currentUser && (
           <div className="sidebar-bottom">
             <div className="account-menu" ref={accountMenuRef}>
+              <button
+                aria-controls="account-menu-panel"
+                aria-expanded={isAccountMenuOpen}
+                className="account-trigger"
+                ref={accountTriggerRef}
+                onClick={() => setIsAccountMenuOpen((open) => !open)}
+                type="button"
+              >
+                <span className="account-avatar" aria-hidden="true">
+                  <Icon name="user" />
+                </span>
+                <span className="account-identity">
+                  <span className="account-name">{currentUser.first_name} {currentUser.last_name}</span>
+                  <span className="account-email">{currentUser.email}</span>
+                </span>
+                <span className="account-chevron" aria-hidden="true">⌃</span>
+              </button>
               {isAccountMenuOpen && (
                 <div className="account-menu-panel" id="account-menu-panel">
                   <button
@@ -122,23 +139,6 @@ export function HomePage({
                   </button>
                 </div>
               )}
-              <button
-                aria-controls="account-menu-panel"
-                aria-expanded={isAccountMenuOpen}
-                className="account-trigger"
-                ref={accountTriggerRef}
-                onClick={() => setIsAccountMenuOpen((open) => !open)}
-                type="button"
-              >
-                <span className="account-avatar" aria-hidden="true">
-                  <Icon name="user" />
-                </span>
-                <span className="account-identity">
-                  <span className="account-name">{currentUser.first_name} {currentUser.last_name}</span>
-                  <span className="account-email">{currentUser.email}</span>
-                </span>
-                <span className="account-chevron" aria-hidden="true">⌃</span>
-              </button>
             </div>
           </div>
         )}
