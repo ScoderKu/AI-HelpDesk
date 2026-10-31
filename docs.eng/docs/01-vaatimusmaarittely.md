@@ -109,6 +109,7 @@ The project's technical solutions must meet the following conditions:
 - MySQL is used as the database.
 - The backend provides a REST API.
 - The AI integration uses Ollama in a Docker container and the `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf` model.
+- The Ollama environment is tested on NVIDIA GPUs. Compatibility with GPUs from other vendors or of other types is not verified; users choosing them are responsible for testing compatibility.
 - The frontend and backend must work together.
 - Selected tools and libraries must be free, and their licenses and terms of use must be checked before adoption.
 - Source code is managed in GitHub.
@@ -130,7 +131,7 @@ The following technologies are agreed as the baseline before implementation.
 | Version control | Git and GitHub |
 | Containerization and development environment | Docker Compose: frontend, backend, MySQL, and Ollama |
 
-The model and other tools will be tested using available resources. Licenses and terms of use for the model, tools, and libraries will be checked before they are included in the delivery.
+The model and other tools will be tested using available resources. Ollama testing is limited to NVIDIA GPUs; compatibility with other GPUs is not verified by the project. Licenses and terms of use for the model, tools, and libraries will be checked before they are included in the delivery.
 
 ## 10. Assumptions
 

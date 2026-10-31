@@ -54,7 +54,7 @@ Sprintin lopussa sovelluksessa on perusrakenne, johon tukipyyntöjen hallinta ja
 7. Luodaan käyttöliittymän perusrakenne, navigaatio ja lomakkeiden peruskomponentit.
 8. Luodaan frontendin, backendin ja Ollaman Docker-konfiguraatiot sekä Compose-palvelut niille ja MySQL-tietokannalle.
 9. Otetaan valittu GGUF-malli automaattisesti käyttöön Ollama-kontissa `Modelfile`-tiedoston avulla ja lisätään mallin sekä MySQL:n pysyvä tallennus ja palveluiden valmiustarkistukset.
-10. Lisätään ympäristömuuttujien esimerkkitiedosto ja dokumentoidaan `docker compose up --build`; testataan puhdas käynnistys, mallin saatavuus sekä backendin yhteydet MySQL:ään ja Ollamaan.
+10. Lisätään ympäristömuuttujien esimerkkitiedosto ja dokumentoidaan `docker compose up --build`; testataan puhdas käynnistys, mallin saatavuus sekä backendin yhteydet MySQL:ään ja Ollamaan projektin NVIDIA-GPU-ympäristössä. Muiden GPU:iden yhteensopivuutta ei varmenneta projektissa.
 11. Testataan keskeiset rekisteröitymis-, kirjautumis-, tietokanta- ja käynnistystoiminnot.
 
 ## 3.4 Odotetut tulokset
