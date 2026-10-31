@@ -53,7 +53,7 @@ export function HomePage({
       ) {
         if (accountMenuRef.current?.contains(document.activeElement)) {
           const target = event.target
-          const targetCanReceiveFocus = target instanceof HTMLElement && target.closest(
+          const targetCanReceiveFocus = target instanceof Element && target.closest(
             'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
           )
           if (!targetCanReceiveFocus) accountTriggerRef.current?.focus()
