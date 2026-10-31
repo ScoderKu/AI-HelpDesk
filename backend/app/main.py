@@ -2,6 +2,7 @@ import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from enum import Enum
 import hashlib
 import hmac
 import ipaddress
@@ -10,7 +11,7 @@ import os
 import secrets
 import time
 
-from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
+from fastapi import Depends, FastAPI, HTTPException, Path, Request, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,8 +23,12 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal, engine, get_db
-from app.models import AuthSession, User
+from app.models import AuthSession, Ticket, User
 from app.schemas import (
+    TicketCreateRequest,
+    TicketResponse,
+    TicketStatus,
+    TicketUpdateRequest,
     UserLoginRequest,
     UserRegistrationRequest,
     UserRegistrationResponse,
@@ -389,6 +394,115 @@ def get_current_user(
 ) -> UserResponse:
     response.headers["Cache-Control"] = "no-store"
     return UserResponse.model_validate(user)
+
+
+@app.get(
+    "/api/v1/tickets",
+    response_model=list[TicketResponse],
+    tags=["Tickets"],
+)
+def list_tickets(
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> list[TicketResponse]:
+    tickets = db.scalars(
+        select(Ticket)
+        .where(Ticket.user_id == user.id)
+        .order_by(Ticket.created_at.desc(), Ticket.id.desc())
+    ).all()
+    return [TicketResponse.model_validate(ticket) for ticket in tickets]
+
+
+@app.post(
+    "/api/v1/tickets",
+    response_model=TicketResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Tickets"],
+)
+def create_ticket(
+    ticket_data: TicketCreateRequest,
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> TicketResponse:
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    ticket = Ticket(
+        user_id=user.id,
+        conversation_id=None,
+        title=ticket_data.title,
+        description=ticket_data.description,
+        status=TicketStatus.OPEN.value,
+        priority=ticket_data.priority.value,
+        created_at=now,
+        updated_at=now,
+        closed_at=None,
+    )
+    db.add(ticket)
+    db.commit()
+    db.refresh(ticket)
+    return TicketResponse.model_validate(ticket)
+
+
+@app.get(
+    "/api/v1/tickets/{ticket_id}",
+    response_model=TicketResponse,
+    tags=["Tickets"],
+)
+def get_ticket(
+    ticket_id: int = Path(gt=0),
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> TicketResponse:
+    ticket = db.scalar(
+        select(Ticket).where(
+            Ticket.id == ticket_id,
+            Ticket.user_id == user.id,
+        )
+    )
+    if ticket is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ticket not found.",
+        )
+    return TicketResponse.model_validate(ticket)
+
+
+@app.patch(
+    "/api/v1/tickets/{ticket_id}",
+    response_model=TicketResponse,
+    tags=["Tickets"],
+)
+def update_ticket(
+    ticket_data: TicketUpdateRequest,
+    ticket_id: int = Path(gt=0),
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> TicketResponse:
+    ticket = db.scalar(
+        select(Ticket).where(
+            Ticket.id == ticket_id,
+            Ticket.user_id == user.id,
+        )
+    )
+    if ticket is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ticket not found.",
+        )
+    if ticket.status != TicketStatus.OPEN.value:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Only open tickets can be updated.",
+        )
+
+    updates = ticket_data.model_dump(exclude_unset=True)
+    for field, value in updates.items():
+        if isinstance(value, Enum):
+            value = value.value
+        setattr(ticket, field, value)
+    ticket.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    db.commit()
+    db.refresh(ticket)
+    return TicketResponse.model_validate(ticket)
 
 
 @app.post(

@@ -331,7 +331,7 @@ REST API toimii frontendin ja backendin välisenä rajapintana.
 
 ## 5.2 Endpointit
 
-Alla olevista autentikointireiteistä rekisteröityminen, kirjautuminen, uloskirjautuminen ja nykyisen käyttäjän haku on toteutettu. Tukipyyntö-, keskustelu-, haku- ja profiilireitit kuvaavat suunniteltua rajapintaa eivätkä ole vielä toteutettuja.
+Autentikointireiteistä sekä tukipyyntöjen listaus-, luonti-, haku- ja päivitysreitit on toteutettu. Tukipyyntöjen yhteenveto ja sulkeminen sekä keskustelu-, haku- ja profiilireitit ovat vielä suunniteltuja.
 
 ### Autentikointi ja käyttäjätili
 

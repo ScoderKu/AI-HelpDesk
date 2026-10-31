@@ -331,7 +331,7 @@ The REST API serves as the interface between the frontend and backend.
 
 ## 5.2 Endpoints
 
-Registration, login, logout, and current-user lookup in the authentication routes below are implemented. Ticket, conversation, search, and profile routes describe the planned API and are not implemented yet.
+Authentication routes and ticket list, create, detail, and update routes are implemented. Ticket summary and close, as well as conversation, search, and profile routes, remain planned.
 
 ### Authentication and User Account
 
