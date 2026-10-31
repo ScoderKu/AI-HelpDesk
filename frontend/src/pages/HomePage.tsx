@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Icon } from '../components/Icon'
 import { LanguageSwitch } from '../components/LanguageSwitch'
 import type { Copy } from '../i18n/copy'
@@ -28,6 +29,8 @@ export function HomePage({
   onSignOut,
   onShowPreviewNotice,
 }: HomePageProps) {
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -57,20 +60,58 @@ export function HomePage({
             <span>{text.tickets}</span>
             <span className="nav-soon">›</span>
           </button>
-          <button className="nav-link" onClick={onShowPreviewNotice} type="button">
-            <Icon name="user" />
-            <span>{text.profile}</span>
-            <span className="nav-soon">›</span>
-          </button>
         </nav>
 
-        <div className="sidebar-bottom">
-          <div className={`sidebar-section-label${currentUser ? ' sidebar-user-name' : ''}`}>
-            {currentUser
-              ? `${currentUser.first_name} ${currentUser.last_name}`
-              : text.account}
+        {currentUser && (
+          <div className="sidebar-bottom">
+            <div className="account-menu">
+              {isAccountMenuOpen && (
+                <div className="account-menu-panel" id="account-menu-panel">
+                  <button
+                    className="account-menu-item"
+                    onClick={() => {
+                      setIsAccountMenuOpen(false)
+                      onShowPreviewNotice()
+                    }}
+                    type="button"
+                  >
+                    <Icon name="user" />
+                    <span>{text.profile}</span>
+                  </button>
+                  <button
+                    className="account-menu-item"
+                    disabled={isSigningOut}
+                    onClick={() => {
+                      setIsAccountMenuOpen(false)
+                      onSignOut()
+                    }}
+                    type="button"
+                  >
+                    <Icon name="logout" />
+                    <span>{isSigningOut ? text.signingOut : text.signOut}</span>
+                  </button>
+                </div>
+              )}
+              <button
+                aria-controls="account-menu-panel"
+                aria-expanded={isAccountMenuOpen}
+                aria-haspopup="menu"
+                className="account-trigger"
+                onClick={() => setIsAccountMenuOpen((open) => !open)}
+                type="button"
+              >
+                <span className="account-avatar" aria-hidden="true">
+                  <Icon name="user" />
+                </span>
+                <span className="account-identity">
+                  <span className="account-name">{currentUser.first_name} {currentUser.last_name}</span>
+                  <span className="account-email">{currentUser.email}</span>
+                </span>
+                <span className="account-chevron" aria-hidden="true">⌃</span>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </aside>
 
       <main className="main-content" id="home">
@@ -79,19 +120,9 @@ export function HomePage({
           <div className="topbar-actions">
             <div className="topbar-status"><span className="status-dot" />{text.preview}</div>
             {currentUser ? (
-              <>
-                <span className="signed-in-user" title={currentUser.email}>
-                  {text.signedInAs} {currentUser.username}
-                </span>
-                <button
-                  className="topbar-auth-link"
-                  disabled={isSigningOut}
-                  onClick={onSignOut}
-                  type="button"
-                >
-                  {isSigningOut ? text.signingOut : text.signOut}
-                </button>
-              </>
+              <span className="signed-in-user" title={currentUser.email}>
+                {text.signedInAs} {currentUser.username}
+              </span>
             ) : authLoading ? (
               <span className="topbar-auth-loading">{text.checkingSession}</span>
             ) : (
