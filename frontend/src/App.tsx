@@ -78,7 +78,7 @@ function App() {
     setNotice('')
   }
 
-  const handleSignOut = async () => {
+  const handleSignOut = async (): Promise<boolean> => {
     setIsSigningOut(true)
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
@@ -88,8 +88,10 @@ function App() {
       if (!response.ok) throw new Error(`Sign out failed: ${response.status}`)
       setUser(null)
       setNotice(text.signedOut)
+      return true
     } catch {
       setNotice(text.signOutError)
+      return false
     } finally {
       setIsSigningOut(false)
     }
