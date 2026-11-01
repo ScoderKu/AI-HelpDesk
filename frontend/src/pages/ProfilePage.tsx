@@ -9,7 +9,7 @@ type Props = {
   text: Copy
   onBackHome: () => void
   onProfileUpdated: (user: AuthenticatedUser) => void
-  onPasswordChanged: () => Promise<void>
+  onPasswordChanged: () => void
 }
 
 async function send<T>(path: string, body: unknown): Promise<T> {
@@ -73,7 +73,7 @@ export function ProfilePage({ currentUser, text, onBackHome, onProfileUpdated, o
       setNewPassword('')
       setConfirmNewPassword('')
       setPasswordNotice(text.passwordChanged)
-      await onPasswordChanged()
+      onPasswordChanged()
     } catch (error) {
       const status = error instanceof Error && 'status' in error ? Number((error as Error & { status: number }).status) : 0
       setPasswordError(status === 400 ? text.currentPasswordError : text.passwordChangeError)
