@@ -109,6 +109,7 @@ class UserProfileEndpointTests(unittest.TestCase):
 
     def test_profile_update_changes_only_supplied_fields(self) -> None:
         db = MagicMock()
+        db.scalar.return_value = None
         request = UserProfileUpdateRequest(username="augusta")
         result = main.update_current_user_profile(request, self.user, db)
         self.assertEqual(result.first_name, "Ada")
@@ -146,6 +147,7 @@ class UserProfileEndpointTests(unittest.TestCase):
         self, verify: MagicMock, hash_new: MagicMock
     ) -> None:
         db = MagicMock()
+        db.scalar.return_value = self.user
         response = main.change_current_user_password(
             UserPasswordChangeRequest(
                 current_password="current-password",
