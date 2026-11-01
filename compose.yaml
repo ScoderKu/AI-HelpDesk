@@ -138,8 +138,8 @@ services:
       ollama:
         condition: service_healthy
     command:
-        ollama show poro-helpdesk >/dev/null 2>&1
-        || ollama create poro-helpdesk -f /models/Modelfile
+      - >-
+        ollama show poro-helpdesk >/dev/null 2>&1 || ollama create poro-helpdesk -f /models/Modelfile
     restart: "no"
 
 volumes:

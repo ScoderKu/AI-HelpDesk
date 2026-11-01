@@ -56,7 +56,7 @@ flowchart LR
 - [Sprint-suunnitelma](<docs/04-sprintin%20suunnitelma.md>)
 - [Järjestelmän suunnittelu](<docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>)
 - [UX/UI-suunnittelu](docs/06-ux-ui-suunnittelu.md)
-- [Ollama-mallin Modelfile](agents/Modelfile)
+- [Ollama-mallin Modelfile](ollama/Modelfile)
 
 ### Edellytykset
 
@@ -90,15 +90,15 @@ npm run build
 npm run lint
 ```
 
-Backendin proxy-käsittelyn ja vanhentuneiden istuntojen siivouskyselyn yksikkötestit voi ajaa projektin juuresta Dockerilla:
+Backendin koko `unittest`-testisarjan voi ajaa projektin juuresta Dockerilla:
 
 ```powershell
 docker compose exec backend python -m unittest discover -s tests -v
 ```
 
-Testit kattavat luotetun ja luottamattoman proxyn, proxy-ketjun, asiakkaiden erilliset IP-avaimet, puuttuvat ja virheelliset välitysotsakkeet sekä sen, että vanhentuneet istunnot poistetaan erillisellä ensisijavainkyselyllä. Ne eivät korvaa oikeassa LAN-verkossa tehtävää välitystestiä tai rinnakkaisten kirjautumisten testiä MySQL:llä. Keskeisten toimintojen hyväksymiskriteerit ja muut suunnitellut testit on kuvattu käyttäjätarinoissa ja vaatimusmäärittelyssä. Rekisteröityminen ja istuntopohjainen kirjautuminen toimivat; AI-chat odottaa backend-integraatiota.
-Uudet rate limiting -testit tarkistavat IP-yritysten laskennan, sähköpostin epäonnistumislaskurin, rajat, Redis-virheen sekä sen, ettei onnistunut kirjautuminen kasvata sähköpostin virhelaskuria.
-Ticket API -testit tarkistavat omistajuusrajauksen, server-side oletukset, sallitut muutokset, summary- ja close-toiminnot, virhetilat sekä request-validaation. Frontendin build ja lint ajetaan erikseen frontend-kansiossa.
+Testit kattavat proxy-IP:n poiminnan, kirjautumisen rate limiting -laskurit ja Redis-virheet, vanhentuneiden istuntojen siivouskyselyn sekä Ticket API:n validoinnin, omistajuusrajauksen ja keskeiset toiminnot. Testit eivät korvaa rekisteröitymisen ja kirjautumisen API-integraatiotestejä, rinnakkaisten kirjautumisten testiä MySQL:llä tai oikeassa LAN-verkossa tehtävää IP-välitystestiä. Frontendin build ja lint ajetaan erikseen frontend-kansiossa.
+
+Viimeisimmässä Sprint 1 -tarkistuksessa backendin 31 testiä läpäisivät (`31/31`), frontendin tuotantobuild onnistui ja lint-tarkistus ei raportoinut virheitä tai varoituksia. Työpistekohtaiset ja ympäristöriippuvaiset tarkistukset kirjataan projektinhallinnan Sprint-tilanteeseen.
 
 ### Kuvat
 
@@ -166,7 +166,7 @@ flowchart LR
 - [Sprint plan](<docs/04-sprintin%20suunnitelma.md>)
 - [System design](<docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>)
 - [UX/UI design](docs/06-ux-ui-suunnittelu.md)
-- [Ollama model Modelfile](agents/Modelfile)
+- [Ollama model Modelfile](ollama/Modelfile)
 
 ### Prerequisites
 
@@ -200,15 +200,15 @@ npm run build
 npm run lint
 ```
 
-Run the backend unit tests for proxy client-IP handling and expired-session cleanup from the project root using Docker:
+Run the complete backend `unittest` suite from the project root using Docker:
 
 ```powershell
 docker compose exec backend python -m unittest discover -s tests -v
 ```
 
-The tests cover trusted and untrusted proxies, proxy chains, distinct client IP keys, missing or malformed forwarded headers, and cleanup by primary key outside the login transaction. They do not replace a forwarding test on a real LAN or a concurrent sign-in test against MySQL. Acceptance criteria and other planned tests for key features are described in the user stories and requirements specification. Registration and session-based sign-in are implemented; AI chat still needs backend integration.
-The new rate limiting tests cover IP attempt counting, the email failure counter, both limits, Redis errors, and that successful login does not increment the email failure counter.
-Ticket API tests cover owner scoping, server-side defaults, allowed updates, summary and close actions, error responses, and request validation. Run the frontend build and lint separately from the frontend directory.
+The tests cover proxy client-IP resolution, login rate-limit counters and Redis failures, expired-session cleanup, and Ticket API validation, ownership checks, and core actions. They do not replace registration/sign-in API integration tests, a concurrent sign-in test against MySQL, or an IP-forwarding test on a real LAN. Run the frontend build and lint separately from the frontend directory.
+
+In the latest Sprint 1 check, all 31 backend tests passed (`31/31`), the frontend production build succeeded, and lint reported no errors or warnings. Environment-dependent checks are recorded in the Sprint status in project management.
 
 ### Screenshots
 
