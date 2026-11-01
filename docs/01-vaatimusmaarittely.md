@@ -20,7 +20,8 @@ AI HelpDesk pyrkii helpottamaan tätä prosessia tarjoamalla tekoälypohjaista n
 ## 3. Projektin tavoitteet
 
 Projektin tavoitteena on suunnitella ja toteuttaa toimiva AI HelpDesk -sovellus, joka täyttää seuraavat tavoitteet:
-- Käyttäjä voi rekisteröityä, kirjautua sisään ja muokata omia profiilitietojaan.
+- Käyttäjä voi rekisteröityä ja kirjautua sisään.
+- Käyttäjä voi tarkastella profiilitietojaan, muokata etunimeä, sukunimeä ja käyttäjänimeä sekä vaihtaa salasanansa nykyisen salasanan vahvistuksella. Sähköpostiosoite on vain luettavissa eikä sitä voi muuttaa.
 - Käyttäjä voi keskustella tekoälyn kanssa teknisistä ongelmista.
 - Tekoäly voi pyytää lisätietoja, kuten käyttöjärjestelmän, virheilmoituksen tai ongelman toistamiseen liittyvät vaiheet.
 - Käyttäjä voi luoda tukipyyntöjä, tarkastella omia tukipyyntöjään ja sulkea niitä.
@@ -75,7 +76,7 @@ Sovelluksen on täytettävä seuraavat toiminnalliset vaatimukset.
 | Tunnus | Vaatimus |
 |---|---|
 | FR-01 | Käyttäjä voi rekisteröityä ja kirjautua sisään. |
-| FR-02 | Käyttäjä voi tarkastella ja muokata omia profiilitietojaan. |
+| FR-02 | Käyttäjä voi tarkastella profiilitietojaan, muokata etunimeä, sukunimeä ja käyttäjänimeä sekä vaihtaa salasanansa nykyisen salasanan vahvistuksella. Sähköpostiosoite on vain luettavissa eikä sitä voi muuttaa. |
 | FR-03 | Käyttäjä voi luoda uuden tukipyynnön. |
 | FR-04 | Käyttäjä voi tarkastella ja sulkea omia tukipyyntöjään. |
 | FR-05 | Tukipyynnössä on otsikko, kuvaus, tila, prioriteetti, luontiaika ja käyttäjän tunniste. |
@@ -161,7 +162,7 @@ Seuraava taulukko yhdistää toiminnalliset vaatimukset käyttäjätarinoihin, h
 | Vaatimus | Käyttäjätarina ja hyväksymiskriteerit | Todentaminen |
 |---|---|---|
 | FR-01 | US-01 (AC-01.1–AC-01.4), US-02 (AC-02.1–AC-02.3) | TEST-01: rekisteröityminen, kirjautuminen ja käyttöoikeuden tarkistus |
-| FR-02 | US-03 (AC-03.1–AC-03.3) | TEST-02: oman profiilin haku ja sallittujen tietojen päivitys |
+| FR-02 | US-03 (AC-03.1–AC-03.5) | TEST-02: profiilin haku, sallittujen tietojen päivitys, salasanan vaihto ja sähköpostin muuttamisen esto |
 | FR-03 | US-04 (AC-04.1–AC-04.3) | TEST-03: tukipyynnön luominen ja kenttien validointi |
 | FR-04 | US-05 (AC-05.1–AC-05.4) | TEST-04: omien pyyntöjen listaus, sulkeminen ja omistajuustarkistus |
 | FR-05 | US-04 (AC-04.2) | TEST-05: tukipyynnön kentät, oletusarvot ja aikaleimat |
