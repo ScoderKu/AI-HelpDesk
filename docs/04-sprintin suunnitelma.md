@@ -92,26 +92,37 @@ Sprintin lopussa käyttäjä pystyy luomaan tukipyynnön, tarkastelemaan omia py
 
 ## 4.3 Keskeiset kehitystehtävät
 
+Työ toteutetaan seuraavassa järjestyksessä. US-17 tehdään vasta, kun US-04, US-05 ja US-03 on toteutettu ja hyväksytty.
+
+**1. US-04 – Tukipyynnön luominen**
+1. Tarkistetaan olemassa oleva tukipyynnön luontilomake ja backendin luontirajapinta.
+2. Varmistetaan otsikon, kuvauksen ja prioriteetin validointi sekä tukipyynnön tallentaminen kirjautuneen käyttäjän omistukseen.
+3. Testataan onnistunut luonti ja virheelliset syötteet.
+
+**2. US-05 – Omien tukipyyntöjen tarkastelu ja sulkeminen**
+1. Tarkistetaan omien tukipyyntöjen listaus, yksittäisen pyynnön tarkastelu ja sulkeminen.
+2. Varmistetaan backendissä käyttäjän omistajuuden tarkistus sekä se, ettei suljettua pyyntöä voi sulkea uudelleen tai muokata vastoin hyväksymiskriteerejä.
+3. Testataan tyhjä lista, olemassa olevat pyynnöt, luvaton pääsy ja sulkemisen tilasiirtymä.
+
+**3. US-03 – Käyttäjäprofiilin hallinta**
 1. Toteutetaan profiilitietojen hakeminen sekä etunimen, sukunimen ja käyttäjänimen päivittäminen; sähköpostiosoite näytetään vain luettavana.
-2. Toteutetaan erillinen salasanan vaihtaminen: nykyisen salasanan tarkistus, uuden salasanan validointi ja vahvistuskentän tarkistus; uusi salasana tallennetaan vain turvallisesti tiivistettynä.
-3. Toteutetaan ADMINille backend-komento: luodaan satunnainen väliaikainen salasana, tallennetaan vain sen tiiviste, asetetaan pakotettu vaihto ja mitätöidään vanhat istunnot.
-4. Väliaikaisella salasanalla kirjautunut käyttäjä saa käyttää vain salasanan vaihtoa ja uloskirjautumista, kunnes salasana on vaihdettu.
-3. Toteutetaan tukipyynnön luontilomake ja tietojen validointi.
-4. Tallennetaan tukipyynnön otsikko, kuvaus, tila, prioriteetti, luontiaika ja omistaja.
-5. Toteutetaan käyttäjän omien tukipyyntöjen luettelonäkymä.
-6. Toteutetaan yksittäisen tukipyynnön tietojen tarkastelu.
-6. Toteutetaan tukipyynnön sulkeminen.
-7. Varmistetaan, ettei käyttäjä voi tarkastella tai muuttaa toisen käyttäjän tukipyyntöä luvattomasti.
-8. Testataan tietojen tallennus, päivitys, haku ja käyttöoikeuksien tarkistaminen.
+2. Toteutetaan salasanan vaihtaminen nykyisen salasanan vahvistuksella, uuden salasanan validoinnilla ja vahvistuskentän tarkistuksella.
+3. Varmistetaan, että backend hylkää sähköpostiosoitteen muuttamisen ja tallentaa uuden salasanan vain turvallisesti tiivistettynä.
+4. Testataan profiilin haku, kelvolliset ja virheelliset päivitykset sekä salasanan vaihdon onnistuminen ja epäonnistuminen.
+
+**4. US-17 – ADMINin tekemä unohtuneen salasanan palautus (Sprint 2:n viimeinen työ)**
+1. Toteutetaan backendin suojattu ylläpitokomento, joka luo kryptografisesti satunnaisen väliaikaisen salasanan ja tallentaa vain sen tiivisteen.
+2. Asetetaan salasanan pakotetun vaihdon merkintä ja mitätöidään käyttäjän aiemmat istunnot.
+3. Rajataan väliaikaisella salasanalla kirjautuneen käyttäjän käyttöoikeudet salasanan vaihtamiseen ja uloskirjautumiseen.
+4. Varmistetaan, ettei reset-toiminnolle ole tavallisen käyttäjän HTTP-endpointia tai frontend-käyttöliittymää.
+5. Testataan ADMINin käyttöoikeus, tuntematon käyttäjä, väliaikainen salasana, pakotettu vaihto ja istuntojen mitätöinti.
 
 ## 4.4 Odotetut tulokset
 
-1. Käyttäjä voi tarkastella profiilitietojaan, päivittää etunimen, sukunimen ja käyttäjänimen sekä vaihtaa salasanan nykyisen salasanan vahvistuksella. Sähköpostiosoite näkyy mutta sitä ei voi muuttaa.
-2. ADMIN voi palauttaa unohtuneen salasanan backend-komennolla; käyttäjä joutuu vaihtamaan väliaikaisen salasanan eikä vanhoilla istunnoilla voi enää käyttää tiliä.
-2. Käyttäjä voi luoda tukipyynnön.
-3. Käyttäjä näkee omat tukipyyntönsä ja niiden tilat.
-4. Käyttäjä voi sulkea oman avoimen tukipyyntönsä.
-5. Tukipyyntöjen käyttöoikeudet tarkistetaan backendissä.
+1. Käyttäjä voi luoda tukipyynnön, joka tallentuu hänen omistukseensa.
+2. Käyttäjä näkee vain omat tukipyyntönsä, voi tarkastella niiden tietoja ja sulkea oman avoimen pyyntönsä.
+3. Käyttäjä voi tarkastella profiilitietojaan, päivittää etunimen, sukunimen ja käyttäjänimen sekä vaihtaa salasanan nykyisen salasanan vahvistuksella. Sähköpostiosoite näkyy mutta sitä ei voi muuttaa.
+4. Sprintin viimeisenä toteutettava US-17 mahdollistaa ADMINin backend-resetin; väliaikainen salasana on vaihdettava ennen muiden suojattujen toimintojen käyttöä ja aiemmat istunnot mitätöidään.
 
 ## 4.5 Sprintin hyväksyminen
 
