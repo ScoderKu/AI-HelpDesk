@@ -57,7 +57,7 @@ US-16:n 5 SP:n arvio kattaa frontendin, backendin, MySQL:n ja Ollaman Compose-pa
 |---------------|-----------------------|
 | US-01 | Tietokanta ja käyttäjätietojen tallennus |
 | US-02 | US-01, autentikointi ja käyttöoikeuksien hallinta |
-| US-03 | US-01, käyttäjäkohtainen tietojen haku |
+| US-03 | US-01, käyttäjäkohtainen tietojen haku, nykyisen salasanan tarkistus ja salasanan turvallinen tiivistäminen |
 | US-04 | US-10, US-11 ja käyttäjän tunnistaminen |
 | US-05 | US-04, US-10, US-11 ja käyttöoikeuksien tarkistaminen |
 | US-06 | REST-rajapinta ja tekoälypalvelun integraatio |
@@ -84,7 +84,7 @@ MVP-version tavoitteena on toteuttaa AI HelpDesk -sovelluksen keskeinen käyttö
 
 - US-01: Käyttäjän rekisteröityminen
 - US-02: Käyttäjän kirjautuminen
-- US-03: Käyttäjäprofiilin hallinta
+- US-03: Käyttäjäprofiilin hallinta (etunimen, sukunimen ja käyttäjänimen muokkaus; sähköpostin näyttäminen vain luettavana; salasanan vaihto nykyisen salasanan vahvistuksella)
 - US-04: Tukipyynnön luominen
 - US-05: Omien tukipyyntöjen tarkastelu ja sulkeminen
 - US-06: Tekoälypohjainen keskustelu
