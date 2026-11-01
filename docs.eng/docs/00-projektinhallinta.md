@@ -205,6 +205,8 @@ Progress is described primarily through verifiable outcomes, not merely a percen
 
 **Status on 31.10.2026:** Proxy handling for the login IP rate limit and session cleanup during login have been updated. The frontend has the fixed address `172.30.0.2` on a dedicated Docker proxy network and uses the backend alias `backend-proxy` at `172.30.0.3`, without sharing the backend's default network. The containers were recreated, and the frontend's `/api/health` request to the backend returned HTTP 200. Expired sessions are cleaned by a separate hourly background task in primary-key batches, not as part of the login transaction. Seven backend unit tests and Compose configuration validation passed. Forwarding between two actual LAN devices and concurrent sign-ins against MySQL have not yet been verified. The current Compose port binding remains `127.0.0.1`, so this configuration is not accessible from other LAN devices.
 
+**Status on 01.11.2026 – Sprint 1:** Implementations for all six Sprint stories are present in the current branch. The backend `unittest` suite passed 31/31 tests. The frontend TypeScript check and production build succeeded, and lint is clean. Alembic migrations were tested twice against a separate empty MySQL database; the active database is at `0002_conversations_and_tickets (head)`. Ticket API ORM paths were exercised against MySQL inside a transaction that was rolled back. First-time Ollama model initialization was tested with an empty temporary model volume: `poro-helpdesk` was created from the `Modelfile`, and the temporary Docker resources were removed. The entire Compose stack has not yet been started at once with both MySQL and Ollama volumes empty. Remaining checks are registration/sign-in API integration tests, a manual UI acceptance review, concurrent sign-ins against MySQL, and LAN forwarding. LAN access and frontend production deployment remain deferred as previously agreed.
+
 ### 8.4 Definition of Done
 
 A user story or function can be marked complete when:
@@ -264,6 +266,7 @@ Significant technical and project management decisions are recorded in this tabl
 | 26.10.2026 | 0.3 | Aligned the official scope, RAG MVP, Ollama and selected model, Docker Compose, license term checks, and US-09/US-14 commitments | Project implementer |
 | 31.10.2026 | 0.4 | Documented the proxy-based login IP rate-limit change, test results, and outstanding LAN verification | Project implementer |
 | 31.10.2026 | 0.5 | Routed frontend traffic through the trusted proxy network and moved expired-session cleanup outside the login transaction | Project implementer |
+| 01.11.2026 | 0.6 | Fixed Compose handling for Ollama model initialization; verified empty model-volume initialization, Sprint 1 test results, and remaining checks; corrected Modelfile paths and HomePage focus handling | Project implementer |
 
 ## 12. Links to Other Project Documents
 

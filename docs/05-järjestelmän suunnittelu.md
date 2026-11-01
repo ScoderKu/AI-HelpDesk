@@ -121,13 +121,13 @@ Tietokannan viite-eheys varmistetaan pää- ja viiteavaimilla. Käyttäjäkohtai
 
 ### 2.5 Tekoälyintegraatio
 
-AI Service välittää käyttäjän viestin Compose-ympäristössä toimivalle Ollama-palvelulle ja käsittelee saadun vastauksen. Käytettävä malli on `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`, jonka konfiguraatio on [Modelfile](../agents/Modelfile)-tiedostossa. Mallin kontekstipituus on 4096 ja lämpötila 0.2.
+AI Service välittää käyttäjän viestin Compose-ympäristössä toimivalle Ollama-palvelulle ja käsittelee saadun vastauksen. Käytettävä malli on `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`, jonka konfiguraatio on [Modelfile](../ollama/Modelfile)-tiedostossa. Mallin kontekstipituus on 4096 ja lämpötila 0.2.
 
 #### Tekoälyintegraation tulee
 
 - Kutsua Ollamaa backendistä Compose-verkon sisäisellä palvelunimellä ja rajapinnalla; selain ei kutsu Ollamaa suoraan.
 - Käynnistää Ollama Compose-palveluna ja varmistaa terveystarkistuksella, että palvelu sekä valittu malli ovat käytettävissä.
-- Tuoda mallin GGUF-tiedosto Ollama-kontin saataville dokumentoidulla tavalla. Nykyinen suunnitteluratkaisu liittää `agents`-hakemiston mallitiedoston konttiin vain luku -tilassa; `Modelfile` käyttää kontissa polkua `/models/Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`.
+- Tuoda mallin GGUF-tiedosto Ollama-kontin saataville dokumentoidulla tavalla. Nykyinen Compose-ratkaisu liittää `ollama`-hakemiston konttiin vain luku -tilassa hakemistoon `/models`; `Modelfile` käyttää kontissa polkua `/models/Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`.
 - Luoda valitun mallin Ollamaan automaattisesti Compose-käynnistyksen yhteydessä `Modelfile`-tiedoston perusteella, jos mallia ei vielä ole Ollaman mallivarastossa.
 - Säilyttää Ollaman mallivaraston pysyvässä Docker-volyymissa, jotta palvelun uudelleenkäynnistys ei edellytä mallin uutta manuaalista tuontia.
 - Käsitellä aikakatkaisut, palveluvirheet ja käyttörajoitukset.

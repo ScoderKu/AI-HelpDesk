@@ -209,6 +209,8 @@ Edistymistä kuvataan ensisijaisesti todennettavilla tuloksilla, ei pelkällä p
 
 **Tilanne 31.10.2026:** Kirjautumisyritysten IP-kohtaisen käyttörajan proxy-käsittelyä ja kirjautumisen istuntosiivousta on korjattu. Frontendille on määritetty osoite `172.30.0.2` Dockerin erillisessä proxy-verkossa; se käyttää backendin verkkoaliasta `backend-proxy` osoitteessa `172.30.0.3` eikä liity backendin kanssa jaettuun oletusverkkoon. Kontit luotiin uudelleen ja frontendin `/api/health`-pyyntö backendille palautti HTTP 200. Vanhentuneet istunnot siivotaan erillisessä taustatehtävässä tunnin välein ja poistetaan erissä ensisijaisavaimen kautta, ei kirjautumistransaktion yhteydessä. Seitsemän backendin yksikkötestiä sekä Compose-konfiguraation tarkistus läpäistiin. Kahden LAN-laitteen välistä IP-välitystä tai rinnakkaisia kirjautumisia todellisella MySQL-palvelulla ei ole vielä varmennettu. Nykyinen Compose-porttisidonta on edelleen `127.0.0.1`, joten palvelu ei tällä asetuksella ole muiden LAN-laitteiden käytettävissä.
 
+**Tilanne 01.11.2026 – Sprint 1:** Sprintin kuuden käyttäjätarinan toteutukset ovat nykyisessä branchissa. Backendin `unittest`-testisarja läpäisi 31/31 testiä. Frontendin TypeScript-tarkistus ja tuotantobuild onnistuivat; lint-tarkistus on puhdas. Alembic-migraatiot testattiin erillisessä tyhjässä MySQL-tietokannassa kahdesti, ja käytössä oleva tietokanta on versiossa `0002_conversations_and_tickets (head)`. Ticket API:n ORM-polut testattiin MySQL:llä transaktion rollbackilla. Ollaman mallin ensimmäinen käyttöönotto testattiin tyhjällä väliaikaisella mallivolyymilla: `poro-helpdesk` muodostui `Modelfile`-tiedostosta ja väliaikaiset Docker-resurssit poistettiin. Koko Compose-pinoa ei ole vielä käynnistetty kerralla täysin tyhjillä MySQL- ja Ollama-volyymeilla. Avoinna ovat rekisteröitymisen ja kirjautumisen API-integraatiotestit, käyttöliittymän manuaalinen hyväksymistarkastus, MySQL:n rinnakkaiskirjautumistesti sekä LAN-välitystesti. LAN-käyttö ja frontendin production-käyttöönotto pysyvät aiemmin sovitusti myöhempään vaiheeseen.
+
 ### 8.4 Definition of Done
 
 Käyttäjätarina tai toiminto voidaan merkitä valmiiksi, kun:
@@ -268,6 +270,7 @@ Merkittävät tekniset ja projektinhallinnalliset päätökset kirjataan tähän
 | 26.10.2026 | 0.3 | Yhtenäistetty virallinen laajuus, RAG MVP, Ollama ja valittu malli, Docker Compose, lisenssiehtojen tarkistus sekä US-09/US-14-sitoumukset | Projektin toteuttaja |
 | 31.10.2026 | 0.4 | Dokumentoitu proxy-pohjaisen kirjautumisen IP-rajoituksen muutos, testitulokset ja LAN-varmennuksen avoin tarve | Projektin toteuttaja |
 | 31.10.2026 | 0.5 | Pakotettu frontendin backend-reititys luotetun proxy-verkon kautta ja siirretty vanhentuneiden istuntojen siivous kirjautumistransaktion ulkopuolelle | Projektin toteuttaja |
+| 01.11.2026 | 0.6 | Korjattu Ollaman mallin alustuskomennon Compose-käsittely; varmennettu tyhjän mallivolyymin alustus, Sprint 1:n testitulokset ja avoimet tarkistukset; korjattu Modelfile-polut ja HomePage-focus-käsittely | Projektin toteuttaja |
 
 ## 12. Linkit projektin muihin dokumentteihin
 

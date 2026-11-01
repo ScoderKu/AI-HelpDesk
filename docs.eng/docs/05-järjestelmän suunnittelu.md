@@ -121,13 +121,13 @@ Database referential integrity is ensured with primary and foreign keys. User-sp
 
 ### 2.5 AI Integration
 
-AI Service forwards the user's message to the Ollama service running in the Compose environment and processes the response. The model used is `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`, whose configuration is in the [Modelfile](../../agents/Modelfile). The model's context length is 4096 and its temperature is 0.2.
+AI Service forwards the user's message to the Ollama service running in the Compose environment and processes the response. The model used is `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`, whose configuration is in the [Modelfile](../../ollama/Modelfile). The model's context length is 4096 and its temperature is 0.2.
 
 #### The AI Integration Must
 
 - Call Ollama from the backend using the service name and API within the Compose network; the browser does not call Ollama directly.
 - Run Ollama as a Compose service and use a health check to ensure that the service and selected model are available.
-- Make the GGUF model file available to the Ollama container in a documented way. The current design mounts the model file from the `agents` directory into the container as read-only; the `Modelfile` uses the container path `/models/Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`.
+- Make the GGUF model file available to the Ollama container in a documented way. The current Compose setup mounts the `ollama` directory into the container as read-only at `/models`; the `Modelfile` uses the container path `/models/Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`.
 - Automatically create the selected model in Ollama at Compose startup based on the `Modelfile`, if the model is not already in Ollama's model store.
 - Retain Ollama's model store in a persistent Docker volume so that restarting the service does not require the model to be imported manually again.
 - Handle timeouts, service errors, and usage limits.
