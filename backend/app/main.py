@@ -399,6 +399,19 @@ def get_current_user(
     return UserResponse.model_validate(user)
 
 
+@app.get(
+    "/api/v1/users/me",
+    response_model=UserResponse,
+    tags=["Users"],
+)
+def get_current_user_profile(
+    response: Response,
+    user: User = Depends(get_authenticated_user),
+) -> UserResponse:
+    response.headers["Cache-Control"] = "no-store"
+    return UserResponse.model_validate(user)
+
+
 @app.patch(
     "/api/v1/users/me",
     response_model=UserResponse,
