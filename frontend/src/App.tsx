@@ -117,6 +117,7 @@ function App() {
       notice={notice}
       authLoading={authLoading}
       currentUser={user}
+      onUserUpdated={setUser}
       isSigningOut={isSigningOut}
       onLanguageChange={changeLanguage}
       onOpenAuth={setAuthMode}
