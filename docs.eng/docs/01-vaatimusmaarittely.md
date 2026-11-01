@@ -91,6 +91,7 @@ The application must meet the following functional requirements.
 | FR-14 | The user interface is available in Finnish and English, and the user's language selection is retained. |
 | FR-15 | The frontend, backend, MySQL database, Ollama service, and selected AI model can be deployed with Docker Compose using one command documented in the README. The backend uses Ollama over the Compose network. |
 | FR-16 | A signed-in user can view the total number of their own support requests and the number in `OPEN` and `CLOSED` states; no data from other users is returned. |
+| FR-17 | An authorized administrator can reset a user's forgotten password using a protected backend maintenance command. The user must change the temporary password before accessing other protected features. |
 
 ## 7. Non-Functional Requirements
 
