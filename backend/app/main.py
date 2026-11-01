@@ -31,6 +31,7 @@ from app.schemas import (
     TicketSummaryResponse,
     TicketUpdateRequest,
     UserLoginRequest,
+    AuthStatusResponse,
     UserProfileUpdateRequest,
     UserPasswordChangeRequest,
     UserRegistrationRequest,
@@ -282,6 +283,14 @@ def get_authenticated_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required.",
         )
+    if user.must_change_password and not (
+        request.method == "GET" and request.url.path == "/api/v1/auth/me"
+        or request.method == "POST" and request.url.path == "/api/v1/users/me/password"
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Password change required before accessing this resource.",
+        )
     return user
 
 
@@ -343,7 +352,7 @@ def login_user(
     request: Request,
     response: Response,
     db: Session = Depends(get_db),
-) -> UserResponse:
+) -> AuthStatusResponse:
     enforce_login_rate_limit(request, credentials.email)
     user = db.scalar(
         select(User)
@@ -388,20 +397,20 @@ def login_user(
         path="/",
     )
     response.headers["Cache-Control"] = "no-store"
-    return UserResponse.model_validate(user)
+    return AuthStatusResponse(must_change_password=user.must_change_password)
 
 
 @app.get(
     "/api/v1/auth/me",
-    response_model=UserResponse,
+    response_model=AuthStatusResponse,
     tags=["Authentication"],
 )
 def get_current_user(
     response: Response,
     user: User = Depends(get_authenticated_user),
-) -> UserResponse:
+) -> AuthStatusResponse:
     response.headers["Cache-Control"] = "no-store"
-    return UserResponse.model_validate(user)
+    return AuthStatusResponse(must_change_password=user.must_change_password)
 
 
 @app.get(
@@ -485,6 +494,7 @@ def change_current_user_password(
     locked_user.password_hash = hash_password(
         password_data.new_password.get_secret_value()
     )
+    locked_user.must_change_password = False
     db.execute(delete(AuthSession).where(AuthSession.user_id == locked_user.id))
     locked_user.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
     db.commit()
