@@ -13,11 +13,11 @@ Käyttäjätarinoiden yksityiskohtaiset kuvaukset ja hyväksymiskriteerit löyty
 | Sprintti | Tavoite | Käyttäjätarinat | SP |
 |-----------|----------|----------------|----|
 | Sprint 1 | Tekninen perusta, käyttäjän tunnistaminen ja Docker Compose | US-01, US-02, US-10, US-11, US-12, US-16 | 33 |
-| Sprint 2 | Tukipyyntöjen ja profiilin hallinta | US-03, US-04, US-05 | 13 |
+| Sprint 2 | Tukipyyntöjen, profiilin ja salasanan palautuksen hallinta | US-03, US-04, US-05, US-17 | 15 |
 | Sprint 3 | Tekoälykeskustelu ja keskusteluhistoria | US-06, US-07, US-08 | 18 |
 | Sprint 4 | Käyttökokemuksen täydentäminen | US-09, US-13, US-14 | 9 |
 | Sprint 5 | Tietopohjainen tekoälyneuvonta | US-15 | 13 |
-| **Yhteensä** |  | **16 käyttäjätarinaa** | **86 SP** |
+| **Yhteensä** |  | **17 käyttäjätarinaa** | **88 SP** |
 
 Story Point -määrät ovat sovitut suunnitteluarviot. Sprint 1 säilytetään 33 SP:n kokonaisuutena ja nykyinen Sprint-jako pidetään ennallaan. US-09, US-14, RAG ja muut lopulliseen toimituslaajuuteen valitut ominaisuudet eivät ole ehdollisia ajan riittävyydelle. Jos kapasiteettiriski toteutuu, se nostetaan päätettäväksi ja muutokset hyväksytään muutostenhallinnan kautta; sitoumuksia ei poisteta hiljaisesti.
 
@@ -76,7 +76,7 @@ Sprintti voidaan hyväksyä, kun Sprint Backlogiin valitut ja valmiiksi merkityt
 
 ## 4.1 Sprintin tavoite
 
-Mahdollistaa käyttäjän omien profiilitietojen ja tukipyyntöjen hallinta.
+Mahdollistaa käyttäjän omien profiilitietojen ja tukipyyntöjen hallinta sekä unohtuneen salasanan turvallinen palautus ADMINin backend-komennolla ilman erillistä hallintakäyttöliittymää.
 
 Sprintin lopussa käyttäjä pystyy luomaan tukipyynnön, tarkastelemaan omia pyyntöjään ja sulkemaan ratkaistun pyynnön.
 
@@ -87,12 +87,15 @@ Sprintin lopussa käyttäjä pystyy luomaan tukipyynnön, tarkastelemaan omia py
 | US-04 | Tukipyynnön luominen | 5 |
 | US-05 | Omien tukipyyntöjen tarkastelu ja sulkeminen | 5 |
 | US-03 | Käyttäjäprofiilin hallinta | 3 |
-| **Yhteensä** |  | **13** |
+| US-17 | Unohtuneen salasanan palauttaminen ADMINin toimesta | 2 |
+| **Yhteensä** |  | **15** |
 
 ## 4.3 Keskeiset kehitystehtävät
 
 1. Toteutetaan profiilitietojen hakeminen sekä etunimen, sukunimen ja käyttäjänimen päivittäminen; sähköpostiosoite näytetään vain luettavana.
 2. Toteutetaan erillinen salasanan vaihtaminen: nykyisen salasanan tarkistus, uuden salasanan validointi ja vahvistuskentän tarkistus; uusi salasana tallennetaan vain turvallisesti tiivistettynä.
+3. Toteutetaan ADMINille backend-komento: luodaan satunnainen väliaikainen salasana, tallennetaan vain sen tiiviste, asetetaan pakotettu vaihto ja mitätöidään vanhat istunnot.
+4. Väliaikaisella salasanalla kirjautunut käyttäjä saa käyttää vain salasanan vaihtoa ja uloskirjautumista, kunnes salasana on vaihdettu.
 3. Toteutetaan tukipyynnön luontilomake ja tietojen validointi.
 4. Tallennetaan tukipyynnön otsikko, kuvaus, tila, prioriteetti, luontiaika ja omistaja.
 5. Toteutetaan käyttäjän omien tukipyyntöjen luettelonäkymä.
@@ -104,6 +107,7 @@ Sprintin lopussa käyttäjä pystyy luomaan tukipyynnön, tarkastelemaan omia py
 ## 4.4 Odotetut tulokset
 
 1. Käyttäjä voi tarkastella profiilitietojaan, päivittää etunimen, sukunimen ja käyttäjänimen sekä vaihtaa salasanan nykyisen salasanan vahvistuksella. Sähköpostiosoite näkyy mutta sitä ei voi muuttaa.
+2. ADMIN voi palauttaa unohtuneen salasanan backend-komennolla; käyttäjä joutuu vaihtamaan väliaikaisen salasanan eikä vanhoilla istunnoilla voi enää käyttää tiliä.
 2. Käyttäjä voi luoda tukipyynnön.
 3. Käyttäjä näkee omat tukipyyntönsä ja niiden tilat.
 4. Käyttäjä voi sulkea oman avoimen tukipyyntönsä.
@@ -309,7 +313,7 @@ Sprinttiä ei pidetä automaattisesti onnistuneena vain siksi, että kaikki suun
 
 # 11. Yhteenveto
 
-AI HelpDesk -sovelluksen alustava Sprint Plan koostuu viidestä Sprintistä ja 16 käyttäjätarinasta. Tarinoiden alustava kokonaisarvio on **86 Story Pointia**, sisältäen Sprint 1:een sijoitetun US-16:n 5 Story Pointin arvion.
+AI HelpDesk -sovelluksen alustava Sprint Plan koostuu viidestä Sprintistä ja 17 käyttäjätarinasta. Tarinoiden alustava kokonaisarvio on **88 Story Pointia**, sisältäen Sprint 1:een sijoitetun US-16:n 5 Story Pointin arvion.
 
 1. Sprint 1 luo sovelluksen teknisen perustan.
 2. Sprint 2 toteuttaa profiilin ja tukipyyntöjen hallinnan.
