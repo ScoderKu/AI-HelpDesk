@@ -38,15 +38,15 @@ Työmääräarviot perustuvat suhteelliseen Story Point -arviointiin. Arvioinnis
 | 7 | US-05 | Omien tukipyyntöjen tarkastelu ja sulkeminen | P1 | 5 | Sprint 2 |
 | 8 | US-03 | Käyttäjäprofiilin hallinta | P1 | 3 | Sprint 2 |
 | 9 | US-17 | Unohtuneen salasanan palauttaminen ADMINin toimesta | P1 | 2 | Sprint 2 |
-| 9 | US-06 | Tekoälypohjainen keskustelu | P1 | 8 | Sprint 3 |
-| 10 | US-08 | Keskusteluviestien tallentaminen | P1 | 5 | Sprint 3 |
-| 11 | US-07 | Tarkentavat kysymykset ja ongelmanratkaisu | P1 | 5 | Sprint 3 |
-| 12 | US-09 | Tukipyynnön luominen keskustelusta | P2 | 3 | Sprint 4 |
-| 13 | US-13 | Monikielinen käyttöliittymä | P2 | 3 | Sprint 4 |
-| 14 | US-14 | Tukipyyntöjen rajattu yhteenvetonäkymä | P3 | 3 | Sprint 4 |
-| 15 | US-15 | Tietopohjainen tekoälyneuvonta (RAG) | P2 | 13 | Sprint 5 |
-| 16 | US-16 | Sovelluksen käynnistäminen Docker Composella | P2 | 5 | Sprint 1 |
-| **Yhteensä** |  |  |  | **86 SP** |  |
+| 10 | US-06 | Tekoälypohjainen keskustelu | P1 | 8 | Sprint 3 |
+| 11 | US-08 | Keskusteluviestien tallentaminen | P1 | 5 | Sprint 3 |
+| 12 | US-07 | Tarkentavat kysymykset ja ongelmanratkaisu | P1 | 5 | Sprint 3 |
+| 13 | US-09 | Tukipyynnön luominen keskustelusta | P2 | 3 | Sprint 4 |
+| 14 | US-13 | Monikielinen käyttöliittymä | P2 | 3 | Sprint 4 |
+| 15 | US-14 | Tukipyyntöjen rajattu yhteenvetonäkymä | P3 | 3 | Sprint 4 |
+| 16 | US-15 | Tietopohjainen tekoälyneuvonta (RAG) | P2 | 13 | Sprint 5 |
+| 17 | US-16 | Sovelluksen käynnistäminen Docker Composella | P2 | 5 | Sprint 1 |
+| **Yhteensä** |  |  |  | **88 SP** |  |
 
 US-16:n 5 SP:n arvio kattaa frontendin, backendin, MySQL:n ja Ollaman Compose-palvelut, GGUF-mallin käyttöönoton Ollama-kontissa, tarvittavat konfiguraatiot, tietokannan ja mallin pysyvän tallennuksen, valmiustarkistukset sekä dokumentoinnin ja käynnistyksen integraatiotestauksen. Arvio ei sisällä tuotantoympäristön käyttöönottoa tai orkestrointia.
 
