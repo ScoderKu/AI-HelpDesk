@@ -71,6 +71,13 @@ class UserProfileEndpointTests(unittest.TestCase):
             password_hash="stored-hash",
         )
 
+    def test_profile_read_returns_user_fields_without_password_hash(self) -> None:
+        response = main.get_current_user_profile(MagicMock(), self.user)
+        payload = response.model_dump()
+        self.assertEqual(payload["email"], "ada@example.com")
+        self.assertEqual(payload["username"], "ada")
+        self.assertNotIn("password_hash", payload)
+
     def test_profile_update_persists_only_allowed_fields(self) -> None:
         db = MagicMock()
         db.scalar.return_value = None
