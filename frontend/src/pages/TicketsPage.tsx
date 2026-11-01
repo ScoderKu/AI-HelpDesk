@@ -107,6 +107,8 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError('')
+    if (!form.title.trim()) { setError(text.ticketTitleRequired); return }
+    if (!form.description.trim()) { setError(text.ticketDescriptionRequired); return }
     setIsSaving(true)
     try {
       const ticket = await ticketsApi.create({ ...form, title: form.title.trim(), description: form.description.trim() })
@@ -126,6 +128,8 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
     event.preventDefault()
     if (!selectedTicket) return
     setError('')
+    if (!form.title.trim()) { setError(text.ticketTitleRequired); return }
+    if (!form.description.trim()) { setError(text.ticketDescriptionRequired); return }
     setIsSaving(true)
     try {
       const ticket = await ticketsApi.update(selectedTicket.id, { ...form, title: form.title.trim(), description: form.description.trim() })
