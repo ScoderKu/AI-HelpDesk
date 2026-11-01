@@ -3,6 +3,7 @@ import { Icon } from '../components/Icon'
 import { LanguageSwitch } from '../components/LanguageSwitch'
 import { ticketsApi } from '../ticketsApi'
 import { TicketsPage } from './TicketsPage'
+import { ProfilePage } from './ProfilePage'
 import type { Copy } from '../i18n/copy'
 import type { AuthMode, AuthenticatedUser, Language, TicketSummary } from '../types'
 
@@ -11,11 +12,13 @@ type HomePageProps = {
   text: Copy
   notice: string
   currentUser: AuthenticatedUser | null
+  onUserUpdated: (user: AuthenticatedUser) => void
   authLoading: boolean
   isSigningOut: boolean
   onLanguageChange: (language: Language) => void
   onOpenAuth: (mode: AuthMode) => void
   onSignOut: () => Promise<boolean>
+  onPasswordChanged: () => void
   onShowPreviewNotice: () => void
 }
 
@@ -24,15 +27,18 @@ export function HomePage({
   text,
   notice,
   currentUser,
+  onUserUpdated,
   authLoading,
   isSigningOut,
   onLanguageChange,
   onOpenAuth,
   onSignOut,
+  onPasswordChanged,
   onShowPreviewNotice,
 }: HomePageProps) {
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
-  const [activeView, setActiveView] = useState<'home' | 'tickets'>('home')
+  const [activeView, setActiveView] = useState<'home' | 'tickets' | 'profile'>('home')
+  const [profileUser, setProfileUser] = useState(currentUser)
   const [ticketSummary, setTicketSummary] = useState<TicketSummary>({ total: 0, open: 0, closed: 0 })
   const [summaryError, setSummaryError] = useState('')
   const [summaryRefresh, setSummaryRefresh] = useState(0)
@@ -40,6 +46,8 @@ export function HomePage({
   const accountTriggerRef = useRef<HTMLButtonElement>(null)
   const signOutButtonRef = useRef<HTMLButtonElement>(null)
   const pageTitleRef = useRef<HTMLHeadingElement>(null)
+
+  useEffect(() => { setProfileUser(currentUser) }, [currentUser])
 
   useEffect(() => {
     let active = true
@@ -147,8 +155,7 @@ export function HomePage({
                     className="account-menu-item"
                     onClick={() => {
                       setIsAccountMenuOpen(false)
-                      accountTriggerRef.current?.focus()
-                      onShowPreviewNotice()
+                      setActiveView('profile')
                     }}
                     type="button"
                   >
@@ -202,7 +209,19 @@ export function HomePage({
         </header>
 
         <div className="page-content">
-          {activeView === 'tickets' ? (
+          {activeView === 'profile' && profileUser ? (
+            <ProfilePage
+              currentUser={profileUser}
+              language={language}
+              text={text}
+              onBackHome={() => setActiveView('home')}
+              onProfileUpdated={(updated) => { setProfileUser(updated); onUserUpdated(updated) }}
+              onPasswordChanged={() => {
+                onPasswordChanged()
+                setActiveView('home')
+              }}
+            />
+          ) : activeView === 'tickets' ? (
             <TicketsPage
               language={language}
               text={text}

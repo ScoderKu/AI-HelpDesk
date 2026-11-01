@@ -78,6 +78,11 @@ function App() {
     setNotice('')
   }
 
+  const handlePasswordChanged = () => {
+    setUser(null)
+    setNotice(text.passwordChanged)
+  }
+
   const handleSignOut = async (): Promise<boolean> => {
     setIsSigningOut(true)
     try {
@@ -117,10 +122,12 @@ function App() {
       notice={notice}
       authLoading={authLoading}
       currentUser={user}
+      onUserUpdated={setUser}
       isSigningOut={isSigningOut}
       onLanguageChange={changeLanguage}
       onOpenAuth={setAuthMode}
       onSignOut={handleSignOut}
+      onPasswordChanged={handlePasswordChanged}
       onShowPreviewNotice={showPreviewNotice}
       text={text}
     />

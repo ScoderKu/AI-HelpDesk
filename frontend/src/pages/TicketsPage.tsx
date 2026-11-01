@@ -107,9 +107,11 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError('')
+    if (!form.title.trim()) { setError(text.ticketTitleRequired); return }
+    if (!form.description.trim()) { setError(text.ticketDescriptionRequired); return }
     setIsSaving(true)
     try {
-      const ticket = await ticketsApi.create(form)
+      const ticket = await ticketsApi.create({ ...form, title: form.title.trim(), description: form.description.trim() })
       setSelectedTicket(ticket)
       setForm({ title: ticket.title, description: ticket.description, priority: ticket.priority })
       setMode('detail')
@@ -126,9 +128,11 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
     event.preventDefault()
     if (!selectedTicket) return
     setError('')
+    if (!form.title.trim()) { setError(text.ticketTitleRequired); return }
+    if (!form.description.trim()) { setError(text.ticketDescriptionRequired); return }
     setIsSaving(true)
     try {
-      const ticket = await ticketsApi.update(selectedTicket.id, form)
+      const ticket = await ticketsApi.update(selectedTicket.id, { ...form, title: form.title.trim(), description: form.description.trim() })
       setSelectedTicket(ticket)
       setForm({ title: ticket.title, description: ticket.description, priority: ticket.priority })
       setIsEditing(false)
@@ -164,6 +168,7 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
           maxLength={200}
           required
           value={form.title}
+          aria-invalid={!form.title.trim()}
           onChange={(event) => setForm({ ...form, title: event.target.value })}
         />
       </label>
@@ -174,6 +179,7 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
           required
           rows={6}
           value={form.description}
+          aria-invalid={!form.description.trim()}
           onChange={(event) => setForm({ ...form, description: event.target.value })}
         />
       </label>
