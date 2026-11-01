@@ -320,13 +320,24 @@ Jos lomake avataan AI-keskustelusta, otsikko ja kuvaus voidaan esitäyttää kes
 
 ### 6.9 Profiili ja kieliasetus
 
-**Tarkoitus:** näyttää käyttäjän tiedot ja antaa mahdollisuus hallita käyttöliittymän kieltä.
+**Tarkoitus:** näyttää käyttäjän tiedot, mahdollistaa sallittujen profiilitietojen päivittäminen, salasanan vaihtaminen ja käyttöliittymän kielen hallinta.
 
-**Sisältö**
-- käyttäjän tallennetut tiedot;
-- muokkaustoiminnot vain niille tiedoille, joiden muokkaaminen kuuluu vaatimuksiin;
+**Profiilitiedot**
+- etunimi – muokattavissa;
+- sukunimi – muokattavissa;
+- käyttäjänimi – muokattavissa;
+- sähköpostiosoite – näytetään vain luettavana, eikä käyttöliittymä tarjoa sen muuttamista.
+
+**Salasanan vaihtaminen**
+- erillinen **Vaihda salasana** -toiminto;
+- nykyisen salasanan kenttä;
+- uuden salasanan kenttä;
+- uuden salasanan vahvistuskenttä;
+- **Vaihda salasana** -painike ja onnistumis-/virheilmoitus.
+
+**Muut toiminnot**
 - kielen valinta: suomi / englanti;
-- **Tallenna muutokset** -painike, jos muutettavia tietoja on;
+- **Tallenna muutokset** -painike profiilitiedoille;
 - **Kirjaudu ulos** -toiminto.
 
 **Kaksikielisyys**
@@ -446,6 +457,8 @@ Seuraavat kriteerit täydentävät käyttäjätarinoiden hyväksymiskriteerejä.
 | UX-14 | Käyttäjä näkee vain omat tukipyyntönsä ja keskustelunsa. | Testaa kahdella eri testikäyttäjällä |
 | UX-15 | Käyttäjän viesti säilyy AI-palvelun virheen jälkeen, jos se on jo kirjoitettu tai lähetetty. | Simuloi AI-palvelun virhe |
 | UX-16 | Etusivu näyttää vain kirjautuneen käyttäjän tukipyyntöjen kokonaismäärän sekä `OPEN`- ja `CLOSED`-määrät; tyhjän tilin arvot ovat nollia. | Testaa käyttäjätilillä, jolla on pyyntöjä ja tyhjällä tilillä; vertaa lukumääriä tietokantaan |
+| UX-17 | Profiilissa etunimi, sukunimi ja käyttäjänimi ovat muokattavissa, mutta sähköpostiosoite on vain luettavissa. | Muokkaa sallittuja kenttiä ja varmista, ettei sähköpostille ole muokkaustoimintoa |
+| UX-18 | Salasanan vaihto pyytää nykyisen salasanan, uuden salasanan ja vahvistuksen sekä näyttää onnistumis- tai virhepalautteen. | Testaa oikea ja väärä nykyinen salasana sekä poikkeava vahvistus |
 
 ## 12. Käytettävyystestaussuunnitelma
 
