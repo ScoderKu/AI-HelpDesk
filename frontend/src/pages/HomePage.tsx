@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Icon } from '../components/Icon'
 import { LanguageSwitch } from '../components/LanguageSwitch'
+import { ticketsApi } from '../ticketsApi'
+import { TicketsPage } from './TicketsPage'
 import type { Copy } from '../i18n/copy'
-import type { AuthMode, AuthenticatedUser, Language } from '../types'
+import type { AuthMode, AuthenticatedUser, Language, TicketSummary } from '../types'
 
 type HomePageProps = {
   language: Language
@@ -30,11 +32,31 @@ export function HomePage({
   onShowPreviewNotice,
 }: HomePageProps) {
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
+  const [activeView, setActiveView] = useState<'home' | 'tickets'>('home')
+  const [ticketSummary, setTicketSummary] = useState<TicketSummary>({ total: 0, open: 0, closed: 0 })
+  const [summaryError, setSummaryError] = useState('')
+  const [summaryRefresh, setSummaryRefresh] = useState(0)
   const accountMenuRef = useRef<HTMLDivElement>(null)
   const accountTriggerRef = useRef<HTMLButtonElement>(null)
   const signOutButtonRef = useRef<HTMLButtonElement>(null)
   const pageTitleRef = useRef<HTMLHeadingElement>(null)
   const [focusPageTitleAfterSignOut, setFocusPageTitleAfterSignOut] = useState(false)
+
+  useEffect(() => {
+    let active = true
+    if (!currentUser) return () => { active = false }
+    void ticketsApi.summary()
+      .then((summary) => {
+        if (active) {
+          setTicketSummary(summary)
+          setSummaryError('')
+        }
+      })
+      .catch(() => {
+        if (active) setSummaryError(text.ticketLoadError)
+      })
+    return () => { active = false }
+  }, [currentUser, summaryRefresh, text.ticketLoadError])
 
   useEffect(() => {
     if (focusPageTitleAfterSignOut && !currentUser) {
@@ -93,7 +115,7 @@ export function HomePage({
 
         <div className="sidebar-section-label">{text.workspace}</div>
         <nav className="main-nav" aria-label={text.workspace}>
-          <a className="nav-link active" href="#home" aria-current="page">
+          <a className={`nav-link ${activeView === 'home' ? 'active' : ''}`} href="#home" aria-current={activeView === 'home' ? 'page' : undefined} onClick={() => setActiveView('home')}>
             <Icon name="home" />
             <span>{text.home}</span>
           </a>
@@ -102,10 +124,9 @@ export function HomePage({
             <span>{text.chat}</span>
             <span className="nav-soon">›</span>
           </button>
-          <button className="nav-link" onClick={onShowPreviewNotice} type="button">
+          <button className={`nav-link ${activeView === 'tickets' ? 'active' : ''}`} onClick={() => currentUser ? setActiveView('tickets') : onShowPreviewNotice()} type="button">
             <Icon name="ticket" />
-            <span>{text.tickets}</span>
-            <span className="nav-soon">›</span>
+            <span>{text.ticketsNav}</span>
           </button>
         </nav>
 
@@ -151,6 +172,7 @@ export function HomePage({
                       const succeeded = await onSignOut()
                       if (succeeded) {
                         setIsAccountMenuOpen(false)
+                        setActiveView('home')
                         setFocusPageTitleAfterSignOut(true)
                       } else {
                         signOutButtonRef.current?.focus()
@@ -188,6 +210,14 @@ export function HomePage({
         </header>
 
         <div className="page-content">
+          {activeView === 'tickets' ? (
+            <TicketsPage
+              language={language}
+              text={text}
+              onBackHome={() => setActiveView('home')}
+              onChanged={() => setSummaryRefresh((value) => value + 1)}
+            />
+          ) : <>
           <div className="preview-notice" role="note">
             <span className="notice-indicator"><Icon name="layers" /></span>
             <div>
@@ -239,7 +269,7 @@ export function HomePage({
                   <span className="stat-icon"><Icon name="layers" /></span>
                   <span className="stat-label">{text.total}</span>
                 </div>
-                <div className="stat-value">0</div>
+                <div className="stat-value">{currentUser ? ticketSummary.total : 0}</div>
                 <p>{text.totalHint}</p>
               </article>
               <article className="stat-card stat-open">
@@ -247,7 +277,7 @@ export function HomePage({
                   <span className="stat-icon"><Icon name="circle" /></span>
                   <span className="stat-label">{text.open}</span>
                 </div>
-                <div className="stat-value">0</div>
+                <div className="stat-value">{currentUser ? ticketSummary.open : 0}</div>
                 <p>{text.openHint}</p>
               </article>
               <article className="stat-card stat-closed">
@@ -255,18 +285,20 @@ export function HomePage({
                   <span className="stat-icon"><Icon name="check" /></span>
                   <span className="stat-label">{text.closed}</span>
                 </div>
-                <div className="stat-value">0</div>
+                <div className="stat-value">{currentUser ? ticketSummary.closed : 0}</div>
                 <p>{text.closedHint}</p>
               </article>
             </div>
           </section>
 
+          {currentUser && summaryError && <div aria-live="polite" className="action-feedback" role="status"><span>{summaryError}</span></div>}
           <div aria-live="polite" className="action-feedback" role="status">
             {notice && <span>{notice}</span>}
           </div>
 
           <footer className="page-footer">{text.footer}</footer>
           <div className="lab-signature">Developed by ScoderKu Lab</div>
+          </>}
         </div>
       </main>
     </div>
