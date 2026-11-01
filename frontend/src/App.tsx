@@ -38,7 +38,7 @@ function App() {
           credentials: 'include',
         })
         if (response.status === 401) {
-          if (active) setUser(null)
+          if (active) { setUser(null); setMustChangePassword(false) }
           return
         }
         if (!response.ok) throw new Error(`Session check failed: ${response.status}`)
@@ -84,11 +84,18 @@ function App() {
 
   const handleLoginSuccess = async (authStatus: AuthStatus) => {
     setMustChangePassword(authStatus.must_change_password)
-    if (!authStatus.must_change_password) {
-      const response = await fetch(`${API_BASE_URL}/api/v1/users/me`, { credentials: 'include' })
-      if (!response.ok) { setNotice(text.sessionCheckError); return }
-      setUser(await response.json())
-    } else setUser(null)
+    if (authStatus.must_change_password) {
+      setUser(null)
+    } else {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/users/me`, { credentials: 'include' })
+        if (!response.ok) throw new Error(`Profile load failed: ${response.status}`)
+        setUser(await response.json())
+      } catch {
+        setNotice(text.sessionCheckError)
+        return
+      }
+    }
     setAuthMode(null)
     setNotice('')
   }
