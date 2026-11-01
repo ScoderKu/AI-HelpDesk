@@ -18,6 +18,7 @@ type HomePageProps = {
   onLanguageChange: (language: Language) => void
   onOpenAuth: (mode: AuthMode) => void
   onSignOut: () => Promise<boolean>
+  onPasswordChanged: () => void
   onShowPreviewNotice: () => void
 }
 
@@ -32,6 +33,7 @@ export function HomePage({
   onLanguageChange,
   onOpenAuth,
   onSignOut,
+  onPasswordChanged,
   onShowPreviewNotice,
 }: HomePageProps) {
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
@@ -214,8 +216,8 @@ export function HomePage({
               text={text}
               onBackHome={() => setActiveView('home')}
               onProfileUpdated={(updated) => { setProfileUser(updated); onUserUpdated(updated) }}
-              onPasswordChanged={async () => {
-                await onSignOut()
+              onPasswordChanged={() => {
+                onPasswordChanged()
                 setActiveView('home')
               }}
             />
