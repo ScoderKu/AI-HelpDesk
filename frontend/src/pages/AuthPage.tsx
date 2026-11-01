@@ -3,14 +3,14 @@ import { Icon } from '../components/Icon'
 import { LanguageSwitch } from '../components/LanguageSwitch'
 import { API_BASE_URL } from '../api'
 import type { Copy } from '../i18n/copy'
-import type { AuthMode, AuthenticatedUser, Language } from '../types'
+import type { AuthMode, AuthStatus, Language } from '../types'
 
 type AuthPageProps = {
   mode: AuthMode
   language: Language
   text: Copy
   onLanguageChange: (language: Language) => string
-  onLoginSuccess: (user: AuthenticatedUser) => void
+  onLoginSuccess: (status: AuthStatus) => void
   onModeChange: (mode: AuthMode) => void
   onBack: () => void
 }
@@ -114,8 +114,8 @@ export function AuthPage({
       )
 
       if (response.status === 200 && !isRegister) {
-        const user: AuthenticatedUser = await response.json()
-        onLoginSuccess(user)
+        const authStatus: AuthStatus = await response.json()
+        onLoginSuccess(authStatus)
       } else if (response.status === 201 && isRegister) {
         form.reset()
         setNotice(text.registrationSuccess)
