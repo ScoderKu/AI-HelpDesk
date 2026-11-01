@@ -91,18 +91,19 @@ Sprintin lopussa käyttäjä pystyy luomaan tukipyynnön, tarkastelemaan omia py
 
 ## 4.3 Keskeiset kehitystehtävät
 
-1. Toteutetaan profiilitietojen hakeminen ja päivittäminen.
-2. Toteutetaan tukipyynnön luontilomake ja tietojen validointi.
-3. Tallennetaan tukipyynnön otsikko, kuvaus, tila, prioriteetti, luontiaika ja omistaja.
-4. Toteutetaan käyttäjän omien tukipyyntöjen luettelonäkymä.
-5. Toteutetaan yksittäisen tukipyynnön tietojen tarkastelu.
+1. Toteutetaan profiilitietojen hakeminen sekä etunimen, sukunimen ja käyttäjänimen päivittäminen; sähköpostiosoite näytetään vain luettavana.
+2. Toteutetaan erillinen salasanan vaihtaminen: nykyisen salasanan tarkistus, uuden salasanan validointi ja vahvistuskentän tarkistus; uusi salasana tallennetaan vain turvallisesti tiivistettynä.
+3. Toteutetaan tukipyynnön luontilomake ja tietojen validointi.
+4. Tallennetaan tukipyynnön otsikko, kuvaus, tila, prioriteetti, luontiaika ja omistaja.
+5. Toteutetaan käyttäjän omien tukipyyntöjen luettelonäkymä.
+6. Toteutetaan yksittäisen tukipyynnön tietojen tarkastelu.
 6. Toteutetaan tukipyynnön sulkeminen.
 7. Varmistetaan, ettei käyttäjä voi tarkastella tai muuttaa toisen käyttäjän tukipyyntöä luvattomasti.
 8. Testataan tietojen tallennus, päivitys, haku ja käyttöoikeuksien tarkistaminen.
 
 ## 4.4 Odotetut tulokset
 
-1. Käyttäjä voi tarkastella ja päivittää omia profiilitietojaan.
+1. Käyttäjä voi tarkastella profiilitietojaan, päivittää etunimen, sukunimen ja käyttäjänimen sekä vaihtaa salasanan nykyisen salasanan vahvistuksella. Sähköpostiosoite näkyy mutta sitä ei voi muuttaa.
 2. Käyttäjä voi luoda tukipyynnön.
 3. Käyttäjä näkee omat tukipyyntönsä ja niiden tilat.
 4. Käyttäjä voi sulkea oman avoimen tukipyyntönsä.
