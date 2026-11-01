@@ -40,7 +40,6 @@ export function HomePage({
   const accountTriggerRef = useRef<HTMLButtonElement>(null)
   const signOutButtonRef = useRef<HTMLButtonElement>(null)
   const pageTitleRef = useRef<HTMLHeadingElement>(null)
-  const [focusPageTitleAfterSignOut, setFocusPageTitleAfterSignOut] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -57,13 +56,6 @@ export function HomePage({
       })
     return () => { active = false }
   }, [currentUser, summaryRefresh, text.ticketLoadError])
-
-  useEffect(() => {
-    if (focusPageTitleAfterSignOut && !currentUser) {
-      pageTitleRef.current?.focus()
-      setFocusPageTitleAfterSignOut(false)
-    }
-  }, [currentUser, focusPageTitleAfterSignOut])
 
   useEffect(() => {
     if (!isAccountMenuOpen) return
@@ -173,7 +165,7 @@ export function HomePage({
                       if (succeeded) {
                         setIsAccountMenuOpen(false)
                         setActiveView('home')
-                        setFocusPageTitleAfterSignOut(true)
+                        pageTitleRef.current?.focus()
                       } else {
                         signOutButtonRef.current?.focus()
                       }
