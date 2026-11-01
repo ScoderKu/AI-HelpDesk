@@ -31,6 +31,8 @@ from app.schemas import (
     TicketSummaryResponse,
     TicketUpdateRequest,
     UserLoginRequest,
+    UserProfileUpdateRequest,
+    UserPasswordChangeRequest,
     UserRegistrationRequest,
     UserRegistrationResponse,
     UserResponse,
@@ -395,6 +397,77 @@ def get_current_user(
 ) -> UserResponse:
     response.headers["Cache-Control"] = "no-store"
     return UserResponse.model_validate(user)
+
+
+@app.patch(
+    "/api/v1/users/me",
+    response_model=UserResponse,
+    tags=["Users"],
+)
+def update_current_user_profile(
+    profile_data: UserProfileUpdateRequest,
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> UserResponse:
+    existing_username = db.scalar(
+        select(User.id).where(
+            User.username == profile_data.username,
+            User.id != user.id,
+        )
+    )
+    if existing_username is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Username is already registered.",
+        )
+
+    user.first_name = profile_data.first_name
+    user.last_name = profile_data.last_name
+    user.username = profile_data.username
+    user.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    try:
+        db.commit()
+        db.refresh(user)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Username is already registered.",
+        ) from None
+    return UserResponse.model_validate(user)
+
+
+@app.post(
+    "/api/v1/users/me/password",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["Users"],
+)
+def change_current_user_password(
+    password_data: UserPasswordChangeRequest,
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> Response:
+    if not verify_password(
+        password_data.current_password.get_secret_value(),
+        user.password_hash,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect.",
+        )
+    user.password_hash = hash_password(password_data.new_password.get_secret_value())
+    user.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    db.commit()
+    response = Response(status_code=status.HTTP_204_NO_CONTENT)
+    response.delete_cookie(
+        key=SESSION_COOKIE_NAME,
+        httponly=True,
+        secure=SESSION_COOKIE_SECURE,
+        samesite="lax",
+        path="/",
+    )
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.get(
