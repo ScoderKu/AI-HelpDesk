@@ -456,6 +456,7 @@ def change_current_user_password(
             detail="Current password is incorrect.",
         )
     user.password_hash = hash_password(password_data.new_password.get_secret_value())
+    db.execute(delete(AuthSession).where(AuthSession.user_id == user.id))
     user.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
     db.commit()
     response = Response(status_code=status.HTTP_204_NO_CONTENT)
