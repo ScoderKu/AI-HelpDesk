@@ -1,6 +1,8 @@
 export type Language = 'fi' | 'en'
 export type AuthMode = 'login' | 'register'
 
+export type AuthStatus = { must_change_password: boolean }
+
 export type AuthenticatedUser = {
   id: number
   first_name: string
