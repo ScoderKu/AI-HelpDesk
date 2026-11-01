@@ -134,3 +134,33 @@ class TicketSummaryResponse(BaseModel):
     total: int
     open: int
     closed: int
+
+
+class UserProfileUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    first_name: str = Field(min_length=1, max_length=100)
+    last_name: str = Field(min_length=1, max_length=100)
+    username: str = Field(min_length=3, max_length=100)
+
+    @model_validator(mode="after")
+    def validate_profile(self) -> Self:
+        if not self.first_name or not self.last_name or len(self.username) < 3:
+            raise ValueError("Profile fields are invalid.")
+        return self
+
+
+class UserPasswordChangeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    current_password: SecretStr = Field(min_length=1, max_length=128)
+    new_password: SecretStr = Field(min_length=8, max_length=128)
+    confirm_new_password: SecretStr = Field(min_length=8, max_length=128)
+
+    @model_validator(mode="after")
+    def validate_passwords(self) -> Self:
+        if self.new_password.get_secret_value() != self.confirm_new_password.get_secret_value():
+            raise ValueError("New password confirmation does not match.")
+        if self.current_password.get_secret_value() == self.new_password.get_secret_value():
+            raise ValueError("New password must differ from current password.")
+        return self
