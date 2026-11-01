@@ -99,6 +99,7 @@ Backend tarjoaa REST-rajapinnan ja toteuttaa sovelluksen liiketoimintalogiikan.
 | Auth Service | Käyttäjän tunnistaminen ja käyttöoikeudet |
 | User Service | Profiilitietojen hallinta ja salasanan vaihtamisen orkestrointi |
 | Auth Service | Nykyisen salasanan tarkistaminen ja salasanan tiivisteen turvallinen päivittäminen |
+| Admin Password Reset | Ylläpitäjän backend-komennon käyttöoikeus, väliaikaisen salasanan luonti, pakotetun vaihdon merkitseminen ja istuntojen mitätöinti |
 | Ticket Service | Tukipyyntöjen luominen ja päivittäminen |
 | Chat Service | Keskustelujen ja viestien käsittely |
 | AI Service | Tekoälypalvelun integraatio |
@@ -216,6 +217,7 @@ ER-diagrammi kuvaa MVP-version tietomallin ja pidetään ennallaan. RAG MVP käy
 | username | VARCHAR(100) | NOT NULL, UNIQUE | Käyttäjänimi |
 | email | VARCHAR(255) | NOT NULL, UNIQUE | Sähköpostiosoite |
 | password_hash | VARCHAR(255) | NOT NULL | Salasanan tiiviste |
+| must_change_password | BOOLEAN | NOT NULL, DEFAULT FALSE | Pakottaa salasanan vaihtamisen seuraavan kirjautumisen jälkeen |
 | created_at | DATETIME | NOT NULL | Luontiaika |
 | updated_at | DATETIME | NOT NULL | Viimeisin päivitysaika |
 
@@ -345,7 +347,15 @@ Autentikointireitit sekä tukipyyntöjen listaus-, luonti-, haku-, päivitys-, y
 | GET | `/api/v1/auth/me` | Palauttaa nykyisen kirjautuneen käyttäjän | Kyllä |
 | GET | `/api/v1/users/me` | Hakee kirjautuneen käyttäjän profiilin | Suunniteltu |
 | PATCH | `/api/v1/users/me` | Päivittää vain etunimen, sukunimen ja käyttäjänimen; sähköpostikenttää ei hyväksytä päivitettäväksi | Suunniteltu |
-| POST | `/api/v1/users/me/password` | Vaihtaa salasanan nykyisen salasanan ja uuden salasanan vahvistuksen jälkeen; tallentaa vain uuden salasanan tiivisteen | Suunniteltu |
+| POST | `/api/v1/users/me/password` | Vaihtaa salasanan nykyisen salasanan ja uuden salasanan vahvistuksen jälkeen; tallentaa vain uuden salasanan tiivisteen ja poistaa pakotetun vaihdon merkinnän | Suunniteltu |
+
+#### Unohtuneen salasanan palautus (US-17)
+
+Palautus toteutetaan backendin hallintakomennolla, ei HTTP-endpointina eikä frontendin hallintanäkymänä. Komento suoritetaan vain backendin ylläpitoon oikeutetusta ympäristöstä (esimerkiksi Docker-kontin ylläpitokonsolista). Tavallisen käyttäjän istunto ei anna oikeutta suorittaa komentoa.
+
+Komento hakee kohdekäyttäjän, luo kryptografisesti satunnaisen väliaikaisen salasanan, tallentaa vain sen tiivisteen, asettaa users.must_change_password-arvon TRUE ja mitätöi kaikki kohdekäyttäjän auth_sessions-istunnot. Väliaikainen salasana tulostetaan kerran ADMINin terminaaliin. Salasanaa ei kirjoiteta sovelluslokeihin eikä tallenneta selväkielisenä.
+
+Väliaikaisella salasanalla kirjautunut käyttäjä saa käyttää vain salasanan vaihtoa ja uloskirjautumista. Onnistunut salasanan vaihto poistaa pakotetun vaihdon merkinnän.
 
 Autentikointi käyttää MySQL:ään tallennettua palvelinpuolen istuntoa. Alembic-migraatiot ajetaan ennen backendin käynnistymistä; ensimmäinen baseline-migraatio luo `users`- ja `auth_sessions`-taulut tai ottaa olemassa olevat taulut käyttöön muuttamatta niitä. Myöhemmät skeemamuutokset toimitetaan tarkistettuina migraatiotiedostoina. Eväste sisältää HMAC-allekirjoitetun käyttäjä-, vanhenemis- ja istuntotunnisteen; eväste on `HttpOnly` ja `SameSite=Lax`, ja sen voimassaolo on kahdeksan tuntia. `AUTH_COOKIE_SECURE` määrittää `Secure`-attribuutin: Compose käyttää oletuksena arvoa `true`; vain paikallisessa HTTP-kehityksessä `.env`-tiedostossa asetetaan `AUTH_COOKIE_SECURE=false`. HTTPS-käytössä asetus pidetään arvossa `true`. Uloskirjautuminen poistaa istunnon MySQL:stä ja evästeen selaimesta. Lisäksi uloskirjautumispyynnön `Origin`-otsakkeen on vastattava täsmälleen jotakin `FRONTEND_ORIGINS`-asetuksen alkuperää; puuttuva tai tuntematon alkuperä hylätään. LAN-käytössä sovelluksen tarkka alkuperä lisätään tähän asetukseen, eikä tarkistusta poisteta. Erillistä CSRF-tokenia ei käytetä.
 
@@ -525,6 +535,7 @@ POST /api/v1/conversations/25/messages
 ## 5.7 Rajapinnan tietoturva
 
 1. Salasanat tiivistetään turvallisella salasanatiivistealgoritmilla.
+2. ADMINin palautuskomento on käytettävissä vain backendin ylläpitoympäristössä; väliaikainen salasana näytetään kerran, pakotettu vaihto estää muut suojatut toiminnot ja kaikki aiemmat istunnot mitätöidään.
 2. Autentikointi toteutetaan turvallisella istunto- tai token-mekanismilla.
 3. HTTPS on pakollinen tuotantoympäristössä.
 4. Backend tarkistaa käyttäjän oikeudet ennen resurssien palauttamista tai muuttamista.
