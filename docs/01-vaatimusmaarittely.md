@@ -20,7 +20,9 @@ AI HelpDesk pyrkii helpottamaan tätä prosessia tarjoamalla tekoälypohjaista n
 ## 3. Projektin tavoitteet
 
 Projektin tavoitteena on suunnitella ja toteuttaa toimiva AI HelpDesk -sovellus, joka täyttää seuraavat tavoitteet:
-- Käyttäjä voi rekisteröityä, kirjautua sisään ja muokata omia profiilitietojaan.
+- Käyttäjä voi rekisteröityä ja kirjautua sisään.
+- Käyttäjä voi tarkastella profiilitietojaan, muokata etunimeä, sukunimeä ja käyttäjänimeä sekä vaihtaa salasanansa nykyisen salasanan vahvistuksella. Sähköpostiosoite on vain luettavissa eikä sitä voi muuttaa.
+- ADMIN voi palauttaa unohtuneen salasanan backendin hallintakomennolla; käyttäjä saa satunnaisen väliaikaisen salasanan ja joutuu vaihtamaan sen seuraavalla kirjautumiskerralla.
 - Käyttäjä voi keskustella tekoälyn kanssa teknisistä ongelmista.
 - Tekoäly voi pyytää lisätietoja, kuten käyttöjärjestelmän, virheilmoituksen tai ongelman toistamiseen liittyvät vaiheet.
 - Käyttäjä voi luoda tukipyyntöjä, tarkastella omia tukipyyntöjään ja sulkea niitä.
@@ -45,6 +47,7 @@ Projektin laajuus rajataan siten, että sovellus voidaan toteuttaa ja testata vi
 
 - Käyttäjän rekisteröityminen ja kirjautuminen.
 - Käyttäjäprofiilin tarkastelu ja muokkaaminen.
+- Unohtuneen salasanan palauttaminen ADMINin backend-hallintakomennolla ilman erillistä käyttöliittymää.
 - Tukipyyntöjen luominen, tarkastelu ja sulkeminen.
 - Tukipyyntöjen tilan ja prioriteetin hallinta.
 - Tekoälypohjainen chat ja ongelmanratkaisu.
@@ -75,7 +78,7 @@ Sovelluksen on täytettävä seuraavat toiminnalliset vaatimukset.
 | Tunnus | Vaatimus |
 |---|---|
 | FR-01 | Käyttäjä voi rekisteröityä ja kirjautua sisään. |
-| FR-02 | Käyttäjä voi tarkastella ja muokata omia profiilitietojaan. |
+| FR-02 | Käyttäjä voi tarkastella profiilitietojaan, muokata etunimeä, sukunimeä ja käyttäjänimeä sekä vaihtaa salasanansa nykyisen salasanan vahvistuksella. Sähköpostiosoite on vain luettavissa eikä sitä voi muuttaa. |
 | FR-03 | Käyttäjä voi luoda uuden tukipyynnön. |
 | FR-04 | Käyttäjä voi tarkastella ja sulkea omia tukipyyntöjään. |
 | FR-05 | Tukipyynnössä on otsikko, kuvaus, tila, prioriteetti, luontiaika ja käyttäjän tunniste. |
@@ -90,10 +93,11 @@ Sovelluksen on täytettävä seuraavat toiminnalliset vaatimukset.
 | FR-14 | Käyttöliittymä on käytettävissä suomeksi ja englanniksi, ja käyttäjän kielivalinta säilyy. |
 | FR-15 | Frontend, backend, MySQL-tietokanta, Ollama-palvelu ja valittu tekoälymalli voidaan ottaa käyttöön Docker Composella yhdellä README:ssä dokumentoidulla komennolla. Backend käyttää Ollamaa Compose-verkon kautta. |
 | FR-16 | Kirjautunut käyttäjä voi tarkastella omien tukipyyntöjensä kokonaismäärää sekä `OPEN`- ja `CLOSED`-tiloissa olevien pyyntöjen määriä; muilta käyttäjiltä ei palauteta tietoja. |
+| FR-17 | ADMIN voi palauttaa unohtuneen salasanan vain backendin hallintakomennolla. Backend luo satunnaisen väliaikaisen salasanan, vaatii sen vaihtamisen seuraavassa kirjautumisessa ja mitätöi käyttäjän aiemmat istunnot. Käyttäjälle ei toteuteta reset-käyttöliittymää. |
 
 ## 7. Ei-toiminnalliset vaatimukset
 
-- Tietoturva: salasanoja ei tallenneta selväkielisinä. Käyttäjä voi käyttää ja muokata vain niitä tietoja, joihin hänellä on oikeus.
+- Tietoturva: salasanoja ei tallenneta selväkielisinä. Käyttäjä voi käyttää ja muokata vain niitä tietoja, joihin hänellä on oikeus. Väliaikainen salasana näytetään vain kerran eikä sitä kirjata lokeihin.
 - Tietojen eheys: tietokannan tietojen on säilyttävä johdonmukaisina ja liittymien on oltava oikein määriteltyjä.
 - Käytettävyys: käyttöliittymän on oltava selkeä ja tärkeimpien toimintojen on oltava helposti löydettävissä.
 - Ylläpidettävyys: lähdekoodin on oltava rakenteeltaan selkeä ja jaettu tarkoituksenmukaisiin osiin.
@@ -161,7 +165,7 @@ Seuraava taulukko yhdistää toiminnalliset vaatimukset käyttäjätarinoihin, h
 | Vaatimus | Käyttäjätarina ja hyväksymiskriteerit | Todentaminen |
 |---|---|---|
 | FR-01 | US-01 (AC-01.1–AC-01.4), US-02 (AC-02.1–AC-02.3) | TEST-01: rekisteröityminen, kirjautuminen ja käyttöoikeuden tarkistus |
-| FR-02 | US-03 (AC-03.1–AC-03.3) | TEST-02: oman profiilin haku ja sallittujen tietojen päivitys |
+| FR-02 | US-03 (AC-03.1–AC-03.5) | TEST-02: profiilin haku, sallittujen tietojen päivitys, salasanan vaihto ja sähköpostin muuttamisen esto |
 | FR-03 | US-04 (AC-04.1–AC-04.3) | TEST-03: tukipyynnön luominen ja kenttien validointi |
 | FR-04 | US-05 (AC-05.1–AC-05.4) | TEST-04: omien pyyntöjen listaus, sulkeminen ja omistajuustarkistus |
 | FR-05 | US-04 (AC-04.2) | TEST-05: tukipyynnön kentät, oletusarvot ja aikaleimat |
@@ -176,3 +180,4 @@ Seuraava taulukko yhdistää toiminnalliset vaatimukset käyttäjätarinoihin, h
 | FR-14 | US-13 (AC-13.1–AC-13.3) | TEST-14: suomen- ja englanninkielinen käyttöliittymä sekä kielivalinnan säilyminen |
 | FR-15 | US-16 (AC-16.1–AC-16.4) | TEST-15: frontendin, backendin, MySQL:n, Ollaman ja mallin käynnistys README:n yhdellä Docker Compose -komennolla sekä backendin Ollama-yhteys |
 | FR-16 | US-14 (AC-14.1–AC-14.4) | TEST-16: kirjautuneen käyttäjän kokonaismäärä ja OPEN/CLOSED-määrät tyhjässä ja täydessä tilanteessa sekä omistajuuden tarkistus |
+| FR-17 | US-17 (AC-17.1–AC-17.5) | TEST-17: ADMIN-reset, väliaikainen salasana, pakotettu vaihto, istuntojen mitätöinti ja tavallisen käyttäjän pääsyn esto |

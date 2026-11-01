@@ -31,6 +31,8 @@ from app.schemas import (
     TicketSummaryResponse,
     TicketUpdateRequest,
     UserLoginRequest,
+    UserProfileUpdateRequest,
+    UserPasswordChangeRequest,
     UserRegistrationRequest,
     UserRegistrationResponse,
     UserResponse,
@@ -343,7 +345,12 @@ def login_user(
     db: Session = Depends(get_db),
 ) -> UserResponse:
     enforce_login_rate_limit(request, credentials.email)
-    user = db.scalar(select(User).where(User.email == credentials.email))
+    user = db.scalar(
+        select(User)
+        .where(User.email == credentials.email)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
     password_hash = user.password_hash if user is not None else DUMMY_PASSWORD_HASH
     password_is_valid = verify_password(
         credentials.password.get_secret_value(),
@@ -395,6 +402,102 @@ def get_current_user(
 ) -> UserResponse:
     response.headers["Cache-Control"] = "no-store"
     return UserResponse.model_validate(user)
+
+
+@app.get(
+    "/api/v1/users/me",
+    response_model=UserResponse,
+    tags=["Users"],
+)
+def get_current_user_profile(
+    response: Response,
+    user: User = Depends(get_authenticated_user),
+) -> UserResponse:
+    response.headers["Cache-Control"] = "no-store"
+    return UserResponse.model_validate(user)
+
+
+@app.patch(
+    "/api/v1/users/me",
+    response_model=UserResponse,
+    tags=["Users"],
+)
+def update_current_user_profile(
+    profile_data: UserProfileUpdateRequest,
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> UserResponse:
+    updates = profile_data.model_dump(exclude_unset=True)
+    if "username" in updates:
+        existing_username = db.scalar(
+            select(User.id).where(
+                User.username == updates["username"],
+                User.id != user.id,
+            )
+        )
+        if existing_username is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Username is already registered.",
+            )
+
+    for field, value in updates.items():
+        setattr(user, field, value)
+    user.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    try:
+        db.commit()
+        db.refresh(user)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Username is already registered.",
+        ) from None
+    return UserResponse.model_validate(user)
+
+
+@app.post(
+    "/api/v1/users/me/password",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["Users"],
+)
+def change_current_user_password(
+    password_data: UserPasswordChangeRequest,
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> Response:
+    # Serialize password changes with logins using the same user-row lock.
+    # populate_existing ensures this transaction checks the latest committed hash.
+    locked_user = db.scalar(
+        select(User)
+        .where(User.id == user.id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    if locked_user is None or not verify_password(
+        password_data.current_password.get_secret_value(),
+        locked_user.password_hash,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect.",
+        )
+    locked_user.password_hash = hash_password(
+        password_data.new_password.get_secret_value()
+    )
+    db.execute(delete(AuthSession).where(AuthSession.user_id == locked_user.id))
+    locked_user.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    db.commit()
+    response = Response(status_code=status.HTTP_204_NO_CONTENT)
+    response.delete_cookie(
+        key=SESSION_COOKIE_NAME,
+        httponly=True,
+        secure=SESSION_COOKIE_SECURE,
+        samesite="lax",
+        path="/",
+    )
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.get(

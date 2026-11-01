@@ -134,3 +134,43 @@ class TicketSummaryResponse(BaseModel):
     total: int
     open: int
     closed: int
+
+
+class UserProfileUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    first_name: str | None = Field(default=None, min_length=1, max_length=100)
+    last_name: str | None = Field(default=None, min_length=1, max_length=100)
+    username: str | None = Field(default=None, min_length=3, max_length=100)
+
+    @model_validator(mode="after")
+    def validate_profile(self) -> Self:
+        if not self.model_fields_set:
+            raise ValueError("At least one profile field must be provided.")
+        if any(getattr(self, field) is None for field in self.model_fields_set):
+            raise ValueError("Profile fields cannot be null.")
+        if any(
+            not getattr(self, field)
+            for field in ("first_name", "last_name")
+            if field in self.model_fields_set
+        ):
+            raise ValueError("Profile names cannot be blank.")
+        if "username" in self.model_fields_set and len(self.username) < 3:
+            raise ValueError("Username must contain at least 3 characters.")
+        return self
+
+
+class UserPasswordChangeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    current_password: SecretStr = Field(min_length=1, max_length=128)
+    new_password: SecretStr = Field(min_length=8, max_length=128)
+    confirm_new_password: SecretStr = Field(min_length=8, max_length=128)
+
+    @model_validator(mode="after")
+    def validate_passwords(self) -> Self:
+        if self.new_password.get_secret_value() != self.confirm_new_password.get_secret_value():
+            raise ValueError("New password confirmation does not match.")
+        if self.current_password.get_secret_value() == self.new_password.get_secret_value():
+            raise ValueError("New password must differ from current password.")
+        return self
