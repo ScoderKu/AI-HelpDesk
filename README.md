@@ -80,6 +80,33 @@ Backend ajaa `alembic upgrade head` -migraatiot automaattisesti ennen käynnisty
 
 LAN-käytössä lisää `FRONTEND_ORIGINS`-asetukseen sovelluksen tarkka alkuperä, esimerkiksi `http://helpdesk.lan:8088`, ja pidä logoutin `Origin`-tarkistus käytössä. Suosi HTTPS:ää ja `AUTH_COOKIE_SECURE=true`-asetusta istuntokeksin suojaamiseksi.
 
+### Ylläpitäjän ohje: unohtuneen salasanan palautus (US-17)
+
+US-17:n salasanan palautus tehdään vain backendin ylläpitokomennolla. Sovelluksessa ei ole julkista salasanan palautusrajapintaa, käyttäjän palautusnäkymää, sähköpostipalautusta tai ADMIN-käyttöliittymää.
+
+**Ennen palautusta**
+1. Varmista käyttäjän henkilöllisyys sovelluksen ulkopuolella organisaation käytännön mukaisesti.
+2. Varmista, että sinulla on oikeus käyttää suojattua backend-/Docker-ympäristöä. Docker- ja palvelinympäristön käyttöoikeus antaa mahdollisuuden suorittaa ylläpitotoimintoja.
+3. Varmista, että backend ja tietokanta ovat käynnissä.
+
+**Palauta salasana**
+
+Suorita projektin juurihakemistossa PowerShellissä seuraava komento ja korvaa sähköpostiosoite kohdekäyttäjän osoitteella:
+
+```powershell
+docker compose exec backend python -m app.admin reset-password --email user@example.com
+```
+
+Onnistuneessa palautuksessa komento tulostaa uuden väliaikaisen salasanan kerran. Kopioi se heti ja toimita käyttäjälle varmennetun, turvallisen erillisen kanavan kautta. Käyttäjän on kirjauduttava sisään väliaikaisella salasanalla ja vaihdettava se ennen muiden suojattujen toimintojen käyttöä. Salasanan vaihdon jälkeen käyttäjän on kirjauduttava uudelleen uudella salasanalla.
+
+**Tietoturvaohjeet**
+- Älä suorita komentoa jaetussa tai tallentavassa terminaalissa. Suojaa terminaalin tuloste ja tyhjennä/poista mahdolliset tallenteet organisaation käytäntöjen mukaisesti.
+- Älä kirjoita väliaikaista salasanaa tikettiin, sähköpostiin, chattiin, komentoriviparametriksi, tiedostoon tai lokiin.
+- Älä suorita komentoa uudelleen vain siksi, että salasana jäi kopioimatta. Uusi suoritus luo uuden väliaikaisen salasanan ja mitätöi aiemman; suorita palautus uudelleen hallitusti ja toimita viimeisin salasana turvallisesti.
+- Jos käyttäjää ei löydy tai tietokantatoiminto epäonnistuu, komento palauttaa virheen eikä tulosta salasanaa. Tarkista backendin ja tietokannan tila; älä yritä muuttaa salasanaa suoraan tietokannasta.
+- Palautus mitätöi käyttäjän kaikki olemassa olevat kirjautumisistunnot.
+- Komento ei luo ylläpitäjäroolia eikä tarkista sovelluksen käyttäjäroolia: sen käyttöoikeus perustuu suojatun backend-ympäristön käyttöoikeuksiin.
+
 ### Testaus
 
 Frontendin tyypitys, tuotantobuild ja lint-tarkistukset voi suorittaa näin:
@@ -189,6 +216,33 @@ For local HTTP development, set `AUTH_COOKIE_SECURE=false` in `.env`. Compose bi
 Before startup, the backend automatically runs `alembic upgrade head`. The initial baseline migration creates the `users` and `auth_sessions` tables in a new database or adopts tables created by the previous startup path without changing them. Verify the schema of a database created by an earlier version and back up the MySQL volume before upgrading. Alembic autogeneration produces a candidate migration; review each migration file before merging it.
 
 For LAN access, add the exact application origin to `FRONTEND_ORIGINS`, for example `http://helpdesk.lan:8088`, and keep the logout `Origin` check enabled. Prefer HTTPS with `AUTH_COOKIE_SECURE=true` to protect the session cookie.
+
+### Administrator guide: forgotten password reset (US-17)
+
+US-17 password resets are performed only through a backend maintenance command. The application does not provide a public password-reset API, a user-facing reset page, email-based recovery, or an ADMIN user interface.
+
+**Before resetting a password**
+1. Verify the user's identity outside the application according to your organization's procedure.
+2. Ensure that you are authorized to access the protected backend/Docker environment. Access to the Docker and server environment allows maintenance commands to be run.
+3. Ensure that the backend and database are running.
+
+**Reset the password**
+
+From the project root, run the following command in PowerShell. Replace the email address with the target user's email:
+
+```powershell
+docker compose exec backend python -m app.admin reset-password --email user@example.com
+```
+
+When the reset succeeds, the command prints the new temporary password once. Copy it immediately and deliver it to the user through a verified, secure out-of-band channel. The user must sign in with the temporary password and change it before accessing any other protected feature. After changing the password, the user must sign in again with the new password.
+
+**Security instructions**
+- Do not run the command in a shared or recorded terminal. Protect terminal output and remove any recordings according to your organization's policy.
+- Never put the temporary password in a ticket, email, chat, command-line argument, file, or log.
+- Do not rerun the command merely because the password was not copied. A new run generates a new temporary password and invalidates the previous one; if a reset must be repeated, perform it deliberately and securely deliver the latest password.
+- If the target user does not exist or a database operation fails, the command returns an error and does not print a password. Check backend/database health; do not change the password directly in the database.
+- The reset invalidates all existing login sessions belonging to the user.
+- The command does not create an administrator role or check an application-level user role. Authorization is based on access to the protected backend environment.
 
 ### Testing
 
