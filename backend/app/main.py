@@ -345,7 +345,12 @@ def login_user(
     db: Session = Depends(get_db),
 ) -> UserResponse:
     enforce_login_rate_limit(request, credentials.email)
-    user = db.scalar(select(User).where(User.email == credentials.email))
+    user = db.scalar(
+        select(User)
+        .where(User.email == credentials.email)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
     password_hash = user.password_hash if user is not None else DUMMY_PASSWORD_HASH
     password_is_valid = verify_password(
         credentials.password.get_secret_value(),
@@ -422,21 +427,22 @@ def update_current_user_profile(
     user: User = Depends(get_authenticated_user),
     db: Session = Depends(get_db),
 ) -> UserResponse:
-    existing_username = db.scalar(
-        select(User.id).where(
-            User.username == profile_data.username,
-            User.id != user.id,
+    updates = profile_data.model_dump(exclude_unset=True)
+    if "username" in updates:
+        existing_username = db.scalar(
+            select(User.id).where(
+                User.username == updates["username"],
+                User.id != user.id,
+            )
         )
-    )
-    if existing_username is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Username is already registered.",
-        )
+        if existing_username is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Username is already registered.",
+            )
 
-    user.first_name = profile_data.first_name
-    user.last_name = profile_data.last_name
-    user.username = profile_data.username
+    for field, value in updates.items():
+        setattr(user, field, value)
     user.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
     try:
         db.commit()
@@ -460,17 +466,27 @@ def change_current_user_password(
     user: User = Depends(get_authenticated_user),
     db: Session = Depends(get_db),
 ) -> Response:
-    if not verify_password(
+    # Serialize password changes with logins using the same user-row lock.
+    # populate_existing ensures this transaction checks the latest committed hash.
+    locked_user = db.scalar(
+        select(User)
+        .where(User.id == user.id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    if locked_user is None or not verify_password(
         password_data.current_password.get_secret_value(),
-        user.password_hash,
+        locked_user.password_hash,
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Current password is incorrect.",
         )
-    user.password_hash = hash_password(password_data.new_password.get_secret_value())
-    db.execute(delete(AuthSession).where(AuthSession.user_id == user.id))
-    user.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    locked_user.password_hash = hash_password(
+        password_data.new_password.get_secret_value()
+    )
+    db.execute(delete(AuthSession).where(AuthSession.user_id == locked_user.id))
+    locked_user.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
     db.commit()
     response = Response(status_code=status.HTTP_204_NO_CONTENT)
     response.delete_cookie(
