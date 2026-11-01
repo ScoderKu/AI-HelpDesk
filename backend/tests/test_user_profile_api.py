@@ -30,12 +30,22 @@ class UserProfileSchemaTests(unittest.TestCase):
                 email="changed@example.com",
             )
 
-    def test_profile_rejects_blank_names_and_short_username(self) -> None:
-        for values in (
-            {"first_name": " ", "last_name": "Lovelace", "username": "ada"},
-            {"first_name": "Ada", "last_name": " ", "username": "ada"},
-            {"first_name": "Ada", "last_name": "Lovelace", "username": "ab"},
-        ):
+    def test_profile_accepts_partial_updates(self) -> None:
+        request = UserProfileUpdateRequest(username=" newname ")
+        self.assertEqual(request.model_dump(exclude_unset=True), {"username": "newname"})
+        self.assertEqual(request.model_fields_set, {"username"})
+
+    def test_profile_rejects_empty_patch_nulls_and_invalid_supplied_values(self) -> None:
+        invalid_payloads = (
+            {},
+            {"username": None},
+            {"first_name": None},
+            {"last_name": None},
+            {"first_name": " "},
+            {"last_name": " "},
+            {"username": "ab"},
+        )
+        for values in invalid_payloads:
             with self.subTest(values=values), self.assertRaises(ValidationError):
                 UserProfileUpdateRequest(**values)
 
@@ -97,28 +107,33 @@ class UserProfileEndpointTests(unittest.TestCase):
         self.assertEqual(payload["username"], "ada")
         self.assertNotIn("password_hash", payload)
 
-    def test_profile_update_persists_only_allowed_fields(self) -> None:
+    def test_profile_update_changes_only_supplied_fields(self) -> None:
         db = MagicMock()
-        db.scalar.return_value = None
-        request = UserProfileUpdateRequest(
-            first_name="Augusta", last_name="King", username="augusta"
-        )
+        request = UserProfileUpdateRequest(username="augusta")
         result = main.update_current_user_profile(request, self.user, db)
-        self.assertEqual(result.first_name, "Augusta")
-        self.assertEqual(result.last_name, "King")
+        self.assertEqual(result.first_name, "Ada")
+        self.assertEqual(result.last_name, "Lovelace")
         self.assertEqual(result.username, "augusta")
         self.assertEqual(result.email, "ada@example.com")
+        db.scalar.assert_called_once()
         db.commit.assert_called_once_with()
         db.refresh.assert_called_once_with(self.user)
+
+    def test_profile_update_does_not_check_username_when_not_supplied(self) -> None:
+        db = MagicMock()
+        request = UserProfileUpdateRequest(first_name="Augusta")
+        result = main.update_current_user_profile(request, self.user, db)
+        self.assertEqual(result.first_name, "Augusta")
+        self.assertEqual(result.username, "ada")
+        db.scalar.assert_not_called()
+        db.commit.assert_called_once_with()
 
     def test_profile_update_rejects_username_owned_by_another_user(self) -> None:
         db = MagicMock()
         db.scalar.return_value = 99
         with self.assertRaises(HTTPException) as raised:
             main.update_current_user_profile(
-                UserProfileUpdateRequest(
-                    first_name="Ada", last_name="Lovelace", username="taken"
-                ),
+                UserProfileUpdateRequest(username="taken"),
                 self.user,
                 db,
             )
