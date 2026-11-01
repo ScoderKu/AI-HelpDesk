@@ -4,7 +4,7 @@
 
 Tämä dokumentti määrittelee AI HelpDesk -sovelluksen priorisoidun Product Backlogin. Se sisältää käyttäjätarinoiden tunnisteet, prioriteetit, työmääräarviot, tekniset riippuvuudet ja sovitun sprinttijaon. US-09 ja US-14 kuuluvat viralliseen toimituslaajuuteen. Valitut lisäominaisuudet ovat US-13 (suomen- ja englanninkielinen käyttöliittymä), US-15 (RAG) ja US-16 (Docker Compose -käynnistys yhdellä komennolla; mukana myös Ollama).
 
-Käyttäjätarinoiden täydelliset kuvaukset ja hyväksymiskriteerit on määritelty erillisessä dokumentissa `02-käyttäjätarinat ja hyväksymiskriteerit.md`. Tässä dokumentissa käyttäjätarinoihin viitataan niiden tunnisteilla US-01–US-16.
+Käyttäjätarinoiden täydelliset kuvaukset ja hyväksymiskriteerit on määritelty erillisessä dokumentissa `02-käyttäjätarinat ja hyväksymiskriteerit.md`. Tässä dokumentissa käyttäjätarinoihin viitataan niiden tunnisteilla US-01–US-17.
 
 MVP:n perustoiminnot sekä sovitut US-09 ja US-14 toteutetaan niiden Sprint-jaon mukaisesti. RAG ja monikielinen käyttöliittymä toteutetaan omissa Sprint-jaksoissaan. Docker Compose -ympäristö, mukaan lukien Ollama ja valittu malli, rakennetaan Sprint 1:ssä kehitys- ja esittely-ympäristöä varten.
 
@@ -37,6 +37,7 @@ Työmääräarviot perustuvat suhteelliseen Story Point -arviointiin. Arvioinnis
 | 6 | US-04 | Tukipyynnön luominen | P1 | 5 | Sprint 2 |
 | 7 | US-05 | Omien tukipyyntöjen tarkastelu ja sulkeminen | P1 | 5 | Sprint 2 |
 | 8 | US-03 | Käyttäjäprofiilin hallinta | P1 | 3 | Sprint 2 |
+| 9 | US-17 | Unohtuneen salasanan palauttaminen ADMINin toimesta | P1 | 2 | Sprint 2 |
 | 9 | US-06 | Tekoälypohjainen keskustelu | P1 | 8 | Sprint 3 |
 | 10 | US-08 | Keskusteluviestien tallentaminen | P1 | 5 | Sprint 3 |
 | 11 | US-07 | Tarkentavat kysymykset ja ongelmanratkaisu | P1 | 5 | Sprint 3 |
@@ -58,6 +59,7 @@ US-16:n 5 SP:n arvio kattaa frontendin, backendin, MySQL:n ja Ollaman Compose-pa
 | US-01 | Tietokanta ja käyttäjätietojen tallennus |
 | US-02 | US-01, autentikointi ja käyttöoikeuksien hallinta |
 | US-03 | US-01, käyttäjäkohtainen tietojen haku, nykyisen salasanan tarkistus ja salasanan turvallinen tiivistäminen |
+| US-17 | US-01, autentikointi, käyttäjätietojen haku, salasanatiivisteen luonti ja auth_sessions-istuntojen mitätöinti |
 | US-04 | US-10, US-11 ja käyttäjän tunnistaminen |
 | US-05 | US-04, US-10, US-11 ja käyttöoikeuksien tarkistaminen |
 | US-06 | REST-rajapinta ja tekoälypalvelun integraatio |
@@ -126,6 +128,6 @@ Käyttäjätarina on valmis valittavaksi Sprintiin, kun:
 
 ## 8. Yhteenveto
 
-AI HelpDesk -sovelluksen Product Backlog sisältää 16 käyttäjätarinaa ja niiden arviot ovat yhteensä 86 Story Pointia. US-09 ja US-14 ovat virallisia toimitussitoumuksia. US-14 on rajattu käyttäjän omien tukipyyntöjen kokonaismäärään ja `OPEN`/`CLOSED`-tilajakaumaan. US-15:n RAG MVP käyttää Markdown- ja TXT-dokumentteja avainsanahaulla; semanttista hakua harkitaan vain testinäytön perusteella. US-16:n 5 Story Pointin arvio kattaa dokumentoidun yhden komennon Compose-käynnistyksen frontendille, backendille, MySQL:lle ja Ollamalle valittu malli mukaan lukien. Tuotantokäyttöönotto ja orkestrointi eivät sisälly arvioon.
+AI HelpDesk -sovelluksen Product Backlog sisältää 17 käyttäjätarinaa ja niiden arviot ovat yhteensä 88 Story Pointia. US-09 ja US-14 ovat virallisia toimitussitoumuksia. US-14 on rajattu käyttäjän omien tukipyyntöjen kokonaismäärään ja `OPEN`/`CLOSED`-tilajakaumaan. US-15:n RAG MVP käyttää Markdown- ja TXT-dokumentteja avainsanahaulla; semanttista hakua harkitaan vain testinäytön perusteella. US-16:n 5 Story Pointin arvio kattaa dokumentoidun yhden komennon Compose-käynnistyksen frontendille, backendille, MySQL:lle ja Ollamalle valittu malli mukaan lukien. Tuotantokäyttöönotto ja orkestrointi eivät sisälly arvioon.
 
 Backlogin ensimmäinen tavoite on rakentaa toimiva tekninen perusta, toteuttaa käyttäjien tunnistaminen ja tukipyyntöjen hallinta sekä mahdollistaa tekoälypohjainen keskustelu.
