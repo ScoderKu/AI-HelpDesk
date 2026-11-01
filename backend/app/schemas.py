@@ -139,14 +139,24 @@ class TicketSummaryResponse(BaseModel):
 class UserProfileUpdateRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    first_name: str = Field(min_length=1, max_length=100)
-    last_name: str = Field(min_length=1, max_length=100)
-    username: str = Field(min_length=3, max_length=100)
+    first_name: str | None = Field(default=None, min_length=1, max_length=100)
+    last_name: str | None = Field(default=None, min_length=1, max_length=100)
+    username: str | None = Field(default=None, min_length=3, max_length=100)
 
     @model_validator(mode="after")
     def validate_profile(self) -> Self:
-        if not self.first_name or not self.last_name or len(self.username) < 3:
-            raise ValueError("Profile fields are invalid.")
+        if not self.model_fields_set:
+            raise ValueError("At least one profile field must be provided.")
+        if any(getattr(self, field) is None for field in self.model_fields_set):
+            raise ValueError("Profile fields cannot be null.")
+        if any(
+            not getattr(self, field)
+            for field in ("first_name", "last_name")
+            if field in self.model_fields_set
+        ):
+            raise ValueError("Profile names cannot be blank.")
+        if "username" in self.model_fields_set and len(self.username) < 3:
+            raise ValueError("Username must contain at least 3 characters.")
         return self
 
 
