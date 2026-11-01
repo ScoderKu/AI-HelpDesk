@@ -84,20 +84,34 @@ Sovelluksen kehittäjä vastaa sovelluksen teknisestä toteutuksesta, tietokanna
 
 - Oletetaan, että käyttäjä on kirjautunut sisään.
 - Kun käyttäjä avaa profiilisivun.
-- Niin järjestelmä näyttää käyttäjän omat profiilitiedot.
+- Niin järjestelmä näyttää etunimen, sukunimen, käyttäjänimen ja sähköpostiosoitteen.
+- Sähköpostiosoite näytetään vain luettavana tietona.
 
-**AC-03.2 – Profiilin päivittäminen**
+**AC-03.2 – Profiilitietojen päivittäminen**
 
-- Oletetaan, että käyttäjä on avannut profiilisivunsa.
+- Oletetaan, että käyttäjä on avannut oman profiilisivunsa.
 - Kun käyttäjä muokkaa etunimeään, sukunimeään tai käyttäjänimeään ja tallentaa muutokset.
-- Niin järjestelmä tallentaa muutokset tietokantaan ja näyttää päivitetyt tiedot.
-- MVP:ssä sähköpostiosoitetta ja salasanaa ei muuteta profiilin päivityksessä. Niiden mahdollinen muuttaminen edellyttää erillistä vahvistettua toimintoa.
+- Niin järjestelmä validoi tiedot, tallentaa sallitut muutokset ja näyttää päivitetyt tiedot.
+- Sähköpostiosoitetta ei voi muuttaa profiilin kautta, eikä backend hyväksy sen päivittämistä.
 
-**AC-03.3 – Virheelliset profiilitiedot**
+**AC-03.3 – Salasanan vaihtaminen**
 
-- Oletetaan, että käyttäjä muokkaa profiilitietojaan.
-- Kun käyttäjä syöttää virheellisiä tietoja.
-- Niin järjestelmä näyttää virheilmoituksen eikä tallenna virheellisiä muutoksia.
+- Oletetaan, että käyttäjä on kirjautunut sisään ja avannut salasanan vaihtamisen toiminnon.
+- Kun käyttäjä antaa nykyisen salasanansa, uuden salasanan ja uuden salasanan vahvistuksen.
+- Niin backend tarkistaa nykyisen salasanan, validoi uuden salasanan ja varmistaa, että vahvistus vastaa uutta salasanaa.
+- Onnistuneessa vaihdossa järjestelmä tallentaa uuden salasanan turvallisesti tiivistettynä; selväkielistä salasanaa ei tallenneta eikä palauteta vastauksessa.
+
+**AC-03.4 – Virheelliset profiili- tai salasanatiedot**
+
+- Oletetaan, että käyttäjä yrittää päivittää profiilitietoja tai vaihtaa salasanaa.
+- Kun profiilitiedot ovat virheellisiä, nykyinen salasana ei täsmää, uusi salasana ei täytä vaatimuksia tai salasanan vahvistus ei vastaa uutta salasanaa.
+- Niin järjestelmä näyttää ymmärrettävän virheilmoituksen eikä tallenna virheellisiä muutoksia.
+
+**AC-03.5 – Sähköpostiosoitteen muuttamisen estäminen**
+
+- Oletetaan, että käyttäjä tarkastelee tai päivittää profiiliaan.
+- Kun käyttäjä yrittää muuttaa sähköpostiosoitetta esimerkiksi muokatulla API-pyynnöllä.
+- Niin backend hylkää muutoksen eikä sähköpostiosoite muutu.
 
 ### US-04: Tukipyynnön luominen
 
