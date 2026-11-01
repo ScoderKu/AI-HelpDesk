@@ -345,11 +345,11 @@ Autentikointireitit sekä tukipyyntöjen listaus-, luonti-, haku-, päivitys-, y
 | POST | `/api/v1/auth/login` | Kirjaa käyttäjän sisään | Ei |
 | POST | `/api/v1/auth/logout` | Kirjaa käyttäjän ulos ja mitätöi nykyisen istunnon, jos eväste on voimassa | Istuntoeväste |
 | GET | `/api/v1/auth/me` | Palauttaa nykyisen kirjautuneen käyttäjän | Kyllä |
-| GET | `/api/v1/users/me` | Hakee kirjautuneen käyttäjän profiilin | Suunniteltu |
-| PATCH | `/api/v1/users/me` | Päivittää vain etunimen, sukunimen ja käyttäjänimen; sähköpostikenttää ei hyväksytä päivitettäväksi | Suunniteltu |
-| POST | `/api/v1/users/me/password` | Vaihtaa salasanan nykyisen salasanan ja uuden salasanan vahvistuksen jälkeen; tallentaa vain uuden salasanan tiivisteen ja poistaa pakotetun vaihdon merkinnän | Suunniteltu |
+| GET | `/api/v1/users/me` | Hakee kirjautuneen käyttäjän profiilin ilman salasanatiivistettä | Toteutettu (US-03) |
+| PATCH | `/api/v1/users/me` | Päivittää vain etunimen, sukunimen ja käyttäjänimen; sähköpostikenttää ei hyväksytä päivitettäväksi | Toteutettu (US-03) |
+| POST | `/api/v1/users/me/password` | Vaihtaa salasanan nykyisen salasanan ja uuden salasanan vahvistuksen jälkeen; tallentaa vain tiivisteen ja mitätöi käyttäjän aktiiviset istunnot | Toteutettu (US-03) |
 
-#### Unohtuneen salasanan palautus (US-17)
+#### Unohtuneen salasanan palautus (US-17 – toteutetaan vasta US-04:n, US-05:n ja US-03:n valmistuttua)
 
 Palautus toteutetaan backendin hallintakomennolla, ei HTTP-endpointina eikä frontendin hallintanäkymänä. Komento suoritetaan vain backendin ylläpitoon oikeutetusta ympäristöstä (esimerkiksi Docker-kontin ylläpitokonsolista). Tavallisen käyttäjän istunto ei anna oikeutta suorittaa komentoa.
 
