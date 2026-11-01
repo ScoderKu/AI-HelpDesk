@@ -376,9 +376,45 @@ Sovelluksen kehittäjä vastaa sovelluksen teknisestä toteutuksesta, tietokanna
 - Kun pakollisia tietoja puuttuu tai tiedot ovat virheellisiä.
 - Niin käyttöliittymä kertoo, mitä tietoja käyttäjän tulee korjata.
 
+### US-17: Unohtuneen salasanan palauttaminen ADMINin toimesta
+
+- Roolina sovelluksen ADMIN-ylläpitäjänä
+- Haluan palauttaa käyttäjän unohtuneen salasanan backendin hallintakomennolla.
+- Jotta käyttäjä saa jälleen pääsyn tiliinsä ilman sähköposti- tai OTP-palautusjärjestelmää.
+
+**Hyväksymiskriteerit**
+
+**AC-17.1 – Palautus vain ylläpidon backend-työkalulla**
+- Oletetaan, että käyttäjä ei pysty kirjautumaan unohtuneen salasanan vuoksi.
+- Kun ADMIN suorittaa palautuskomennon backend-ympäristössä tunnistetulle käyttäjätilille.
+- Niin backend palauttaa satunnaisen väliaikaisen salasanan vain ylläpidon käyttöympäristössä.
+- Tavalliselle käyttäjälle ei ole reset-endpointia eikä käyttöliittymätoimintoa.
+
+**AC-17.2 – Väliaikaisen salasanan turvallinen käsittely**
+- Oletetaan, että ADMIN käynnistää salasanan palautuksen.
+- Kun backend luo väliaikaisen salasanan.
+- Niin salasana on kryptografisesti satunnainen, näytetään vain kerran komentotulosteessa ja tietokantaan tallennetaan vain sen turvallinen tiiviste.
+- Salasanaa tai sen tiivistettä ei kirjoiteta sovelluslokeihin.
+
+**AC-17.3 – Salasanan pakotettu vaihtaminen**
+- Oletetaan, että käyttäjän salasana on palautettu.
+- Kun käyttäjä kirjautuu sisään väliaikaisella salasanalla.
+- Niin järjestelmä vaatii käyttäjää vaihtamaan salasanan ennen muiden suojattujen toimintojen käyttöä.
+- Käyttäjä vaihtaa salasanan nykyisen salasanan vahvistuksella US-03:n toiminnon kautta.
+
+**AC-17.4 – Aiemmat istunnot mitätöidään**
+- Oletetaan, että käyttäjällä on aktiivisia kirjautumisistuntoja.
+- Kun ADMIN palauttaa salasanan.
+- Niin backend mitätöi kyseisen käyttäjän aiemmat istunnot.
+
+**AC-17.5 – Virheellinen kohde tai käyttöoikeus**
+- Oletetaan, että palautuskomentoa suoritetaan tuntemattomalle käyttäjälle tai ilman ylläpidon käyttöoikeutta.
+- Kun backend käsittelee komennon.
+- Niin palautus keskeytetään turvallisesti eikä käyttäjän salasanaa tai tarpeettomia tilitietoja paljasteta.
+
 ## 3. Valitut lisäominaisuudet
 
-US-09 ja US-14 kuuluvat viralliseen toimituslaajuuteen ja toteutetaan Sprint 4:ssä hyväksymiskriteeriensä mukaisesti. Lisäksi lopulliseen julkaisuun on valittu kolme lisäominaisuutta: US-13 (suomen- ja englanninkielinen käyttöliittymä), US-15 (RAG) ja US-16 (Docker Compose frontendille, backendille, MySQL:lle ja Ollamalle valittu malli mukaan lukien). US-13 ja US-15 toteutetaan perus-MVP:n jälkeen sovituissa Sprint-jaksoissa; niitä tai US-09:ää ja US-14:ää ei käsitellä valinnaisina. Docker Compose -ympäristö perustetaan Sprint 1:ssä.
+US-09 ja US-14 kuuluvat viralliseen toimituslaajuuteen ja toteutetaan Sprint 4:ssä hyväksymiskriteeriensä mukaisesti. US-17 toteutetaan Sprint 2:ssa backend-pohjaisena ylläpitotoimintona ilman hallintanäkymää. Lisäksi lopulliseen julkaisuun on valittu kolme lisäominaisuutta: US-13 (suomen- ja englanninkielinen käyttöliittymä), US-15 (RAG) ja US-16 (Docker Compose frontendille, backendille, MySQL:lle ja Ollamalle valittu malli mukaan lukien). US-13 ja US-15 toteutetaan perus-MVP:n jälkeen sovituissa Sprint-jaksoissa; niitä tai US-09:ää ja US-14:ää ei käsitellä valinnaisina. Docker Compose -ympäristö perustetaan Sprint 1:ssä.
 
 ### US-13: Monikielinen käyttöliittymä
 
@@ -538,6 +574,7 @@ US-16:n laajuuteen kuuluvat frontendin, backendin ja Ollaman Docker-konfiguraati
 | US-14: Tukipyyntöjen yhteenvetonäkymä | P3 – viralliseen toimituslaajuuteen kuuluva, rajattu toiminnallisuus |
 | US-15: Tietopohjainen tekoälyneuvonta (RAG) | P2 – valittu lisäominaisuus |
 | US-16: Sovelluksen käynnistäminen Docker Composella | P2 – valittu lisäominaisuus |
+| US-17: Unohtuneen salasanan palauttaminen ADMINin toimesta | P1 – Sprint 2:n backend-ylläpitotoiminto |
 
 ## 5. Yhteenveto
 
