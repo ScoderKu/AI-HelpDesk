@@ -109,8 +109,10 @@ class TicketEndpointTests(unittest.TestCase):
         protected_paths = {
             ("GET", "/api/v1/tickets"),
             ("POST", "/api/v1/tickets"),
+            ("GET", "/api/v1/tickets/summary"),
             ("GET", "/api/v1/tickets/{ticket_id}"),
             ("PATCH", "/api/v1/tickets/{ticket_id}"),
+            ("POST", "/api/v1/tickets/{ticket_id}/close"),
         }
         for route in main.app.routes:
             if not isinstance(route, main.app.router.route_class):
@@ -136,6 +138,26 @@ class TicketEndpointTests(unittest.TestCase):
         statement = compile_mysql(db.scalars.call_args.args[0])
         self.assertIn("tickets.user_id = 7", statement)
         self.assertIn("tickets.created_at DESC, tickets.id DESC", statement)
+
+    def test_summary_counts_only_open_and_closed_tickets_for_user(self) -> None:
+        db = MagicMock()
+        db.execute.return_value.one.return_value = (4, 3, 1)
+
+        response = main.get_ticket_summary(self.user, db)
+
+        self.assertEqual(response.model_dump(), {"total": 4, "open": 3, "closed": 1})
+        statement = compile_mysql(db.execute.call_args.args[0])
+        self.assertIn("tickets.user_id = 7", statement)
+        self.assertIn("tickets.status = 'OPEN'", statement)
+        self.assertIn("tickets.status = 'CLOSED'", statement)
+
+    def test_summary_returns_zero_counts_for_user_without_tickets(self) -> None:
+        db = MagicMock()
+        db.execute.return_value.one.return_value = (0, None, None)
+
+        response = main.get_ticket_summary(self.user, db)
+
+        self.assertEqual(response.model_dump(), {"total": 0, "open": 0, "closed": 0})
 
     def test_create_derives_owner_and_defaults_on_server(self) -> None:
         db = MagicMock()
@@ -218,6 +240,34 @@ class TicketEndpointTests(unittest.TestCase):
             main.update_ticket(TicketUpdateRequest(title="Changed"), 10, self.user, db)
 
         self.assertEqual(raised.exception.status_code, 409)
+        db.commit.assert_not_called()
+
+    def test_close_marks_owned_ticket_closed_and_sets_timestamps(self) -> None:
+        ticket = make_ticket(user_id=self.user.id)
+        db = MagicMock()
+        db.scalar.return_value = ticket
+
+        response = main.close_ticket(ticket.id, self.user, db)
+
+        self.assertEqual(ticket.status, TicketStatus.CLOSED.value)
+        self.assertIsNotNone(ticket.closed_at)
+        self.assertEqual(ticket.closed_at, ticket.updated_at)
+        self.assertEqual(response.status, TicketStatus.CLOSED)
+        db.commit.assert_called_once_with()
+        db.refresh.assert_called_once_with(ticket)
+
+    def test_close_hides_foreign_ticket_and_rejects_already_closed_ticket(self) -> None:
+        db = MagicMock()
+        db.scalar.return_value = None
+        with self.assertRaises(HTTPException) as missing:
+            main.close_ticket(10, self.user, db)
+        self.assertEqual(missing.exception.status_code, 404)
+
+        db.reset_mock()
+        db.scalar.return_value = make_ticket(user_id=self.user.id, status="CLOSED")
+        with self.assertRaises(HTTPException) as closed:
+            main.close_ticket(10, self.user, db)
+        self.assertEqual(closed.exception.status_code, 409)
         db.commit.assert_not_called()
 
 

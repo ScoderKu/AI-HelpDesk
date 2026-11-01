@@ -18,7 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from redis import Redis
 from redis.exceptions import RedisError
-from sqlalchemy import delete, select, text
+from sqlalchemy import case, delete, func, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -28,6 +28,7 @@ from app.schemas import (
     TicketCreateRequest,
     TicketResponse,
     TicketStatus,
+    TicketSummaryResponse,
     TicketUpdateRequest,
     UserLoginRequest,
     UserRegistrationRequest,
@@ -443,6 +444,29 @@ def create_ticket(
 
 
 @app.get(
+    "/api/v1/tickets/summary",
+    response_model=TicketSummaryResponse,
+    tags=["Tickets"],
+)
+def get_ticket_summary(
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> TicketSummaryResponse:
+    counts = db.execute(
+        select(
+            func.count(Ticket.id),
+            func.sum(case((Ticket.status == TicketStatus.OPEN.value, 1), else_=0)),
+            func.sum(case((Ticket.status == TicketStatus.CLOSED.value, 1), else_=0)),
+        ).where(Ticket.user_id == user.id)
+    ).one()
+    return TicketSummaryResponse(
+        total=counts[0],
+        open=counts[1] or 0,
+        closed=counts[2] or 0,
+    )
+
+
+@app.get(
     "/api/v1/tickets/{ticket_id}",
     response_model=TicketResponse,
     tags=["Tickets"],
@@ -500,6 +524,42 @@ def update_ticket(
             value = value.value
         setattr(ticket, field, value)
     ticket.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    db.commit()
+    db.refresh(ticket)
+    return TicketResponse.model_validate(ticket)
+
+
+@app.post(
+    "/api/v1/tickets/{ticket_id}/close",
+    response_model=TicketResponse,
+    tags=["Tickets"],
+)
+def close_ticket(
+    ticket_id: int = Path(gt=0),
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> TicketResponse:
+    ticket = db.scalar(
+        select(Ticket).where(
+            Ticket.id == ticket_id,
+            Ticket.user_id == user.id,
+        )
+    )
+    if ticket is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ticket not found.",
+        )
+    if ticket.status != TicketStatus.OPEN.value:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Ticket is already closed.",
+        )
+
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    ticket.status = TicketStatus.CLOSED.value
+    ticket.closed_at = now
+    ticket.updated_at = now
     db.commit()
     db.refresh(ticket)
     return TicketResponse.model_validate(ticket)

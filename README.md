@@ -4,7 +4,7 @@
 
 AI HelpDesk on kehitteillä oleva verkkopohjainen tukipalvelusovellus. Käyttäjä voi keskustella tekoälyn kanssa tietotekniikkaan ja ohjelmistokehitykseen liittyvistä ongelmista sekä hallita omia tukipyyntöjään.
 
-> **Projektin tila:** Docker Compose käynnistää frontendin, FastAPI-backendin, MySQL:n, Redisin ja Ollaman paikalliseen kehityskäyttöön. Rekisteröityminen, kirjautuminen ja uloskirjautuminen on yhdistetty backendin istuntoautentikointiin. Chat ja tukipyynnöt ovat vielä käyttöliittymän esikatselunäkymiä.
+> **Projektin tila:** Docker Compose käynnistää frontendin, FastAPI-backendin, MySQL:n, Redisin ja Ollaman paikalliseen kehityskäyttöön. Rekisteröityminen, kirjautuminen ja uloskirjautuminen käyttävät backendin istuntoautentikointia. Tukipyyntöjen luettelo, luominen, muokkaaminen, sulkeminen ja etusivun yhteenveto käyttävät REST-rajapintaa. AI-chat on edelleen esikatselunäkymä.
 
 ### Keskeiset ominaisuudet
 
@@ -96,9 +96,9 @@ Backendin proxy-käsittelyn ja vanhentuneiden istuntojen siivouskyselyn yksikkö
 docker compose exec backend python -m unittest discover -s tests -v
 ```
 
-Testit kattavat luotetun ja luottamattoman proxyn, proxy-ketjun, asiakkaiden erilliset IP-avaimet, puuttuvat ja virheelliset välitysotsakkeet sekä sen, että vanhentuneet istunnot poistetaan erillisellä ensisijavainkyselyllä. Ne eivät korvaa oikeassa LAN-verkossa tehtävää välitystestiä tai rinnakkaisten kirjautumisten testiä MySQL:llä. Keskeisten toimintojen hyväksymiskriteerit ja muut suunnitellut testit on kuvattu käyttäjätarinoissa ja vaatimusmäärittelyssä. Rekisteröityminen ja istuntopohjainen kirjautuminen toimivat; chat- ja tukipyyntötoiminnot odottavat backend-integraatiota.
+Testit kattavat luotetun ja luottamattoman proxyn, proxy-ketjun, asiakkaiden erilliset IP-avaimet, puuttuvat ja virheelliset välitysotsakkeet sekä sen, että vanhentuneet istunnot poistetaan erillisellä ensisijavainkyselyllä. Ne eivät korvaa oikeassa LAN-verkossa tehtävää välitystestiä tai rinnakkaisten kirjautumisten testiä MySQL:llä. Keskeisten toimintojen hyväksymiskriteerit ja muut suunnitellut testit on kuvattu käyttäjätarinoissa ja vaatimusmäärittelyssä. Rekisteröityminen ja istuntopohjainen kirjautuminen toimivat; AI-chat odottaa backend-integraatiota.
 Uudet rate limiting -testit tarkistavat IP-yritysten laskennan, sähköpostin epäonnistumislaskurin, rajat, Redis-virheen sekä sen, ettei onnistunut kirjautuminen kasvata sähköpostin virhelaskuria.
-Ticket API -testit tarkistavat omistajuusrajauksen, server-side oletukset, sallitut muutokset, virhetilat sekä request-validaation.
+Ticket API -testit tarkistavat omistajuusrajauksen, server-side oletukset, sallitut muutokset, summary- ja close-toiminnot, virhetilat sekä request-validaation. Frontendin build ja lint ajetaan erikseen frontend-kansiossa.
 
 ### Kuvat
 
@@ -114,7 +114,7 @@ Projektin lisenssiä ei ole vielä määritelty. Myös kolmannen osapuolen malli
 
 AI HelpDesk is a web-based support application under development. Users can discuss IT and software development issues with an AI assistant and manage their own support tickets.
 
-> **Project status:** Docker Compose starts the frontend, FastAPI backend, MySQL, Redis, and Ollama for local development. Registration, sign-in, and sign-out are connected to backend session authentication. Chat and support tickets are still frontend preview screens.
+> **Project status:** Docker Compose starts the frontend, FastAPI backend, MySQL, Redis, and Ollama for local development. Registration, sign-in, and sign-out use backend session authentication. The support-ticket list, creation, editing, closing, and home summary use the REST API. AI chat is still a preview screen.
 
 ### Main features
 
@@ -206,9 +206,9 @@ Run the backend unit tests for proxy client-IP handling and expired-session clea
 docker compose exec backend python -m unittest discover -s tests -v
 ```
 
-The tests cover trusted and untrusted proxies, proxy chains, distinct client IP keys, missing or malformed forwarded headers, and cleanup by primary key outside the login transaction. They do not replace a forwarding test on a real LAN or a concurrent sign-in test against MySQL. Acceptance criteria and other planned tests for key features are described in the user stories and requirements specification. Registration and session-based sign-in are implemented; chat and support-ticket features still need backend integration.
+The tests cover trusted and untrusted proxies, proxy chains, distinct client IP keys, missing or malformed forwarded headers, and cleanup by primary key outside the login transaction. They do not replace a forwarding test on a real LAN or a concurrent sign-in test against MySQL. Acceptance criteria and other planned tests for key features are described in the user stories and requirements specification. Registration and session-based sign-in are implemented; AI chat still needs backend integration.
 The new rate limiting tests cover IP attempt counting, the email failure counter, both limits, Redis errors, and that successful login does not increment the email failure counter.
-Ticket API tests cover owner scoping, server-side defaults, allowed updates, error responses, and request validation.
+Ticket API tests cover owner scoping, server-side defaults, allowed updates, summary and close actions, error responses, and request validation. Run the frontend build and lint separately from the frontend directory.
 
 ### Screenshots
 
