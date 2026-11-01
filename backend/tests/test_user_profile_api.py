@@ -71,6 +71,25 @@ class UserProfileEndpointTests(unittest.TestCase):
             password_hash="stored-hash",
         )
 
+    def test_profile_routes_require_authenticated_user(self) -> None:
+        expected = {
+            ("GET", "/api/v1/users/me"),
+            ("PATCH", "/api/v1/users/me"),
+            ("POST", "/api/v1/users/me/password"),
+        }
+        for route in main.app.routes:
+            if not isinstance(route, main.app.router.route_class):
+                continue
+            for method in route.methods or ():
+                key = (method, route.path)
+                if key in expected:
+                    dependencies = {
+                        dependency.call for dependency in route.dependant.dependencies
+                    }
+                    self.assertIn(main.get_authenticated_user, dependencies)
+                    expected.remove(key)
+        self.assertFalse(expected)
+
     def test_profile_read_returns_user_fields_without_password_hash(self) -> None:
         response = main.get_current_user_profile(MagicMock(), self.user)
         payload = response.model_dump()
