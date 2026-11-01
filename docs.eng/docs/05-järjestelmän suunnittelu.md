@@ -312,6 +312,40 @@ When saving a conversation message, the user's message and the AI response are h
 
 ---
 
+### 4.X Administrator-Assisted Forgotten Password Reset (US-17)
+
+US-17 is implemented exclusively as a protected backend maintenance command. It does not introduce a public HTTP password-reset endpoint, a user-facing reset page, email delivery, OTP verification, security questions, or an administrator UI. The administrator must be authorized to access the backend maintenance environment and verify the user's identity outside the application. Authorization must not depend on a normal user session or a role value supplied by the client.
+
+**Maintenance command workflow**
+
+1. The administrator runs the command from the backend container or another protected backend maintenance environment. The command accepts a unique user identifier, preferably the email address, and verifies that the account exists before making changes.
+2. The command generates a temporary password using a cryptographically secure random number generator. The temporary password must comply with the same server-side password policy as a normal password.
+3. The backend hashes the temporary password using the application's existing password-hashing function and stores only the hash in `users.password_hash`.
+4. Within the same database transaction, the backend sets `users.must_change_password = TRUE` and deletes every row belonging to the user from `auth_sessions`. The password update, forced-change flag, and session revocation either all commit or all roll back.
+5. The plaintext temporary password is printed exactly once in the command output, and only after a successful commit. It must never be stored in the database, files, shell history, application logs, or error messages. The command must not display the password if the transaction fails.
+6. The administrator delivers the temporary password to the user through a secure channel outside the application. The user must change it immediately after signing in.
+
+**Sign-in and mandatory password change**
+
+- A successful sign-in using the temporary password creates a normal server-side session, but the session is restricted according to the user's `must_change_password` flag.
+- A restricted session may only change the password or sign out. All other protected API requests must be rejected by the backend with HTTP 403, including requests sent directly to the API.
+- Enforce this centrally in the shared authentication dependency or protected-operation authorization check. Hiding frontend views alone is not sufficient.
+- `GET /api/v1/auth/me` may expose only the authentication state and whether a password change is required; it must not expose other user data or protected functionality. `POST /api/v1/auth/logout` remains available.
+- The password-change endpoint validates the new password and confirmation on the server, stores the new hash, and sets `must_change_password = FALSE`. It then invalidates the current session and signs the user out; the user must sign in again with the new password.
+- A normal user request cannot set or clear `must_change_password` or invoke the maintenance command.
+
+**Transactions, concurrency, errors, and logging**
+
+- The user lookup, password-hash update, forced-change flag, and deletion of all sessions are performed in one transaction. Lock the user row during the operation so a concurrent sign-in cannot leave a session authenticated with the old password.
+- An unknown user produces a clear administrator-facing error, but no plaintext password is displayed and no data is changed.
+- The command exits with a non-zero status on failure. The temporary password is displayed only after a successful commit.
+- Audit logs may contain the execution time, the target user's internal identifier, and the success/failure result where necessary. Never log the password, its hash, session identifiers, or cookies.
+- Protect the maintenance environment and handle terminal output securely. Do not leave temporary passwords in shared logs or recordings.
+
+**Implementation boundary**
+
+This section defines the technical contract for US-17; it does not claim that the maintenance command or forced-change checks have already been implemented. Before implementation, verify the current user and session models, migrations, password-hashing function, shared authentication dependency, and password-change route. The `users.must_change_password` field is required by this design; if it is absent from the active schema, add it through a reviewed Alembic migration. Choose the exact module and CLI syntax to fit the existing backend structure during implementation.
+
 ## 5. REST API Design
 
 ## 5.1 General Principles
