@@ -12,6 +12,7 @@ type HomePageProps = {
   text: Copy
   notice: string
   currentUser: AuthenticatedUser | null
+  onUserUpdated: (user: AuthenticatedUser) => void
   authLoading: boolean
   isSigningOut: boolean
   onLanguageChange: (language: Language) => void
@@ -25,6 +26,7 @@ export function HomePage({
   text,
   notice,
   currentUser,
+  onUserUpdated,
   authLoading,
   isSigningOut,
   onLanguageChange,
@@ -211,7 +213,7 @@ export function HomePage({
               language={language}
               text={text}
               onBackHome={() => setActiveView('home')}
-              onProfileUpdated={setProfileUser}
+              onProfileUpdated={(updated) => { setProfileUser(updated); onUserUpdated(updated) }}
               onPasswordChanged={async () => {
                 await onSignOut()
                 setActiveView('home')
