@@ -26,3 +26,12 @@ export type TicketSummary = {
   open: number
   closed: number
 }
+
+
+export type UserProfileUpdate = Pick<AuthenticatedUser, 'first_name' | 'last_name' | 'username'>
+
+export type PasswordChange = {
+  current_password: string
+  new_password: string
+  confirm_new_password: string
+}
