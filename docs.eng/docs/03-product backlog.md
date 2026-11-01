@@ -37,15 +37,16 @@ Workload estimates are based on relative Story Point estimation. The estimates t
 | 6 | US-04 | Creating a support request | P1 | 5 | Sprint 2 |
 | 7 | US-05 | Viewing and closing one's own support requests | P1 | 5 | Sprint 2 |
 | 8 | US-03 | Managing the user profile | P1 | 3 | Sprint 2 |
-| 9 | US-06 | AI-powered conversation | P1 | 8 | Sprint 3 |
-| 10 | US-08 | Saving conversation messages | P1 | 5 | Sprint 3 |
-| 11 | US-07 | Clarifying questions and problem solving | P1 | 5 | Sprint 3 |
-| 12 | US-09 | Creating a support request from a conversation | P2 | 3 | Sprint 4 |
-| 13 | US-13 | Multilingual user interface | P2 | 3 | Sprint 4 |
-| 14 | US-14 | Limited support request summary view | P3 | 3 | Sprint 4 |
-| 15 | US-15 | Knowledge-based AI advice (RAG) | P2 | 13 | Sprint 5 |
-| 16 | US-16 | Starting the application with Docker Compose | P2 | 5 | Sprint 1 |
-| **Total** |  |  |  | **86 SP** |  |
+| 9 | US-17 | Administrator-assisted forgotten password reset | P1 | 2 | Sprint 2 |
+| 10 | US-06 | AI-powered conversation | P1 | 8 | Sprint 3 |
+| 11 | US-08 | Saving conversation messages | P1 | 5 | Sprint 3 |
+| 12 | US-07 | Clarifying questions and problem solving | P1 | 5 | Sprint 3 |
+| 13 | US-09 | Creating a support request from a conversation | P2 | 3 | Sprint 4 |
+| 14 | US-13 | Multilingual user interface | P2 | 3 | Sprint 4 |
+| 15 | US-14 | Limited support request summary view | P3 | 3 | Sprint 4 |
+| 16 | US-15 | Knowledge-based AI advice (RAG) | P2 | 13 | Sprint 5 |
+| 17 | US-16 | Starting the application with Docker Compose | P2 | 5 | Sprint 1 |
+| **Total** |  |  |  | **88 SP** |  |
 
 The 5 SP estimate for US-16 covers the frontend, backend, MySQL, and Ollama Compose services, deploying the GGUF model in an Ollama container, required configuration, persistent storage for the database and model, readiness checks, and documentation and startup integration testing. The estimate does not include production deployment or orchestration.
 
@@ -57,7 +58,8 @@ The 5 SP estimate for US-16 covers the frontend, backend, MySQL, and Ollama Comp
 |---------------|-----------------------|
 | US-01 | Database and user data storage |
 | US-02 | US-01, authentication, and permission management |
-| US-03 | US-01, user-specific data retrieval |
+| US-03 | US-01, user-specific data retrieval, current-password verification, and secure password hashing |
+| US-17 | US-01, authentication, user lookup, password hashing, forced-change enforcement, and invalidation of `auth_sessions` sessions |
 | US-04 | US-10, US-11, and user identification |
 | US-05 | US-04, US-10, US-11, and permission checks |
 | US-06 | REST API and AI service integration |
@@ -126,6 +128,6 @@ A user story is ready to be selected for a Sprint when:
 
 ## 8. Summary
 
-The AI HelpDesk Product Backlog contains 16 user stories, with a total estimate of 86 Story Points. US-09 and US-14 are official delivery commitments. US-14 is limited to the total number of the user's own support requests and the `OPEN`/`CLOSED` status breakdown. The US-15 RAG MVP uses Markdown and TXT documents with keyword search; semantic search is considered only based on test evidence. The 5 Story Point estimate for US-16 covers documented one-command Compose startup for the frontend, backend, MySQL, and Ollama, including the selected model. Production deployment and orchestration are not included in the estimate.
+The AI HelpDesk Product Backlog contains 17 user stories, with a total estimate of 88 Story Points. US-17 is a Sprint 2 administrator-assisted password reset that uses a protected backend maintenance command; it is sequenced after US-04, US-05, and US-03. US-09 and US-14 are official delivery commitments. US-14 is limited to the total number of the user's own support requests and the `OPEN`/`CLOSED` status breakdown. The US-15 RAG MVP uses Markdown and TXT documents with keyword search; semantic search is considered only based on test evidence. The 5 Story Point estimate for US-16 covers documented one-command Compose startup for the frontend, backend, MySQL, and Ollama, including the selected model. Production deployment and orchestration are not included in the estimate.
 
 The Backlog's first objective is to build a working technical foundation, implement user authentication and support request management, and enable AI-powered conversation.
