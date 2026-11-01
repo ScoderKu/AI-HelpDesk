@@ -96,7 +96,7 @@ export function ProfilePage({ currentUser, text, onBackHome, onProfileUpdated, o
         <label className="profile-field">{text.username}<input required minLength={3} maxLength={100} value={username} onChange={e => setUsername(e.target.value)} /></label>
         <label className="profile-field">{text.email}<input value={currentUser.email} disabled readOnly aria-describedby="profile-email-help" /></label>
       </div>
-      <p className="profile-message">{text.emailReadOnly}</p>
+      <p className="profile-message" id="profile-email-help">{text.emailReadOnly}</p>
       {profileError && <p className="profile-message" role="alert">{profileError}</p>}
       {profileNotice && <p className="profile-message" role="status">{profileNotice}</p>}
       <div className="profile-actions"><button className="button button-primary" disabled={savingProfile} type="submit">{text.profileSave}</button></div>
