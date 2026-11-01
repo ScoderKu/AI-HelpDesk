@@ -66,7 +66,8 @@ Frontend tarjoaa käyttäjälle visuaalisen käyttöliittymän ja välittää k�
 #### Frontendin vastuut
 
 - Rekisteröitymis- ja kirjautumisnäkymät.
-- Käyttäjäprofiilin tarkastelu ja päivittäminen.
+- Käyttäjäprofiilin tarkastelu ja päivittäminen (etunimi, sukunimi ja käyttäjänimi); sähköpostiosoite on vain luettavissa.
+- Salasanan vaihtaminen nykyisen salasanan vahvistuksella.
 - Tukipyyntöjen luominen, tarkastelu ja sulkeminen.
 - Tekoälykeskustelun näyttäminen.
 - Keskusteluhistorian näyttäminen.
@@ -96,7 +97,8 @@ Backend tarjoaa REST-rajapinnan ja toteuttaa sovelluksen liiketoimintalogiikan.
 | Komponentti | Vastuu |
 |------------|---------|
 | Auth Service | Käyttäjän tunnistaminen ja käyttöoikeudet |
-| User Service | Profiilitietojen hallinta |
+| User Service | Profiilitietojen hallinta ja salasanan vaihtamisen orkestrointi |
+| Auth Service | Nykyisen salasanan tarkistaminen ja salasanan tiivisteen turvallinen päivittäminen |
 | Ticket Service | Tukipyyntöjen luominen ja päivittäminen |
 | Chat Service | Keskustelujen ja viestien käsittely |
 | AI Service | Tekoälypalvelun integraatio |
@@ -342,7 +344,8 @@ Autentikointireitit sekä tukipyyntöjen listaus-, luonti-, haku-, päivitys-, y
 | POST | `/api/v1/auth/logout` | Kirjaa käyttäjän ulos ja mitätöi nykyisen istunnon, jos eväste on voimassa | Istuntoeväste |
 | GET | `/api/v1/auth/me` | Palauttaa nykyisen kirjautuneen käyttäjän | Kyllä |
 | GET | `/api/v1/users/me` | Hakee kirjautuneen käyttäjän profiilin | Suunniteltu |
-| PATCH | `/api/v1/users/me` | Päivittää käyttäjän profiilin | Suunniteltu |
+| PATCH | `/api/v1/users/me` | Päivittää vain etunimen, sukunimen ja käyttäjänimen; sähköpostikenttää ei hyväksytä päivitettäväksi | Suunniteltu |
+| POST | `/api/v1/users/me/password` | Vaihtaa salasanan nykyisen salasanan ja uuden salasanan vahvistuksen jälkeen; tallentaa vain uuden salasanan tiivisteen | Suunniteltu |
 
 Autentikointi käyttää MySQL:ään tallennettua palvelinpuolen istuntoa. Alembic-migraatiot ajetaan ennen backendin käynnistymistä; ensimmäinen baseline-migraatio luo `users`- ja `auth_sessions`-taulut tai ottaa olemassa olevat taulut käyttöön muuttamatta niitä. Myöhemmät skeemamuutokset toimitetaan tarkistettuina migraatiotiedostoina. Eväste sisältää HMAC-allekirjoitetun käyttäjä-, vanhenemis- ja istuntotunnisteen; eväste on `HttpOnly` ja `SameSite=Lax`, ja sen voimassaolo on kahdeksan tuntia. `AUTH_COOKIE_SECURE` määrittää `Secure`-attribuutin: Compose käyttää oletuksena arvoa `true`; vain paikallisessa HTTP-kehityksessä `.env`-tiedostossa asetetaan `AUTH_COOKIE_SECURE=false`. HTTPS-käytössä asetus pidetään arvossa `true`. Uloskirjautuminen poistaa istunnon MySQL:stä ja evästeen selaimesta. Lisäksi uloskirjautumispyynnön `Origin`-otsakkeen on vastattava täsmälleen jotakin `FRONTEND_ORIGINS`-asetuksen alkuperää; puuttuva tai tuntematon alkuperä hylätään. LAN-käytössä sovelluksen tarkka alkuperä lisätään tähän asetukseen, eikä tarkistusta poisteta. Erillistä CSRF-tokenia ei käytetä.
 
