@@ -10,7 +10,7 @@ type AuthPageProps = {
   language: Language
   text: Copy
   onLanguageChange: (language: Language) => string
-  onLoginSuccess: (status: AuthStatus) => void
+  onLoginSuccess: (status: AuthStatus) => Promise<void> | void
   onModeChange: (mode: AuthMode) => void
   onBack: () => void
 }
@@ -115,7 +115,7 @@ export function AuthPage({
 
       if (response.status === 200 && !isRegister) {
         const authStatus: AuthStatus = await response.json()
-        onLoginSuccess(authStatus)
+        await onLoginSuccess(authStatus)
       } else if (response.status === 201 && isRegister) {
         form.reset()
         setNotice(text.registrationSuccess)
