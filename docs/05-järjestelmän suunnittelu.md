@@ -351,18 +351,37 @@ Autentikointireitit sekä tukipyyntöjen listaus-, luonti-, haku-, päivitys-, y
 
 #### Unohtuneen salasanan palautus (US-17 – toteutetaan vasta US-04:n, US-05:n ja US-03:n valmistuttua)
 
-Palautus toteutetaan backendin hallintakomennolla, ei HTTP-endpointina eikä frontendin hallintanäkymänä. Komento suoritetaan vain backendin ylläpitoon oikeutetusta ympäristöstä (esimerkiksi Docker-kontin ylläpitokonsolista). Tavallisen käyttäjän istunto ei anna oikeutta suorittaa komentoa.
+US-17 toteutetaan vain backendin ylläpitokomennolla. Se ei lisää julkista HTTP-reset-endpointia, salasanan palautusnäkymää, sähköpostiviestiä, OTP-koodia eikä sovelluksen ADMIN-käyttöliittymää. Tässä määrittelyssä ADMIN tarkoittaa ylläpitotoimintoon valtuutettua henkilöä, joka on varmistanut käyttäjän henkilöllisyyden sovelluksen ulkopuolella. Oikeus komentoon perustuu backend-ympäristön käyttöoikeuksiin, ei tavallisen käyttäjän istuntoon tai asiakkaan lähettämään roolikenttään.
 
-Komento hakee kohdekäyttäjän, luo kryptografisesti satunnaisen väliaikaisen salasanan, tallentaa vain sen tiivisteen, asettaa users.must_change_password-arvon TRUE ja mitätöi kaikki kohdekäyttäjän auth_sessions-istunnot. Väliaikainen salasana tulostetaan kerran ADMINin terminaaliin. Salasanaa ei kirjoiteta sovelluslokeihin eikä tallenneta selväkielisenä.
+**Ylläpitokomennon toimintaketju**
 
-Väliaikaisella salasanalla kirjautunut käyttäjä saa käyttää vain salasanan vaihtoa ja uloskirjautumista. Onnistunut salasanan vaihto poistaa pakotetun vaihdon merkinnän.
+1. Ylläpitäjä suorittaa komennon backend-kontin tai muun suojatun backend-ylläpitoympäristön kautta. Komento hyväksyy yksilöivän käyttäjätunnisteen, ensisijaisesti sähköpostiosoitteen; käyttäjän olemassaolo tarkistetaan ennen muutoksia.
+2. Komento luo kryptografisesti turvallisella satunnaislukugeneraattorilla väliaikaisen salasanan. Salasanan tulee täyttää sama palvelinpuolen salasanapolitiikka kuin tavallisen salasanan.
+3. Komento tiivistää väliaikaisen salasanan nykyisellä salasanatiivistefunktiolla ja tallentaa vain tiivisteen users.password_hash-kenttään.
+4. Samassa tietokantatransaktiossa komento asettaa users.must_change_password = TRUE ja poistaa kaikki käyttäjän auth_sessions-rivit. Salasanan vaihto, pakotetun vaihdon merkintä ja istuntojen mitätöinti joko onnistuvat yhdessä tai peruuntuvat yhdessä.
+5. Väliaikainen salasana tulostetaan ylläpitokomennon onnistuneessa tulosteessa täsmälleen kerran. Sitä ei tallenneta tietokantaan selväkielisenä, tiedostoon, komentohistoriaan, sovelluslokeihin tai virheilmoituksiin. Komento ei tulosta salasanaa, jos transaktio epäonnistuu.
+6. Ylläpitäjä toimittaa väliaikaisen salasanan käyttäjälle turvallista, sovelluksen ulkopuolista kanavaa pitkin. Käyttäjän on vaihdettava se heti kirjautumisen jälkeen.
 
-Autentikointi käyttää MySQL:ään tallennettua palvelinpuolen istuntoa. Alembic-migraatiot ajetaan ennen backendin käynnistymistä; ensimmäinen baseline-migraatio luo `users`- ja `auth_sessions`-taulut tai ottaa olemassa olevat taulut käyttöön muuttamatta niitä. Myöhemmät skeemamuutokset toimitetaan tarkistettuina migraatiotiedostoina. Eväste sisältää HMAC-allekirjoitetun käyttäjä-, vanhenemis- ja istuntotunnisteen; eväste on `HttpOnly` ja `SameSite=Lax`, ja sen voimassaolo on kahdeksan tuntia. `AUTH_COOKIE_SECURE` määrittää `Secure`-attribuutin: Compose käyttää oletuksena arvoa `true`; vain paikallisessa HTTP-kehityksessä `.env`-tiedostossa asetetaan `AUTH_COOKIE_SECURE=false`. HTTPS-käytössä asetus pidetään arvossa `true`. Uloskirjautuminen poistaa istunnon MySQL:stä ja evästeen selaimesta. Lisäksi uloskirjautumispyynnön `Origin`-otsakkeen on vastattava täsmälleen jotakin `FRONTEND_ORIGINS`-asetuksen alkuperää; puuttuva tai tuntematon alkuperä hylätään. LAN-käytössä sovelluksen tarkka alkuperä lisätään tähän asetukseen, eikä tarkistusta poisteta. Erillistä CSRF-tokenia ei käytetä.
+**Kirjautuminen ja pakotettu salasanan vaihto**
 
-Frontend käyttää oletuksena suhteellista `/api`-polkua. Viten kehityspalvelin proxyaa pyynnöt backendille, ja tuotanto-Nginx proxyaa saman polun backendille. Jos backend tarjotaan eri alkuperästä, `VITE_API_BASE_URL` voidaan asettaa build-vaiheessa backendin alkuperäosoitteeksi ilman `/api`-polkua.
+- Onnistunut kirjautuminen käyttäjän väliaikaisella salasanalla luo normaalin palvelinpuolen istunnon, mutta asettaa istunnon rajoitettuun tilaan käyttäjän must_change_password-arvon perusteella.
+- Rajoitetulla istunnolla sallitaan vain salasanan vaihtaminen ja uloskirjautuminen. Kaikki muut suojatut API-pyynnöt estetään backendissä HTTP 403 -vastauksella riippumatta siitä, kutsutaanko niitä suoraan API:sta vai käyttöliittymän kautta.
+- Rajoitus toteutetaan keskitetysti autentikoinnin/suojattujen endpointien yhteisessä riippuvuudessa tai käyttöoikeustarkistuksessa. Yksittäisen frontend-näkymän piilottaminen ei täytä vaatimusta.
+- GET /api/v1/auth/me saa palauttaa vain kirjautumisen tilan ja tiedon siitä, että salasanan vaihto vaaditaan; se ei saa avata muita käyttäjätietoja tai suojattuja toimintoja. POST /api/v1/auth/logout pysyy sallittuna.
+- Salasanan vaihtamisen endpoint tarkistaa uuden salasanan ja vahvistuksen palvelinpuolella, tallentaa uuden tiivisteen ja asettaa must_change_password = FALSE. Vaihdon yhteydessä vanha istunto mitätöidään ja käyttäjä kirjataan ulos; käyttäjän on kirjauduttava uudelleen uudella salasanalla.
+- Tavallisen käyttäjän pyyntö ei voi asettaa tai poistaa must_change_password-arvoa eikä kutsua ylläpitokomentoa.
 
-Kirjautumista rajoitetaan Redisissä yhteisillä, atomisilla laskureilla: enintään 20 kirjautumisyritystä IP-osoitetta kohti minuutissa ja viisi epäonnistunutta salasanatarkistusta normalisoitua sähköpostiosoitetta kohti 15 minuutissa. IP-laskuri kasvaa ennen tunnistautumista; sähköpostilaskuri kasvaa vain, kun käyttäjää ei löydy tai salasana on väärä. Onnistunut kirjautuminen ei kasvata eikä nollaa sähköpostin virhelaskuria. Tiliraja tarkistetaan ennen salasanatiivisteen laskentaa; rajan ylitys palauttaa `429 Too Many Requests`-vastauksen ja `Retry-After`-otsakkeen. Redis-yhteyden virheessä kirjautuminen estetään ja palautetaan `503`. `X-Forwarded-For`-otsaketta käytetään IP:n tunnistamiseen vain, kun yhteys tulee `TRUSTED_PROXY_IPS`-asetuksessa määritetystä luotetusta proxysta. Ketjua luetaan oikealta vasemmalle luotetut proxy-hopit ohittaen; ensimmäinen luottamaton osoite toimii asiakkaan IP:nä. Vanhentuneet kirjautumisistunnot poistetaan erillisessä taustatehtävässä kerran tunnissa. Siivous hakee vanhentuneiden rivien tunnisteet ja poistaa ne erissä ensisijaisavaimen perusteella; kirjautumisen transaktiossa ei tehdä `expires_at`-aluepoistoa.
+**Transaktiot, virheet ja lokitus**
 
+- Käyttäjän haku, salasanatiivisteen päivitys, pakotetun vaihdon merkintä ja kaikkien istuntojen poisto tehdään yhtenä transaktiona. Käyttäjärivi lukitaan päivityksen ajaksi, jotta samanaikainen kirjautuminen ei voi jättää voimaan vanhalla salasanalla luotua istuntoa.
+- Tuntemattomasta käyttäjästä annetaan ylläpitäjälle selkeä virhe, mutta selväkielistä salasanaa ei tulosteta eikä mitään tietoja muuteta.
+- Komento palauttaa ei-nollan poistumiskoodin epäonnistuessaan. Väliaikainen salasana näytetään vain onnistuneen commitin jälkeen.
+- Lokeihin saa kirjata komennon suorittamisen ajankohdan, kohdekäyttäjän sisäisen tunnisteen ja onnistumis-/epäonnistumistiedon vain siinä laajuudessa kuin ylläpidon auditointi edellyttää. Salasanaa, sen tiivistettä, istuntotunnisteita tai evästeitä ei kirjata.
+- Ylläpitoympäristön käyttöoikeudet ja terminaalin tulosteen käsittely ovat ylläpitäjän vastuulla. Väliaikainen salasana on kertakäyttöinen toimitustieto, eikä sitä pidä jättää jaettuihin lokeihin tai tallenteisiin.
+
+**Toteutuksen rajaus**
+
+Tämä on tekninen sopimus US-17:n toteutukselle, ei väite siitä, että ylläpitokomento tai pakotetun vaihdon backend-tarkistukset olisivat jo toteutettuja. Ennen toteutusta tarkistetaan nykyinen users- ja auth_sessions-malli, migraatiot, salasanan tiivistysfunktio, autentikoinnin yhteinen riippuvuus ja salasanan vaihtoreitti. Nykyinen users.must_change_password-kenttä on suunnittelussa määritelty; jos sitä ei löydy käytössä olevasta skeemasta, se lisätään tarkistetulla Alembic-migraatiolla. Komennon tarkka moduuli- ja komentorivisyntaksi päätetään toteutuksessa olemassa olevan backend-rakenteen perusteella.
 ### Tukipyynnöt
 
 | HTTP-metodi | Endpoint | Kuvaus | Autentikointi |
