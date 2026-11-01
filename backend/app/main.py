@@ -344,7 +344,7 @@ async def validation_error_handler(
 
 @app.post(
     "/api/v1/auth/login",
-    response_model=UserResponse,
+    response_model=AuthStatusResponse,
     tags=["Authentication"],
 )
 def login_user(
