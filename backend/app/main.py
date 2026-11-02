@@ -861,7 +861,9 @@ def list_conversation_messages(
 
 
 @app.get("/api/v1/ai/health", tags=["AI"])
-async def ollama_health_check() -> dict[str, object]:
+async def ollama_health_check(
+    _user: User = Depends(get_authenticated_user),
+) -> dict[str, object]:
     """Check Ollama availability and whether the configured model is installed."""
     import json
     from urllib.error import URLError
