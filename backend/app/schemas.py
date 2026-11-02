@@ -8,6 +8,7 @@ from pydantic import (
     ConfigDict,
     Field,
     SecretStr,
+    field_validator,
     field_serializer,
     model_validator,
 )
