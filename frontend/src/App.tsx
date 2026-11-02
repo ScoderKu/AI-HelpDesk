@@ -4,7 +4,8 @@ import { AuthPage } from './pages/AuthPage'
 import { HomePage } from './pages/HomePage'
 import { API_BASE_URL } from './api'
 import { copy } from './i18n/copy'
-import type { AuthMode, AuthenticatedUser, Language } from './types'
+import { ForcedPasswordChange } from './pages/ForcedPasswordChange'
+import type { AuthMode, AuthenticatedUser, AuthStatus, Language } from './types'
 
 function getInitialLanguage(): Language {
   try {
@@ -19,6 +20,7 @@ function App() {
   const [notice, setNotice] = useState('')
   const [authMode, setAuthMode] = useState<AuthMode | null>(null)
   const [user, setUser] = useState<AuthenticatedUser | null>(null)
+  const [mustChangePassword, setMustChangePassword] = useState(false)
   const [authLoading, setAuthLoading] = useState(true)
   const [isSigningOut, setIsSigningOut] = useState(false)
   const text = copy[language]
@@ -36,12 +38,20 @@ function App() {
           credentials: 'include',
         })
         if (response.status === 401) {
-          if (active) setUser(null)
+          if (active) { setUser(null); setMustChangePassword(false) }
           return
         }
         if (!response.ok) throw new Error(`Session check failed: ${response.status}`)
-        const currentUser: AuthenticatedUser = await response.json()
-        if (active) setUser(currentUser)
+        const authStatus: AuthStatus = await response.json()
+        if (active) {
+          setMustChangePassword(authStatus.must_change_password)
+          if (!authStatus.must_change_password) {
+            const profileResponse = await fetch(`${API_BASE_URL}/api/v1/users/me`, { credentials: 'include' })
+            if (!profileResponse.ok) throw new Error(`Profile load failed: ${profileResponse.status}`)
+            const currentUser: AuthenticatedUser = await profileResponse.json()
+            setUser(currentUser)
+          } else setUser(null)
+        }
       } catch {
         if (active) {
           setUser(null)
@@ -72,14 +82,28 @@ function App() {
     }
   }
 
-  const handleLoginSuccess = (authenticatedUser: AuthenticatedUser) => {
-    setUser(authenticatedUser)
+  const handleLoginSuccess = async (authStatus: AuthStatus) => {
+    setMustChangePassword(authStatus.must_change_password)
+    if (authStatus.must_change_password) {
+      setUser(null)
+    } else {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/users/me`, { credentials: 'include' })
+        if (!response.ok) throw new Error(`Profile load failed: ${response.status}`)
+        setUser(await response.json())
+      } catch {
+        setNotice(text.sessionCheckError)
+        return
+      }
+    }
     setAuthMode(null)
     setNotice('')
   }
 
   const handlePasswordChanged = () => {
     setUser(null)
+    setMustChangePassword(false)
+    setAuthMode('login')
     setNotice(text.passwordChanged)
   }
 
@@ -100,6 +124,27 @@ function App() {
     } finally {
       setIsSigningOut(false)
     }
+  }
+
+  const handleForcedPasswordSignOut = async () => {
+    const signedOut = await handleSignOut()
+    if (signedOut) {
+      setMustChangePassword(false)
+      setAuthMode(null)
+    }
+  }
+
+  if (mustChangePassword) {
+    return (
+      <ForcedPasswordChange
+        language={language}
+        text={text}
+        onLanguageChange={changeLanguage}
+        onCompleted={handlePasswordChanged}
+        onSignOut={handleForcedPasswordSignOut}
+        isSigningOut={isSigningOut}
+      />
+    )
   }
 
   if (authMode) {
