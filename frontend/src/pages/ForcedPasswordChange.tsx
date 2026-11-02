@@ -10,9 +10,18 @@ type Props = {
   text: Copy
   onLanguageChange: (language: Language) => string
   onCompleted: () => void
+  onSignOut: () => Promise<void>
+  isSigningOut: boolean
 }
 
-export function ForcedPasswordChange({ language, text, onLanguageChange, onCompleted }: Props) {
+export function ForcedPasswordChange({
+  language,
+  text,
+  onLanguageChange,
+  onCompleted,
+  onSignOut,
+  isSigningOut,
+}: Props) {
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -117,7 +126,7 @@ export function ForcedPasswordChange({ language, text, onLanguageChange, onCompl
             </div>
 
             <form
-              aria-busy={busy}
+              aria-busy={busy || isSigningOut}
               aria-labelledby="forced-password-title"
               className="auth-form forced-password-form"
               onSubmit={(event) => void submit(event)}
@@ -166,9 +175,21 @@ export function ForcedPasswordChange({ language, text, onLanguageChange, onCompl
 
               {error && <p className="forced-password-error" role="alert">{error}</p>}
 
-              <button className="button button-primary auth-submit forced-password-submit" type="submit" disabled={busy}>
+              <button
+                className="button button-primary auth-submit forced-password-submit"
+                type="submit"
+                disabled={busy || isSigningOut}
+              >
                 {busy ? text.forcedPasswordSubmitting : text.passwordChangeSubmit}
                 {!busy && <span aria-hidden="true">→</span>}
+              </button>
+              <button
+                className="button button-secondary forced-password-signout"
+                type="button"
+                disabled={busy || isSigningOut}
+                onClick={() => void onSignOut()}
+              >
+                {isSigningOut ? text.signingOut : text.signOut}
               </button>
             </form>
 
