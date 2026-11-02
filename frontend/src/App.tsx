@@ -3,7 +3,7 @@ import './App.css'
 import { AuthPage } from './pages/AuthPage'
 import { HomePage } from './pages/HomePage'
 import { API_BASE_URL } from './api'
-import { copy, type Copy } from './i18n/copy'
+import { copy } from './i18n/copy'
 import { ForcedPasswordChange } from './pages/ForcedPasswordChange'
 import type { AuthMode, AuthenticatedUser, AuthStatus, Language } from './types'
 
