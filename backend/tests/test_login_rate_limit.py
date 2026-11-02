@@ -139,6 +139,7 @@ class LoginRateLimitTests(unittest.TestCase):
             username="ada",
             email=self.email,
             password_hash="stored-hash",
+            must_change_password=False,
         )
         db = MagicMock()
         db.scalar.return_value = user
@@ -160,7 +161,7 @@ class LoginRateLimitTests(unittest.TestCase):
         check_limit.assert_called_once_with(self.request, self.email)
         record_failure.assert_not_called()
         db.commit.assert_called_once_with()
-        self.assertEqual(result.username, "ada")
+        self.assertFalse(result.must_change_password)
 
     def test_failed_login_records_account_failure(self) -> None:
         user = SimpleNamespace(password_hash="stored-hash")

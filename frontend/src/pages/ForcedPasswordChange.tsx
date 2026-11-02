@@ -10,7 +10,7 @@ type Props = {
   text: Copy
   onLanguageChange: (language: Language) => string
   onCompleted: () => void
-  onSignOut: () => Promise<void>
+  onSignOut: () => Promise<boolean>
   isSigningOut: boolean
 }
 
@@ -53,6 +53,11 @@ export function ForcedPasswordChange({
     } catch {
       setError(text.passwordChangeError)
     } finally { setBusy(false) }
+  }
+
+  const signOut = async () => {
+    setError('')
+    if (!await onSignOut()) setError(text.signOutError)
   }
 
   return (
@@ -187,7 +192,7 @@ export function ForcedPasswordChange({
                 className="button button-secondary forced-password-signout"
                 type="button"
                 disabled={busy || isSigningOut}
-                onClick={() => void onSignOut()}
+                onClick={() => void signOut()}
               >
                 {isSigningOut ? text.signingOut : text.signOut}
               </button>
