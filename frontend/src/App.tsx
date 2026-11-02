@@ -126,8 +126,25 @@ function App() {
     }
   }
 
+  const handleForcedPasswordSignOut = async () => {
+    const signedOut = await handleSignOut()
+    if (signedOut) {
+      setMustChangePassword(false)
+      setAuthMode(null)
+    }
+  }
+
   if (mustChangePassword) {
-    return <ForcedPasswordChange language={language} text={text} onLanguageChange={changeLanguage} onCompleted={handlePasswordChanged} />
+    return (
+      <ForcedPasswordChange
+        language={language}
+        text={text}
+        onLanguageChange={changeLanguage}
+        onCompleted={handlePasswordChanged}
+        onSignOut={handleForcedPasswordSignOut}
+        isSigningOut={isSigningOut}
+      />
+    )
   }
 
   if (authMode) {
