@@ -179,3 +179,40 @@ class UserPasswordChangeRequest(BaseModel):
         if self.current_password.get_secret_value() == self.new_password.get_secret_value():
             raise ValueError("New password must differ from current password.")
         return self
+
+
+class ConversationCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str | None = Field(default=None, max_length=200)
+
+    @field_validator("title")
+    @classmethod
+    def normalize_title(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        return value or None
+
+
+class ConversationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class MessageRole(str, Enum):
+    USER = "USER"
+    ASSISTANT = "ASSISTANT"
+
+
+class MessageResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    role: MessageRole
+    content: str
+    created_at: datetime
