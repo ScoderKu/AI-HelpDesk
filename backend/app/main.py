@@ -23,9 +23,9 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal, engine, get_db
-from app.models import AuthSession, Ticket, User
+from app.models import AuthSession, Conversation, Message, Ticket, User
 from app.schemas import (
-    TicketCreateRequest,
+    ConversationCreateRequest,\n    ConversationResponse,\n    MessageResponse,\n    TicketCreateRequest,
     TicketResponse,
     TicketStatus,
     TicketSummaryResponse,
@@ -790,3 +790,64 @@ def database_health_check() -> dict[str, str]:
             status_code=503,
             detail="Database connection failed",
         )
+
+
+@app.get("/api/v1/conversations", response_model=list[ConversationResponse], tags=["Conversations"])
+def list_conversations(
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> list[ConversationResponse]:
+    items = db.scalars(
+        select(Conversation).where(Conversation.user_id == user.id)
+        .order_by(Conversation.updated_at.desc(), Conversation.id.desc())
+    ).all()
+    return [ConversationResponse.model_validate(item) for item in items]
+
+
+@app.post("/api/v1/conversations", response_model=ConversationResponse,
+          status_code=status.HTTP_201_CREATED, tags=["Conversations"])
+def create_conversation(
+    conversation_data: ConversationCreateRequest,
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> ConversationResponse:
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    item = Conversation(user_id=user.id, title=conversation_data.title,
+                        created_at=now, updated_at=now)
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return ConversationResponse.model_validate(item)
+
+
+@app.get("/api/v1/conversations/{conversation_id}",
+         response_model=ConversationResponse, tags=["Conversations"])
+def get_conversation(
+    conversation_id: int = Path(gt=0),
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> ConversationResponse:
+    item = db.scalar(select(Conversation).where(
+        Conversation.id == conversation_id, Conversation.user_id == user.id
+    ))
+    if item is None:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+    return ConversationResponse.model_validate(item)
+
+
+@app.get("/api/v1/conversations/{conversation_id}/messages",
+         response_model=list[MessageResponse], tags=["Conversations"])
+def list_conversation_messages(
+    conversation_id: int = Path(gt=0),
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> list[MessageResponse]:
+    owned_id = db.scalar(select(Conversation.id).where(
+        Conversation.id == conversation_id, Conversation.user_id == user.id
+    ))
+    if owned_id is None:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+    items = db.scalars(select(Message).where(
+        Message.conversation_id == conversation_id
+    ).order_by(Message.created_at.asc(), Message.id.asc())).all()
+    return [MessageResponse.model_validate(item) for item in items]
