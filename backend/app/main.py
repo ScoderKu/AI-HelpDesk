@@ -28,7 +28,10 @@ from app.models import AuthSession, Conversation, Message, Ticket, User
 from app.schemas import (
     ConversationCreateRequest,
     ConversationResponse,
-    MessageResponse,\n    TicketCreateRequest,
+    MessageResponse,
+    ChatMessageRequest,
+    ChatMessageResponse,
+    TicketCreateRequest,
     TicketResponse,
     TicketStatus,
     TicketSummaryResponse,
