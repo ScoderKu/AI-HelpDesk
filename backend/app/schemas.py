@@ -56,6 +56,11 @@ class UserLoginRequest(BaseModel):
         return self
 
 
+class AuthStatusResponse(BaseModel):
+    authenticated: bool = True
+    must_change_password: bool
+
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

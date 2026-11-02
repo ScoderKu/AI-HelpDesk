@@ -87,7 +87,8 @@ At the end of the Sprint, users can create a support request, view their own req
 | US-04 | Creating a support request | 5 |
 | US-05 | Viewing and closing one's own support requests | 5 |
 | US-03 | Managing the user profile | 3 |
-| **Total** |  | **13** |
+| US-17 | Administrator-assisted forgotten password reset (after US-04, US-05, and US-03) | 2 |
+| **Total** |  | **15** |
 
 ## 4.3 Key Development Tasks
 
@@ -99,6 +100,9 @@ At the end of the Sprint, users can create a support request, view their own req
 6. Implement closing a support request.
 7. Ensure that users cannot view or modify another user's support request without authorization.
 8. Test data storage, updates, retrieval, and permission checks.
+9. Implement the protected backend maintenance command for US-17; generate a one-time temporary password, store only its hash, set the mandatory-change flag, and revoke all existing sessions in one transaction.
+10. Enforce mandatory password change centrally in the backend so a temporary-password session can only change the password or sign out; test direct API access as well as the frontend flow.
+11. Document the administrator's reset procedure and secure out-of-band delivery of the temporary password.
 
 ## 4.4 Expected Outcomes
 
@@ -107,10 +111,13 @@ At the end of the Sprint, users can create a support request, view their own req
 3. Users can see their own support requests and their statuses.
 4. Users can close their own open support request.
 5. Support request permissions are checked in the backend.
+6. An authorized operator can reset a forgotten password using the protected backend maintenance command; the temporary password is displayed only after a successful transaction.
+7. Existing sessions are revoked, and the user must change the temporary password before using other protected features.
+8. The administrator procedure and security precautions are documented.
 
 ## 4.5 Sprint Acceptance
 
-The Sprint can be accepted when the acceptance criteria for the selected user stories are met and support request storage, retrieval, and permissions work in tested situations.
+The Sprint can be accepted when the acceptance criteria for US-04, US-05, and US-03 are met and support request storage, retrieval, and permissions work in tested situations. US-17 is accepted only after those three stories have been completed and checked, and its backend reset flow, forced password-change restriction, session revocation, and administrator instructions have passed their tests.
 
 ---
 

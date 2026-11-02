@@ -365,6 +365,42 @@ The application developer is responsible for the application's technical impleme
 
 US-09 and US-14 are part of the official delivery scope and will be implemented in Sprint 4 in accordance with their acceptance criteria. In addition, three additional features have been selected for the final release: US-13 (Finnish- and English-language user interface), US-15 (RAG), and US-16 (Docker Compose for the frontend, backend, MySQL, and Ollama, including the selected model). US-13 and US-15 will be implemented after the basic MVP in the agreed Sprint periods; they, US-09, and US-14 are not optional. The Docker Compose environment will be set up in Sprint 1.
 
+### US-17: Administrator-Assisted Forgotten Password Reset
+
+- As an authorized application administrator
+- I want to reset a user's forgotten password using a backend maintenance command.
+- So that the user can regain access without a public password-reset endpoint, email delivery, or OTP workflow.
+
+**Acceptance Criteria**
+
+**AC-17.1 – Backend-Only Administrative Reset**
+- Given that a user cannot sign in because they have forgotten their password.
+- When an authorized administrator runs the maintenance command in the protected backend environment for an existing user.
+- Then the backend generates a temporary password and displays it only in the administrator's command output after the database transaction succeeds.
+- There is no public password-reset endpoint or user-facing reset interface.
+
+**AC-17.2 – Secure Temporary Password Handling**
+- Given that the administrator initiates a password reset.
+- When the backend generates the temporary password.
+- Then it is generated using a cryptographically secure random number generator, shown only once, and only its password hash is stored in the database.
+- The plaintext password and its hash are never written to application logs.
+
+**AC-17.3 – Mandatory Password Change**
+- Given that the user's password has been reset.
+- When the user signs in with the temporary password.
+- Then the system requires the user to change the password before allowing access to any other protected feature.
+- The new password is validated and saved through the password-change operation.
+
+**AC-17.4 – Revoke Existing Sessions**
+- Given that the user may have active login sessions.
+- When the administrator resets the password.
+- Then the backend invalidates all existing sessions belonging to that user.
+
+**AC-17.5 – Invalid Target or Unauthorized Execution**
+- Given that the command is run for an unknown user or by a person without backend maintenance access.
+- When the backend processes the command.
+- Then the reset is aborted safely, no account data is changed, and no password or unnecessary account information is disclosed.
+
 ### US-13: Multilingual User Interface
 
 - As an application user
