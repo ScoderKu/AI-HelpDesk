@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import './ChatPage.css'
 import { API_BASE_URL } from '../api'
@@ -47,7 +47,7 @@ export function ChatPage({ language, onBackHome }: ChatPageProps) {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
 
-  const loadConversations = async () => {
+  const loadConversations = useCallback(async () => {
     try {
       const items = await api<Conversation[]>('/api/v1/conversations')
       setConversations(items)
@@ -59,12 +59,13 @@ export function ChatPage({ language, onBackHome }: ChatPageProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [t.loadError])
 
-  useEffect(() => { void loadConversations() }, [])
+  useEffect(() => { void loadConversations() }, [loadConversations])
 
   const openConversation = async (id: number) => {
     setActiveId(id)
+    setMessages([])
     setError('')
     try {
       const items = await api<Message[]>(`/api/v1/conversations/${id}/messages`)
@@ -100,7 +101,6 @@ export function ChatPage({ language, onBackHome }: ChatPageProps) {
         setActiveId(created.id)
         setConversations((current) => [created, ...current])
       }
-      setDraft('')
       const result = await api<{
         conversation_id: number
         user_message: Message
@@ -109,6 +109,7 @@ export function ChatPage({ language, onBackHome }: ChatPageProps) {
         method: 'POST', body: JSON.stringify({ content }),
       })
       setMessages((current) => [...current, result.user_message, result.assistant_message])
+      setDraft('')
       await loadConversations()
     } catch {
       setError(t.sendError)
