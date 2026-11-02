@@ -84,6 +84,11 @@ TRUSTED_PROXY_NETWORKS = tuple(
     for value in os.getenv("TRUSTED_PROXY_IPS", "").split(",")
     if value.strip()
 )
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "poro-helpdesk")
+OLLAMA_HEALTH_TIMEOUT_SECONDS = 3
+
+
 logger = logging.getLogger(__name__)
 redis_client: Redis = Redis.from_url(
     os.getenv("REDIS_URL", "redis://localhost:6379/0"),
@@ -851,3 +856,72 @@ def list_conversation_messages(
         Message.conversation_id == conversation_id
     ).order_by(Message.created_at.asc(), Message.id.asc())).all()
     return [MessageResponse.model_validate(item) for item in items]
+
+
+@app.get("/api/v1/ai/health", tags=["AI"])
+async def ollama_health_check() -> dict[str, object]:
+    """Check Ollama availability and whether the configured model is installed."""
+    import json
+    from urllib.error import URLError
+    from urllib.request import urlopen
+
+    def fetch_ollama_status() -> tuple[str | None, list[str] | None]:
+        version: str | None = None
+        model_names: list[str] | None = None
+
+        with urlopen(
+            f"{OLLAMA_BASE_URL}/api/version",
+            timeout=OLLAMA_HEALTH_TIMEOUT_SECONDS,
+        ) as response:
+            version_payload = json.loads(response.read().decode("utf-8"))
+            version = version_payload.get("version")
+
+        with urlopen(
+            f"{OLLAMA_BASE_URL}/api/tags",
+            timeout=OLLAMA_HEALTH_TIMEOUT_SECONDS,
+        ) as response:
+            tags_payload = json.loads(response.read().decode("utf-8"))
+            model_names = [
+                item.get("name", "")
+                for item in tags_payload.get("models", [])
+                if isinstance(item, dict)
+            ]
+        return version, model_names
+
+    try:
+        version, model_names = await asyncio.to_thread(fetch_ollama_status)
+    except (OSError, URLError, TimeoutError, ValueError) as error:
+        logger.warning("Ollama health check failed: %s", type(error).__name__)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "status": "unavailable",
+                "provider": "ollama",
+                "connected": False,
+                "model": OLLAMA_MODEL,
+                "model_available": False,
+            },
+        ) from None
+
+    available_models = set(model_names or [])
+    model_available = any(
+        name == OLLAMA_MODEL or name.startswith(f"{OLLAMA_MODEL}:")
+        for name in available_models
+    )
+    result: dict[str, object] = {
+        "status": "ok" if model_available else "degraded",
+        "provider": "ollama",
+        "connected": True,
+        "version": version,
+        "model": OLLAMA_MODEL,
+        "model_available": model_available,
+    }
+    if not model_available:
+        result["available_models"] = sorted(available_models)
+
+    if not model_available:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=result,
+        )
+    return result
