@@ -1534,3 +1534,525 @@ a:focus-visible {
 .profile-message[role="alert"] { color: #b42318; }
 .profile-message[role="status"] { color: #167044; }
 @media (max-width: 620px) { .profile-grid { grid-template-columns: 1fr; } .profile-panel { padding: 18px; } }
+
+.forced-password-shell {
+  background:
+    radial-gradient(ellipse at 50% 45%, #eeecff 0, transparent 48%),
+    var(--page-bg);
+}
+
+.forced-password-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #77778f;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.8px;
+}
+
+.forced-password-badge > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e6a23c;
+  box-shadow: 0 0 0 3px #e6a23c22;
+}
+
+.forced-password-content {
+  min-height: calc(100vh - 76px);
+  display: grid;
+  place-items: center;
+  padding: 48px 24px;
+}
+
+.forced-password-card {
+  width: min(100%, 980px);
+  min-height: 590px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  overflow: hidden;
+  border: 1px solid #e8e6f4;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 28px 80px #29294a14, 0 3px 12px #29294a08;
+}
+
+.forced-password-aside {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 38px 38px 30px;
+  color: #fff;
+  background:
+    radial-gradient(ellipse at 15% 15%, #7569e4 0, transparent 42%),
+    linear-gradient(150deg, #39366e 0%, #272743 56%, #202038 100%);
+}
+
+.forced-password-aside::after {
+  position: absolute;
+  right: -120px;
+  bottom: -180px;
+  width: 360px;
+  height: 360px;
+  border: 1px solid #ffffff12;
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.forced-password-art {
+  position: relative;
+  width: 174px;
+  height: 160px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  align-self: center;
+  margin: 0 auto 20px;
+}
+
+.forced-password-orbit {
+  position: absolute;
+  border: 1px solid #ffffff1c;
+  border-radius: 50%;
+}
+
+.forced-password-orbit-one {
+  inset: 9px;
+}
+
+.forced-password-orbit-two {
+  inset: 24px;
+}
+
+.forced-password-lock {
+  z-index: 1;
+  width: 82px;
+  height: 82px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #ffffff3a;
+  border-radius: 26px;
+  color: #fff;
+  background: linear-gradient(145deg, #ffffff35, #ffffff12);
+  box-shadow: 0 16px 38px #15152c55, inset 0 1px #ffffff42;
+  transform: rotate(-6deg);
+}
+
+.forced-password-lock svg {
+  width: 42px;
+  height: 42px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.forced-password-spark {
+  position: absolute;
+  color: #d7d2ff;
+}
+
+.forced-password-spark-one {
+  top: 16px;
+  right: 21px;
+  font-size: 21px;
+}
+
+.forced-password-spark-two {
+  bottom: 24px;
+  left: 16px;
+  font-size: 25px;
+}
+
+.forced-password-aside-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.forced-password-kicker {
+  color: #c6c2ff;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 1.15px;
+}
+
+.forced-password-aside-copy h2 {
+  max-width: 290px;
+  margin: 11px 0 10px;
+  font-size: clamp(24px, 3vw, 31px);
+  font-weight: 650;
+  letter-spacing: -0.9px;
+  line-height: 1.15;
+}
+
+.forced-password-aside-copy p,
+.forced-password-tip p {
+  margin: 0;
+  color: #d0d0e0;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.forced-password-steps {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 12px;
+  margin: 23px 0 20px;
+  padding: 0;
+  list-style: none;
+}
+
+.forced-password-steps li {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: #d0d0e0;
+  font-size: 12px;
+}
+
+.forced-password-steps li.current {
+  color: #fff;
+  font-weight: 650;
+}
+
+.forced-password-step-icon {
+  width: 23px;
+  height: 23px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #ffffff36;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 11px;
+}
+
+.forced-password-step-icon svg {
+  width: 13px;
+  height: 13px;
+}
+
+.forced-password-steps .complete .forced-password-step-icon {
+  border-color: #9ce1c0;
+  color: #9ce1c0;
+  background: #9ce1c01c;
+}
+
+.forced-password-steps .current .forced-password-step-icon {
+  border-color: #aaa4ff;
+  color: #fff;
+  background: #7165d8;
+  box-shadow: 0 0 0 4px #aaa4ff20;
+}
+
+.forced-password-tip {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 11px;
+  margin-top: auto;
+  padding: 15px;
+  border: 1px solid #ffffff1c;
+  border-radius: 13px;
+  background: #ffffff0c;
+}
+
+.forced-password-tip-icon {
+  width: 23px;
+  height: 23px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 7px;
+  color: #c9c4ff;
+  background: #ffffff17;
+}
+
+.forced-password-tip-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.forced-password-tip strong {
+  display: block;
+  margin: 1px 0 5px;
+  color: #fff;
+  font-size: 11px;
+}
+
+.forced-password-tip p {
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.forced-password-main {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px clamp(32px, 5vw, 58px) 34px;
+}
+
+.forced-password-heading {
+  text-align: left;
+}
+
+.forced-password-form-icon {
+  width: 45px;
+  height: 45px;
+  margin: 0 0 22px;
+  border-radius: 14px;
+}
+
+.forced-password-form-icon svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.forced-password-heading .eyebrow {
+  justify-content: flex-start;
+  color: var(--violet);
+  font-size: 9px;
+}
+
+.forced-password-heading h1 {
+  margin-top: 12px;
+  font-size: clamp(25px, 3vw, 31px);
+}
+
+.forced-password-heading p {
+  max-width: 390px;
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+
+.forced-password-form {
+  gap: 16px;
+  margin-top: 27px;
+}
+
+.forced-password-form .auth-field {
+  gap: 8px;
+}
+
+.forced-password-form .auth-field input {
+  min-height: 47px;
+  border-radius: 10px;
+}
+
+.forced-password-form .field-hint {
+  color: #85869a;
+  font-size: 11px;
+}
+
+.forced-password-error {
+  margin: -3px 0 0;
+  padding: 10px 12px;
+  border: 1px solid #f3d0d0;
+  border-radius: 9px;
+  color: #a52e3b;
+  background: #fff5f5;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.forced-password-submit {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 3px;
+  border-radius: 10px;
+}
+
+.forced-password-submit > span {
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1;
+  transition: transform 150ms ease;
+}
+
+.forced-password-submit:hover > span {
+  transform: translateX(3px);
+}
+
+.forced-password-signout {
+  width: 100%;
+  min-height: 43px;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+.forced-password-submit:focus-visible {
+  outline: 3px solid #aaa3ff;
+  outline-offset: 3px;
+}
+
+.forced-password-footer {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 20px 0 0;
+  color: #85869a;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.forced-password-footer svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  color: #7770ce;
+}
+
+@media (max-width: 760px) {
+  .forced-password-content {
+    min-height: calc(100vh - 64px);
+    padding: 28px 16px;
+  }
+
+  .forced-password-card {
+    width: min(100%, 560px);
+    min-height: 0;
+    grid-template-columns: 1fr;
+    border-radius: 20px;
+  }
+
+  .forced-password-aside {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr);
+    column-gap: 17px;
+    padding: 23px 25px 20px;
+  }
+
+  .forced-password-art {
+    width: 76px;
+    height: 76px;
+    grid-row: span 2;
+    align-self: center;
+    margin: 0;
+  }
+
+  .forced-password-orbit-one {
+    inset: 2px;
+  }
+
+  .forced-password-orbit-two {
+    inset: 9px;
+  }
+
+  .forced-password-lock {
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+  }
+
+  .forced-password-lock svg {
+    width: 25px;
+    height: 25px;
+  }
+
+  .forced-password-spark-one {
+    top: 0;
+    right: 4px;
+    font-size: 14px;
+  }
+
+  .forced-password-spark-two {
+    bottom: 4px;
+    left: 0;
+    font-size: 17px;
+  }
+
+  .forced-password-aside-copy h2 {
+    margin: 5px 0 6px;
+    font-size: 20px;
+  }
+
+  .forced-password-aside-copy p {
+    font-size: 11px;
+  }
+
+  .forced-password-kicker {
+    font-size: 9px;
+  }
+
+  .forced-password-steps {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 13px 22px;
+    margin: 17px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid #ffffff1c;
+  }
+
+  .forced-password-tip {
+    grid-column: 1 / -1;
+    margin-top: 15px;
+    padding: 11px 12px;
+  }
+
+  .forced-password-main {
+    padding: 30px clamp(23px, 7vw, 40px) 25px;
+  }
+
+  .forced-password-form-icon {
+    margin-bottom: 17px;
+  }
+
+  .forced-password-form {
+    margin-top: 21px;
+  }
+}
+
+@media (max-width: 480px) {
+  .forced-password-content {
+    padding: 18px 12px;
+  }
+
+  .auth-toolbar {
+    gap: 10px;
+  }
+
+  .forced-password-badge {
+    font-size: 8px;
+    letter-spacing: 0.4px;
+  }
+
+  .forced-password-aside {
+    grid-template-columns: 58px minmax(0, 1fr);
+    column-gap: 13px;
+    padding: 19px 18px 17px;
+  }
+
+  .forced-password-art {
+    width: 58px;
+    height: 58px;
+  }
+
+  .forced-password-aside-copy h2 {
+    font-size: 18px;
+  }
+
+  .forced-password-aside-copy p {
+    font-size: 10px;
+  }
+
+  .forced-password-main {
+    padding: 25px 20px 22px;
+  }
+
+  .forced-password-heading h1 {
+    font-size: 25px;
+  }
+}

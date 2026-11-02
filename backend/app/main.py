@@ -49,7 +49,8 @@ FRONTEND_ORIGINS = tuple(
     origin.strip()
     for origin in os.getenv(
         "FRONTEND_ORIGINS",
-        "http://localhost:8088,http://127.0.0.1:8088",
+        "http://localhost:8088,http://127.0.0.1:8088,"
+        "http://localhost:5173,http://127.0.0.1:5173",
     ).split(",")
     if origin.strip()
 )

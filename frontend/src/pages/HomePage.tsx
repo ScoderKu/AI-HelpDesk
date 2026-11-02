@@ -38,7 +38,6 @@ export function HomePage({
 }: HomePageProps) {
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
   const [activeView, setActiveView] = useState<'home' | 'tickets' | 'profile'>('home')
-  const [profileUser, setProfileUser] = useState(currentUser)
   const [ticketSummary, setTicketSummary] = useState<TicketSummary>({ total: 0, open: 0, closed: 0 })
   const [summaryError, setSummaryError] = useState('')
   const [summaryRefresh, setSummaryRefresh] = useState(0)
@@ -46,8 +45,6 @@ export function HomePage({
   const accountTriggerRef = useRef<HTMLButtonElement>(null)
   const signOutButtonRef = useRef<HTMLButtonElement>(null)
   const pageTitleRef = useRef<HTMLHeadingElement>(null)
-
-  useEffect(() => { setProfileUser(currentUser) }, [currentUser])
 
   useEffect(() => {
     let active = true
@@ -209,13 +206,13 @@ export function HomePage({
         </header>
 
         <div className="page-content">
-          {activeView === 'profile' && profileUser ? (
+          {activeView === 'profile' && currentUser ? (
             <ProfilePage
-              currentUser={profileUser}
+              currentUser={currentUser}
               language={language}
               text={text}
               onBackHome={() => setActiveView('home')}
-              onProfileUpdated={(updated) => { setProfileUser(updated); onUserUpdated(updated) }}
+              onProfileUpdated={onUserUpdated}
               onPasswordChanged={() => {
                 onPasswordChanged()
                 setActiveView('home')
