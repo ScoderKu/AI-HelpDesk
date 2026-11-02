@@ -33,7 +33,7 @@ services:
       DATABASE_URL: "mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mysql:3306/${MYSQL_DATABASE}"
       OLLAMA_BASE_URL: "http://ollama:11434"
       OLLAMA_MODEL: "poro-helpdesk"
-      FRONTEND_ORIGINS: "${FRONTEND_ORIGINS:-http://localhost:8088,http://127.0.0.1:8088}"
+      FRONTEND_ORIGINS: "${FRONTEND_ORIGINS:-http://localhost:8088,http://127.0.0.1:8088,http://localhost:5173,http://127.0.0.1:5173}"
       AUTH_COOKIE_SECURE: "${AUTH_COOKIE_SECURE:-true}"
       REDIS_URL: "redis://redis:6379/0"
       TRUSTED_PROXY_IPS: "${TRUSTED_PROXY_IPS:-172.30.0.2/32}"

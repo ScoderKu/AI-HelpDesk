@@ -6,7 +6,7 @@ os.environ.setdefault("MYSQL_USER", "test")
 os.environ.setdefault("MYSQL_PASSWORD", "test")
 os.environ.setdefault("MYSQL_DATABASE", "test")
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Request, Response
 from pydantic import ValidationError
 
 from app import main
@@ -79,6 +79,7 @@ class UserProfileEndpointTests(unittest.TestCase):
             username="ada",
             email="ada@example.com",
             password_hash="stored-hash",
+            must_change_password=False,
         )
 
     def test_profile_routes_require_authenticated_user(self) -> None:
@@ -158,6 +159,7 @@ class UserProfileEndpointTests(unittest.TestCase):
             db,
         )
         self.assertEqual(self.user.password_hash, "new-hash")
+        self.assertFalse(self.user.must_change_password)
         verify.assert_called_once_with("current-password", "stored-hash")
         hash_new.assert_called_once_with("new-password")
         db.execute.assert_called_once()
@@ -182,6 +184,107 @@ class UserProfileEndpointTests(unittest.TestCase):
             )
         self.assertEqual(raised.exception.status_code, 400)
         db.commit.assert_not_called()
+
+    def test_temporary_password_session_allows_auth_status_and_password_change(self) -> None:
+        self.user.must_change_password = True
+        db = MagicMock()
+        db.scalar.return_value = "session-id"
+        db.get.return_value = self.user
+
+        for method, path in (
+            ("GET", "/api/v1/auth/me"),
+            ("POST", "/api/v1/users/me/password"),
+        ):
+            request = Request({
+                "type": "http",
+                "http_version": "1.1",
+                "method": method,
+                "scheme": "http",
+                "path": path,
+                "raw_path": path.encode(),
+                "query_string": b"",
+                "headers": [],
+                "client": ("127.0.0.1", 12345),
+                "server": ("localhost", 8000),
+            })
+            with self.subTest(method=method, path=path), patch(
+                "app.main.get_session_claims",
+                return_value=(self.user.id, 2_000_000_000, "a" * 32),
+            ):
+                self.assertIs(main.get_authenticated_user(request, db), self.user)
+
+    def test_temporary_password_session_cannot_access_other_protected_routes(self) -> None:
+        self.user.must_change_password = True
+        db = MagicMock()
+        db.scalar.return_value = "session-id"
+        db.get.return_value = self.user
+
+        for method, path in (
+            ("GET", "/api/v1/users/me"),
+            ("PATCH", "/api/v1/users/me"),
+            ("GET", "/api/v1/tickets"),
+        ):
+            request = Request({
+                "type": "http",
+                "http_version": "1.1",
+                "method": method,
+                "scheme": "http",
+                "path": path,
+                "raw_path": path.encode(),
+                "query_string": b"",
+                "headers": [],
+                "client": ("127.0.0.1", 12345),
+                "server": ("localhost", 8000),
+            })
+            with (
+                self.subTest(method=method, path=path),
+                patch(
+                    "app.main.get_session_claims",
+                    return_value=(self.user.id, 2_000_000_000, "a" * 32),
+                ),
+                self.assertRaises(HTTPException) as raised,
+            ):
+                main.get_authenticated_user(request, db)
+
+            self.assertEqual(raised.exception.status_code, 403)
+
+    def test_logout_accepts_configured_origin_and_rejects_untrusted_origin(self) -> None:
+        db = MagicMock()
+        db.scalar.return_value = None
+
+        def make_logout_request(origin: str) -> Request:
+            path = "/api/v1/auth/logout"
+            return Request({
+                "type": "http",
+                "http_version": "1.1",
+                "method": "POST",
+                "scheme": "http",
+                "path": path,
+                "raw_path": path.encode(),
+                "query_string": b"",
+                "headers": [(b"origin", origin.encode())],
+                "client": ("127.0.0.1", 12345),
+                "server": ("localhost", 8000),
+            })
+
+        with patch("app.main.get_session_claims", return_value=None):
+            response = main.logout_user(
+                make_logout_request(main.FRONTEND_ORIGINS[0]),
+                Response(),
+                db,
+            )
+
+        self.assertEqual(response.status_code, 204)
+        self.assertIn("ai_helpdesk_session", response.headers.get("set-cookie", ""))
+
+        with self.assertRaises(HTTPException) as raised:
+            main.logout_user(
+                make_logout_request("https://untrusted.example"),
+                Response(),
+                db,
+            )
+
+        self.assertEqual(raised.exception.status_code, 403)
 
 
 if __name__ == "__main__":

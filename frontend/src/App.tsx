@@ -126,12 +126,13 @@ function App() {
     }
   }
 
-  const handleForcedPasswordSignOut = async () => {
+  const handleForcedPasswordSignOut = async (): Promise<boolean> => {
     const signedOut = await handleSignOut()
     if (signedOut) {
       setMustChangePassword(false)
       setAuthMode(null)
     }
+    return signedOut
   }
 
   if (mustChangePassword) {
