@@ -9,9 +9,18 @@ type Props = {
   text: Copy
   onLanguageChange: (language: Language) => string
   onCompleted: () => void
+  onSignOut: () => Promise<void>
+  isSigningOut: boolean
 }
 
-export function ForcedPasswordChange({ language, text, onLanguageChange, onCompleted }: Props) {
+export function ForcedPasswordChange({
+  language,
+  text,
+  onLanguageChange,
+  onCompleted,
+  onSignOut,
+  isSigningOut,
+}: Props) {
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -56,7 +65,15 @@ export function ForcedPasswordChange({ language, text, onLanguageChange, onCompl
           <label className="profile-field">{text.newPassword}<input type="password" autoComplete="new-password" required minLength={8} maxLength={128} value={newPassword} onChange={e => setNewPassword(e.target.value)} /></label>
           <label className="profile-field">{text.confirmNewPassword}<input type="password" autoComplete="new-password" required minLength={8} maxLength={128} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} /></label>
           {error && <p role="alert" className="profile-message">{error}</p>}
-          <button className="button button-primary" type="submit" disabled={busy}>{busy ? text.registerSubmitting : text.passwordChangeSubmit}</button>
+          <button className="button button-primary" type="submit" disabled={busy || isSigningOut}>{busy ? text.registerSubmitting : text.passwordChangeSubmit}</button>
+          <button
+            className="button button-secondary"
+            type="button"
+            disabled={busy || isSigningOut}
+            onClick={() => void onSignOut()}
+          >
+            {isSigningOut ? text.signingOut : text.signOut}
+          </button>
         </form>
       </div>
     </section>
