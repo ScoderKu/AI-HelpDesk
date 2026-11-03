@@ -312,6 +312,8 @@ Backend suorittaa päivittäin erissä (enintään 500 tunnistetta kerrallaan) a
 
 Siivous suoritetaan FastAPI:n elinkaaren taustatehtävässä tietokantatyössä, ja tietokantavirhe kirjataan lokiin sekä yritetään uudelleen seuraavalla päivittäisellä jaksolla. Siivousindeksit lisätään Alembic-migraatiolla `0005_data_retention_indexes`. Poisto on peruuttamaton; tietokannan varmuuskopiointi ja sovellettavat tietosuojakäytännöt ovat ylläpidon vastuulla.
 
+Siivous valitsee eräehdokkaat ilman pitkää lukitsevaa aluehakua ja toistaa voimassaoloehdot varsinaisessa `DELETE`-komennossa. Keskustelun poisto lukitsee poistettavan rivin; chatin lähetys ja retry lukitsevat keskustelurivin ennen viestin tallennusta. Näin rinnakkaisen chat-päivityksen jälkeen `DELETE` arvioi aikaleiman uudelleen eikä poista aktivoitua keskustelua. Vierasavaimen lukitus synkronoi keskustelun poiston siihen liittyvän uuden tukipyynnön luonnin kanssa.
+
 Kun tukipyyntö luodaan keskustelusta, `tickets.conversation_id` viittaa lähdekeskusteluun. Backend varmistaa, että keskustelu kuuluu samalle kirjautuneelle käyttäjälle kuin tukipyyntö. Itsenäisesti luodun tukipyynnön `conversation_id` on `NULL`.
 
 ## 4.7 Tietojen tallennuksen transaktiot
