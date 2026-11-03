@@ -179,10 +179,21 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     const content = draft.trim()
     if (!content || sending) return
 
+    const optimisticId = -Date.now()
+    const optimisticMessage: Message = {
+      id: optimisticId,
+      role: 'USER',
+      content,
+      created_at: new Date().toISOString(),
+    }
     let conversationId = activeConversationId.current
     let requestId = conversationRequest.current
     setSending(true)
     setError('')
+    setDraft('')
+    setRetryMessageId(null)
+    setMessages((current) => [...current, optimisticMessage])
+
     try {
       if (conversationId === null) {
         const created = await api<Conversation>('/api/v1/conversations', {
@@ -190,44 +201,108 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
         })
         conversationId = created.id
         const stillCurrent = conversationRequest.current === requestId && activeConversationId.current === null
-        if (stillCurrent) {
-          requestId = ++conversationRequest.current
-          activeConversationId.current = created.id
-          setActiveId(created.id)
-          onConversationChange(created.id)
+        if (!stillCurrent) {
+          setMessages((current) => current.filter((message) => message.id !== optimisticId))
+          return
         }
+        requestId = ++conversationRequest.current
+        activeConversationId.current = created.id
+        setActiveId(created.id)
+        onConversationChange(created.id)
         setConversations((current) => [created, ...current])
       }
-      const result = await api<{
-        conversation_id: number
-        user_message: Message
-        assistant_message: Message
-      }>(`/api/v1/conversations/${conversationId}/messages`, {
-        method: 'POST', body: JSON.stringify({ content }),
-      })
-      if (activeConversationId.current === conversationId && conversationRequest.current === requestId) {
-        focusComposerAfterResponse.current = true
-        setMessages((current) => [...current, result.user_message, result.assistant_message])
-        setRetryMessageId(null)
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/conversations/${conversationId}/messages/stream`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content }),
+        },
+      )
+      if (!response.ok || !response.body) {
+        let detail = ''
+        try {
+          const body = await response.json()
+          detail = typeof body.detail === 'string' ? body.detail : ''
+        } catch { /* The response may not contain JSON. */ }
+        throw new Error(detail || `HTTP ${response.status}`)
       }
-      setDraft('')
-      await loadConversations()
-    } catch (requestError) {
-      if (activeConversationId.current !== conversationId || conversationRequest.current !== requestId) return
-      if (requestError instanceof ChatApiError && requestError.savedMessageId !== null) {
-        setDraft('')
-        setRetryMessageId(requestError.savedMessageId)
-        setError(t.chatAiUnavailable)
-        if (conversationId !== null) {
-          try { await refreshMessages(conversationId, requestId) } catch { /* Keep the retry ID from the response header. */ }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let assistantMessageId = -optimisticId
+      let streamFailed = false
+
+      const processEvent = (line: string) => {
+        if (!line.trim()) return
+        const item = JSON.parse(line) as {
+          event: 'user_message' | 'token' | 'done' | 'error'
+          message?: Message
+          assistant_message?: Message
+          content?: string
+          detail?: string
+          saved_message_id?: number
         }
-      } else {
-        setError(requestError instanceof ChatApiError && requestError.status === 409
-          ? t.chatPreviousUnanswered
-          : t.chatSendError)
-        if (requestError instanceof ChatApiError && requestError.status === 409 && conversationId !== null) {
-          try { await refreshMessages(conversationId, requestId) } catch { /* Preserve the original request error. */ }
+        if (item.event === 'user_message' && item.message) {
+          setMessages((current) => current.map((message) =>
+            message.id === optimisticId ? item.message! : message,
+          ))
+        } else if (item.event === 'token' && typeof item.content === 'string') {
+          setMessages((current) => {
+            const existing = current.some((message) => message.id === assistantMessageId)
+            if (!existing) {
+              return [...current, {
+                id: assistantMessageId,
+                role: 'ASSISTANT',
+                content: item.content!,
+                created_at: new Date().toISOString(),
+              }]
+            }
+            return current.map((message) => message.id === assistantMessageId
+              ? { ...message, content: message.content + item.content! }
+              : message)
+          })
+        } else if (item.event === 'done' && item.assistant_message) {
+          setMessages((current) => current.map((message) =>
+            message.id === assistantMessageId ? item.assistant_message! : message,
+          ))
+          streamFailed = false
+        } else if (item.event === 'error') {
+          streamFailed = true
+          if (item.saved_message_id) {
+            setRetryMessageId(item.saved_message_id)
+            setError(t.chatAiUnavailable)
+          } else {
+            setMessages((current) => current.filter((message) =>
+              message.id !== optimisticId && message.id !== assistantMessageId,
+            ))
+            setError(item.detail?.includes('previous message') ? t.chatPreviousUnanswered : t.chatSendError)
+          }
         }
+      }
+
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+        for (const line of lines) processEvent(line)
+      }
+      buffer += decoder.decode()
+      if (buffer.trim()) processEvent(buffer)
+      if (!streamFailed) {
+        focusComposerAfterResponse.current = true
+        setRetryMessageId(null)
+        await loadConversations()
+      }
+    } catch {
+      if (activeConversationId.current === conversationId && conversationRequest.current === requestId) {
+        setMessages((current) => current.filter((message) => message.id !== optimisticId))
+        setError(t.chatSendError)
       }
     } finally {
       setSending(false)
