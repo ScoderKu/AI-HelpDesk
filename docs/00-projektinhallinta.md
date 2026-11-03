@@ -16,7 +16,7 @@
 | Keskeiset sidosryhmät | Projektin toteuttaja, opettaja ja sovelluksen loppukäyttäjät |
 | Dokumentin tila | Elävä dokumentti; päivitetään projektin edetessä |
 
-**Nykytilanne 26.10.2026:** vaatimusmäärittely, käyttäjätarinat hyväksymiskriteereineen, Product Backlog, Sprint-suunnitelma, järjestelmän suunnittelu ja UX/UI-suunnittelu on yhtenäistetty ennen toteutuksen aloittamista. `backend`- ja `frontend`-hakemistoissa ei vielä ole sovelluksen lähdekooditiedostoja. Toteutuksen edistyminen päivitetään jatkossa seurantaan ja GitHub-tehtäviin, ei tämän tilannekuvauksen kautta.
+**Tilannekuvan rajaus:** 26.10.2026 päivätyt tiedot kuvaavat projektin suunnitteluvaihetta, eivät nykyistä toteutustilannetta. Toteutuksen ja varmennuksen ajantasainen yhteenveto ylläpidetään tämän dokumentin kohdassa 8.3.
 
 ## 2. Projektin tarkoitus ja tavoitteet
 
@@ -205,11 +205,21 @@ Edistymistä kuvataan ensisijaisesti todennettavilla tuloksilla, ei pelkällä p
 
 **Tilanne 27.10.2026:** Projektin tekninen perusrakenne ja Docker-ympäristö on aloitettu. Frontendille on luotu React- ja TypeScript-pohja, backendille FastAPI-perusrakenne ja riippuvuudet. Frontendille ja backendille on lisätty Docker-konfiguraatiot. Docker Composeen on määritelty frontend-, backend-, MySQL-, phpMyAdmin- ja Ollama-palvelut sekä Ollama-mallin alustava käyttöönotto. GGUF-mallin `Modelfile` ja sen sijainti `ollama`-hakemistossa on päivitetty.
 
-**Tämänhetkinen rajaus:** Kyseessä on tekninen runko ja käyttöönottopohja; varsinaisten sovellustoimintojen valmistumista tai koko palvelukokonaisuuden toimivuutta ei ole näiden muutosten perusteella vahvistettu.
+**Rajaus 27.10.2026:** Tuolloin kyseessä oli tekninen runko ja käyttöönottopohja; varsinaisten sovellustoimintojen valmistumista tai koko palvelukokonaisuuden toimivuutta ei ollut vielä vahvistettu.
 
 **Tilanne 31.10.2026:** Kirjautumisyritysten IP-kohtaisen käyttörajan proxy-käsittelyä ja kirjautumisen istuntosiivousta on korjattu. Frontendille on määritetty osoite `172.30.0.2` Dockerin erillisessä proxy-verkossa; se käyttää backendin verkkoaliasta `backend-proxy` osoitteessa `172.30.0.3` eikä liity backendin kanssa jaettuun oletusverkkoon. Kontit luotiin uudelleen ja frontendin `/api/health`-pyyntö backendille palautti HTTP 200. Vanhentuneet istunnot siivotaan erillisessä taustatehtävässä tunnin välein ja poistetaan erissä ensisijaisavaimen kautta, ei kirjautumistransaktion yhteydessä. Seitsemän backendin yksikkötestiä sekä Compose-konfiguraation tarkistus läpäistiin. Kahden LAN-laitteen välistä IP-välitystä tai rinnakkaisia kirjautumisia todellisella MySQL-palvelulla ei ole vielä varmennettu. Nykyinen Compose-porttisidonta on edelleen `127.0.0.1`, joten palvelu ei tällä asetuksella ole muiden LAN-laitteiden käytettävissä.
 
 **Tilanne 01.11.2026 – Sprint 1:** Sprintin kuuden käyttäjätarinan toteutukset ovat nykyisessä branchissa. Backendin `unittest`-testisarja läpäisi 31/31 testiä. Frontendin TypeScript-tarkistus ja tuotantobuild onnistuivat; lint-tarkistus on puhdas. Alembic-migraatiot testattiin erillisessä tyhjässä MySQL-tietokannassa kahdesti, ja käytössä oleva tietokanta on versiossa `0002_conversations_and_tickets (head)`. Ticket API:n ORM-polut testattiin MySQL:llä transaktion rollbackilla. Ollaman mallin ensimmäinen käyttöönotto testattiin tyhjällä väliaikaisella mallivolyymilla: `poro-helpdesk` muodostui `Modelfile`-tiedostosta ja väliaikaiset Docker-resurssit poistettiin. Koko Compose-pinoa ei ole vielä käynnistetty kerralla täysin tyhjillä MySQL- ja Ollama-volyymeilla. Avoinna ovat rekisteröitymisen ja kirjautumisen API-integraatiotestit, käyttöliittymän manuaalinen hyväksymistarkastus, MySQL:n rinnakkaiskirjautumistesti sekä LAN-välitystesti. LAN-käyttö ja frontendin production-käyttöönotto pysyvät aiemmin sovitusti myöhempään vaiheeseen.
+
+**Tilanne 03.11.2026 – Sprintit 1–3 ja jatkotyö:** Sprinttien 1–3 ydintoiminnot ovat toteutettuina nykyisessä paikallisessa työkopiossa: käyttäjätili ja istuntoautentikointi, tukipyynnöt ja profiili, US-17:n ylläpidon salasanan palautus sekä Ollamaan yhdistetty keskustelu ja tallennettu historia. Sprintin 4 US-13:n kielivalinta ja US-14:n tukipyyntöyhteenveto ovat jo käytössä; US-09:n keskustelusta luotava ja käyttäjän hyväksymä tukipyyntö on vielä toteutettava. Sprintin 5 RAG-neuvonta sekä lopullinen integroitu hyväksymistestaus ovat kesken.
+
+Viimeisimmät tekniset muutokset: AI-pyynnöt saman keskustelun sisällä sarjoitetaan Redis-lukolla; tietokantatransaktio ja yhteys vapautetaan ennen Ollaman odotusta, ja assistant-vastaus tallennetaan lyhyessä erillisessä tietokantaistunnossa. Tallennetun käyttäjäviestin vastausta voi yrittää uudelleen ilman viestin kaksoistallennusta. Ollaman virheelliset vastausrakenteet käsitellään palveluvirheinä, ja chat POST tarkistaa pyynnön `Origin`-otsakkeen sallitusta frontend-alkuperästä. Lisäksi päivittäinen siivous poistaa erissä yli kolme kalenterikuukautta vanhat suljetut tukipyynnöt ja passiiviset keskustelut; keskustelu säilytetään, jos siihen liittyy avoin tai säilytysajan piirissä oleva tukipyyntö. Tämä on pysyvä poisto.
+
+Käyttöliittymää on levennetty työtilanäkymissä, tukipyyntöjen LOW/MEDIUM/HIGH-prioriteetit erottuvat väreillä, käyttäjän etu- ja sukunimi sekä sähköpostiosoite ovat profiilissa vain luettavia, ja kirjautumis-/rekisteröitymisnäkymät käyttävät pakotetun salasananvaihdon kanssa yhtenäistä kaksiosaista korttirakennetta. Profiilin API hyväksyy muutettavaksi vain käyttäjänimen.
+
+03.11.2026 varmennus: backendin kaikki 57 `unittest`-testiä läpäisivät; frontendin `npm run lint` sekä TypeScript-tarkistus ja `npm run build` onnistuivat; Alembic-migraatiohistoria sisältää uuden head-revision `0005_data_retention_indexes`. Kirjautumis-/rekisteröitymisnäkymä tarkistettiin selaimessa desktop- ja mobiilileveydellä. Migraation soveltamista käytössä olevaan Compose-tietokantaan, koko Compose-pinon käynnistystä täysin tyhjillä tietokanta- ja mallivolyymeilla, oikean LAN-laitteen välistä välitystä ja koko sovelluksen manuaalista hyväksymistestausta ei ole tässä tarkistuksessa varmennettu.
+
+Tämä tilanne kuvaa paikallista työkopiota 03.11.2026; viimeisimpiä muutoksia ei ole vielä vahvistettu Git-commitilla tai pushilla. Sprinttien arvioituja valmiusprosentteja ei ilmoiteta, koska hyväksymistestaus on osin kesken.
 
 ### 8.4 Definition of Done
 
@@ -260,6 +270,8 @@ Merkittävät tekniset ja projektinhallinnalliset päätökset kirjataan tähän
 | D-08 | 31.10.2026 | Backend luottaa vain Compose-verkossa määritettyyn frontend-proxyyn ja käyttää luotetulta proxylta välitetyn osoiteketjun ensimmäistä luottamatonta hopia IP-käyttörajan avaimena | Jaetun proxy-IP:n aiheuttaman käyttäjien ristiinrajoittamisen ja välitetyn otsakkeen väärinkäytön ehkäisy | Frontendin osoite on `172.30.0.2`, luotettu verkko määritetään `TRUSTED_PROXY_IPS`-asetuksella ja logiikka testataan automaattisesti; todellinen LAN-välitys varmennetaan myöhemmin |
 | D-09 | 31.10.2026 | Frontend käyttää vain proxy-verkkoa ja kutsuu backendia verkkoaliaksella `backend-proxy` | Varmistetaan, että proxyn ja backendin välinen yhteys käyttää sitä verkkoa, jolla proxyn IP on luotettu | Frontendin ja backendin proxy-verkon osoitteet sekä `/api/health`-reitti varmennettiin konttien uudelleenluonnin jälkeen |
 | D-10 | 31.10.2026 | Vanhentuneiden istuntojen siivous suoritetaan kirjautumisesta riippumattomassa tunnin välein ajettavassa tehtävässä; poisto tehdään erissä tunnisteiden perusteella | Vältetään MySQL:n `expires_at`-aluepoiston gap lock -lukkojen ja kirjautumisen sessionlisäyksen välinen deadlock | Kirjautumistransaktio luo vain uuden session; siivoustehtävä kirjaa tietokantavirheet ja jatkaa seuraavalla jaksolla |
+| D-11 | 03.11.2026 | Suljetut tukipyynnöt ja käyttämättömät keskustelut poistetaan pysyvästi kolmen kalenterikuukauden jälkeen | Rajataan tietokannan kasvua sovitulla säilytyskäytännöllä | Päivittäinen erissä suoritettava taustatehtävä käyttää `closed_at`- ja `updated_at`-aikoja; avoimeen tai säilytysaikaiseen pyyntöön liittyvää keskustelua ei poisteta |
+| D-12 | 03.11.2026 | Käyttäjä ei voi muuttaa etu- tai sukunimeään profiilista; käyttäjänimi on ainoa muokattava profiilikenttä | Käyttäjän vahvistama käyttöoikeus- ja profiilikäytäntö | Etu- ja sukunimi näytetään lukittuina, ja backendin PATCH-skeema hylkää muut nimet |
 
 ## 11. Muutosloki
 
@@ -271,6 +283,7 @@ Merkittävät tekniset ja projektinhallinnalliset päätökset kirjataan tähän
 | 31.10.2026 | 0.4 | Dokumentoitu proxy-pohjaisen kirjautumisen IP-rajoituksen muutos, testitulokset ja LAN-varmennuksen avoin tarve | Projektin toteuttaja |
 | 31.10.2026 | 0.5 | Pakotettu frontendin backend-reititys luotetun proxy-verkon kautta ja siirretty vanhentuneiden istuntojen siivous kirjautumistransaktion ulkopuolelle | Projektin toteuttaja |
 | 01.11.2026 | 0.6 | Korjattu Ollaman mallin alustuskomennon Compose-käsittely; varmennettu tyhjän mallivolyymin alustus, Sprint 1:n testitulokset ja avoimet tarkistukset; korjattu Modelfile-polut ja HomePage-focus-käsittely | Projektin toteuttaja |
+| 03.11.2026 | 0.7 | Päivitetty Sprinttien 1–5 tilanne, backendin chat- ja retention-ratkaisut, profiilin muokkausrajaus sekä testauksen ja käyttöönoton avoimet tarkistukset | Projektin toteuttaja |
 
 ## 12. Linkit projektin muihin dokumentteihin
 

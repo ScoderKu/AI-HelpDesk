@@ -133,6 +133,8 @@ AI Service forwards the user's message to the Ollama service running in the Comp
 - Handle timeouts, service errors, and usage limits.
 - Limit the amount of conversation context sent to the AI.
 - Save conversation messages in accordance with the application's defined data retention practices.
+- Serialize AI turns in the same conversation with a Redis lock, release the database connection while waiting for Ollama, and save the assistant response in a separate short-lived database session.
+- Allow the response for an already-saved user message to be retried without saving a duplicate user message; treat malformed Ollama responses as service failures.
 - Avoid sending unnecessary personal data to the model.
 
 AI-generated responses are suggestions. Their accuracy cannot be guaranteed in all situations.
@@ -288,12 +290,25 @@ More specifically defined handling is required for internal system instructions 
 | tickets | INDEX(user_id, created_at) | Retrieving a user's support tickets |
 | tickets | INDEX(user_id, status) | Retrieving support tickets by status |
 | tickets | INDEX(conversation_id) | Retrieving support tickets associated with a conversation |
+| tickets | INDEX(status, closed_at) | Cleaning up retained closed support tickets |
 | conversations | INDEX(user_id, updated_at) | Retrieving a user's conversation history |
+| conversations | INDEX(updated_at) | Cleaning up retained inactive conversations |
 | messages | INDEX(conversation_id, created_at, id) | Retrieving conversation messages in order |
 
 Appropriate rules for deleting and updating data are defined for foreign keys. For example, deleting a user must not be implemented in a way that leaves related data in the database unmanaged.
 
-The deletion of a user and retention of conversation history must be defined separately based on privacy and application requirements.
+### Data Retention and Cleanup
+
+The backend runs an automatic daily cleanup in batches of at most 500 identifiers. The retention period is three calendar months, not a fixed 90-day interval:
+
+- A `CLOSED` support ticket is permanently deleted when its `closed_at` timestamp is at or before the cutoff.
+- A conversation is permanently deleted when its `updated_at` timestamp is at or before the cutoff.
+- A conversation is retained if it is linked to an open ticket or a closed ticket whose own retention period has not elapsed.
+- Messages are deleted with their conversation using the foreign key's `ON DELETE CASCADE` rule. The ticket-to-conversation reference uses `ON DELETE SET NULL`.
+
+The cleanup runs as a FastAPI lifespan background task in database worker threads. Database errors are logged and retried on the next daily run. The cleanup indexes are added by Alembic migration `0005_data_retention_indexes`. Deletion is irreversible; database backups and applicable privacy policies remain the operator's responsibility.
+
+Cleanup selects batch candidates without a long-running locking range scan and repeats the eligibility predicates in the actual `DELETE` statement. Deleting a conversation locks that row; chat send and retry lock the conversation row before saving a message. Thus, after a concurrent chat update, the `DELETE` rechecks the timestamp and does not remove a reactivated conversation. Foreign-key locking also serializes conversation deletion with the creation of a linked ticket.
 
 When a support ticket is created from a conversation, `tickets.conversation_id` refers to the source conversation. The backend ensures that the conversation belongs to the same logged-in user as the support ticket. For a support ticket created independently, `conversation_id` is `NULL`.
 
@@ -308,7 +323,7 @@ For example, when creating a support ticket, the system:
 3. Saves the support ticket to the database.
 4. Returns the created support ticket's identifier and details.
 
-When saving a conversation message, the user's message and the AI response are handled as separate events to be saved. An AI service error must not cause an incorrect or fabricated response to appear in the conversation history.
+When saving a conversation message, the user's message and AI response are handled as separate events. Concurrent AI turns in the same conversation are serialized with a Redis lock, and a new message is rejected while the latest user message is still awaiting a response. The user message is saved before the Ollama call; after loading history, the SQLAlchemy transaction is closed before waiting for the AI service. The assistant response is persisted in a separate short-lived database session. An AI failure does not create a fabricated response: the existing message can be retried through a separate retry route without posting the user message again.
 
 ---
 
@@ -342,9 +357,7 @@ US-17 is implemented exclusively as a protected backend maintenance command. It 
 - Audit logs may contain the execution time, the target user's internal identifier, and the success/failure result where necessary. Never log the password, its hash, session identifiers, or cookies.
 - Protect the maintenance environment and handle terminal output securely. Do not leave temporary passwords in shared logs or recordings.
 
-**Implementation boundary**
-
-This section defines the technical contract for US-17; it does not claim that the maintenance command or forced-change checks have already been implemented. Before implementation, verify the current user and session models, migrations, password-hashing function, shared authentication dependency, and password-change route. The `users.must_change_password` field is required by this design; if it is absent from the active schema, add it through a reviewed Alembic migration. Choose the exact module and CLI syntax to fit the existing backend structure during implementation.
+**Implementation status:** the maintenance command is implemented in `app.admin`, and its usage instructions are in the README. Backend enforcement of mandatory password change, session revocation, and the `must_change_password` schema are in place. Running the command requires access to the protected backend/Docker environment; the application does not provide an administrator UI.
 
 ## 5. REST API Design
 
@@ -365,7 +378,7 @@ The REST API serves as the interface between the frontend and backend.
 
 ## 5.2 Endpoints
 
-Authentication routes and ticket list, create, detail, and update routes are implemented. Ticket summary and close, as well as conversation, search, and profile routes, remain planned.
+Authentication, profile, support ticket, and conversation routes are implemented. The RAG search route is designed but must not be marked complete before Sprint 5 implementation.
 
 ### Authentication and User Account
 
@@ -374,9 +387,9 @@ Authentication routes and ticket list, create, detail, and update routes are imp
 | POST | `/api/v1/auth/register` | Creates a user account | No |
 | POST | `/api/v1/auth/login` | Logs the user in | No |
 | POST | `/api/v1/auth/logout` | Signs the user out and revokes the current session when a valid cookie is present | Session cookie |
-| GET | `/api/v1/auth/me` | Returns the current signed-in user | Yes |
-| GET | `/api/v1/users/me` | Retrieves the logged-in user's profile | Planned |
-| PATCH | `/api/v1/users/me` | Updates the user's profile | Planned |
+| GET | `/api/v1/auth/me` | Returns authentication state and whether a forced password change is required | Session cookie |
+| GET | `/api/v1/users/me` | Retrieves the logged-in user's profile without the password hash | Yes |
+| PATCH | `/api/v1/users/me` | Updates only the username; first name, last name, and email cannot be changed | Yes |
 
 Authentication uses a server-side session stored in MySQL. Alembic migrations run before the backend starts; the initial baseline migration creates the `users` and `auth_sessions` tables or adopts existing tables without changing them. Future schema changes are delivered as reviewed migration files. The cookie contains an HMAC-signed user ID, expiration time, and session ID; it is `HttpOnly`, uses `SameSite=Lax`, and expires after eight hours. `AUTH_COOKIE_SECURE` controls the `Secure` attribute: Compose defaults it to `true`; set `AUTH_COOKIE_SECURE=false` only in `.env` for local HTTP development. Keep it `true` when using HTTPS. Sign-out deletes the MySQL session and the browser cookie. The logout request's `Origin` header must exactly match an origin configured in `FRONTEND_ORIGINS`; missing or unrecognized origins are rejected. For LAN access, add the exact application origin to this setting and keep the check enabled. A separate CSRF token is not used.
 
@@ -405,8 +418,8 @@ The static `/summary` route is defined before the dynamic `{id}` route so that t
 | POST | `/api/v1/conversations` | Creates a new conversation | Yes |
 | GET | `/api/v1/conversations/{id}` | Retrieves conversation details | Yes |
 | GET | `/api/v1/conversations/{id}/messages` | Retrieves the conversation's messages | Yes |
-| POST | `/api/v1/conversations/{id}/messages` | Sends a message in an AI conversation | Yes |
-| POST | `/api/v1/conversations/{id}/tickets` | Creates a support ticket based on a conversation | Yes |
+| POST | `/api/v1/conversations/{id}/messages` | Saves a user message and requests an AI response; the chat request `Origin` is checked against the allowlist | Yes |
+| POST | `/api/v1/conversations/{id}/messages/{message_id}/retry` | Retries a response for an already-saved unanswered user message | Yes |
 
 ### Knowledge-Based AI Assistance
 
@@ -463,15 +476,11 @@ POST /api/v1/auth/login
 
 ```json
 {
-  "id": 12,
-  "first_name": "Example",
-  "last_name": "User",
-  "username": "exampleuser",
-  "email": "user@example.com"
+  "must_change_password": false
 }
 ```
 
-A successful login returns HTTP 200 and a `Set-Cookie` header. Invalid credentials return a generic HTTP 401 response; exceeding a limit returns HTTP 429. `GET /api/v1/auth/me` returns the same user object only for a valid session.
+A successful login returns HTTP 200, a `Set-Cookie` header, and the `must_change_password` state. Invalid credentials return a generic HTTP 401 response; exceeding a limit returns HTTP 429. `GET /api/v1/auth/me` returns authentication state, not the user profile. The profile is retrieved separately from `/api/v1/users/me`.
 
 ## 5.4 Example Request: Creating a Support Ticket
 
@@ -551,7 +560,7 @@ POST /api/v1/conversations/25/messages
 | 422 Unprocessable Content | Validation failed | Invalid field values |
 | 429 Too Many Requests | Too many requests | Rate limiting |
 | 500 Internal Server Error | Unexpected server error | Unhandled error |
-| 502 Bad Gateway | External service error | AI service error |
+| 503 Service Unavailable | Service unavailable | AI or Redis service error |
 
 ## 5.7 API Security
 
@@ -562,6 +571,7 @@ POST /api/v1/conversations/25/messages
 5. Inputs are validated on the server side.
 6. Parameterized queries are used for database queries.
 7. Login attempts are limited in Redis by client IP and normalized email address; exceeding a limit returns HTTP 429 with a `Retry-After` header. The forwarded address is used only when the direct peer is a specifically trusted proxy. Trusted proxy networks are configured through the comma-separated IP addresses or CIDR networks in the `TRUSTED_PROXY_IPS` environment variable. In a proxy chain, trusted hops are skipped from right to left and the first untrusted address is used as the client. The proxy must add or replace forwarding data safely; `X-Forwarded-For` sent by an untrusted connection must not be accepted as the client IP.
-8. API keys and other secrets are not stored in source code.
-9. Passwords, authentication tokens, or unnecessary personal data are not stored in error logs.
-10. Only information necessary to process the request is sent to the AI service.
+8. A cookie-authenticated chat POST is accepted only when its `Origin` header exactly matches an origin in `FRONTEND_ORIGINS`; requests from other origins are rejected.
+9. API keys and other secrets are not stored in source code.
+10. Passwords, authentication tokens, or unnecessary personal data are not stored in error logs.
+11. Only information necessary to process the request is sent to the AI service.
