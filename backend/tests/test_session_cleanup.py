@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
@@ -31,6 +32,65 @@ class CleanupExpiredSessionsTests(TestCase):
         self.assertIn("auth_sessions.id IN ('expired-session')", sql)
         self.assertNotIn("expires_at", sql)
         db.commit.assert_called_once_with()
+
+
+class DataRetentionCleanupTests(TestCase):
+    def test_retention_cutoff_uses_three_calendar_months(self) -> None:
+        self.assertEqual(
+            main.data_retention_cutoff(datetime(2025, 5, 31, 12, 30)),
+            datetime(2025, 2, 28, 12, 30),
+        )
+        self.assertEqual(
+            main.data_retention_cutoff(datetime(2024, 5, 31, 12, 30)),
+            datetime(2024, 2, 29, 12, 30),
+        )
+
+    def test_deletes_expired_closed_tickets_and_unlinked_inactive_conversations(
+        self,
+    ) -> None:
+        db = MagicMock()
+        db.__enter__.return_value = db
+        db.scalars.return_value.all.side_effect = [
+            [11, 12],
+            [],
+            [21],
+            [],
+        ]
+        cutoff = datetime(2025, 2, 28, 12, 30)
+
+        with (
+            patch.object(main, "SessionLocal", return_value=db),
+            patch.object(main, "data_retention_cutoff", return_value=cutoff),
+        ):
+            main.cleanup_retained_data()
+
+        self.assertEqual(db.execute.call_count, 2)
+        ticket_query = str(
+            db.scalars.call_args_list[0].args[0].compile(
+                dialect=mysql.dialect(),
+                compile_kwargs={"literal_binds": True},
+            )
+        )
+        conversation_query = str(
+            db.scalars.call_args_list[2].args[0].compile(
+                dialect=mysql.dialect(),
+                compile_kwargs={"literal_binds": True},
+            )
+        )
+        self.assertIn("tickets.status = 'CLOSED'", ticket_query)
+        self.assertIn("tickets.closed_at <= '2025-02-28 12:30:00'", ticket_query)
+        self.assertIn(
+            "conversations.updated_at <= '2025-02-28 12:30:00'",
+            conversation_query,
+        )
+        self.assertIn("NOT (EXISTS", conversation_query)
+        self.assertIn("tickets.status != 'CLOSED'", conversation_query)
+        self.assertIn("tickets.closed_at IS NULL", conversation_query)
+        self.assertIn(
+            "tickets.closed_at > '2025-02-28 12:30:00'",
+            conversation_query,
+        )
+        self.assertEqual(db.commit.call_count, 2)
 
 
 if __name__ == "__main__":

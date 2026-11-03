@@ -218,17 +218,42 @@ export function AuthPage({
       </header>
 
       <main className="auth-content">
-        <section className="auth-card" aria-labelledby="auth-title">
-          <div className="auth-heading">
-            <span className="auth-icon"><Icon name={isRegister ? 'user' : 'sparkle'} /></span>
-            <div className="eyebrow"><span className="eyebrow-line" />AI HELP DESK</div>
-            <h1 id="auth-title">{isRegister ? text.registerTitle : text.loginTitle}</h1>
-            <p>{isRegister ? text.registerDescription : text.loginDescription}</p>
-          </div>
+        <section className="auth-card forced-password-card auth-split-card" aria-labelledby="auth-title">
+          <aside className="forced-password-aside auth-promo">
+            <div className="forced-password-art" aria-hidden="true">
+              <span className="forced-password-orbit forced-password-orbit-one" />
+              <span className="forced-password-orbit forced-password-orbit-two" />
+              <span className="forced-password-lock"><Icon name="sparkle" /></span>
+              <span className="forced-password-spark forced-password-spark-one">✦</span>
+              <span className="forced-password-spark forced-password-spark-two">✧</span>
+            </div>
+            <div className="forced-password-aside-copy">
+              <span className="forced-password-kicker">{text.authPanelKicker}</span>
+              <h2>{text.authPanelTitle}</h2>
+              <p>{text.authPanelDescription}</p>
+            </div>
+            <div className="forced-password-tip">
+              <span className="forced-password-tip-icon"><Icon name="check" /></span>
+              <div>
+                <strong>{text.authPanelTipTitle}</strong>
+                <p>{text.authPanelTipDescription}</p>
+              </div>
+            </div>
+          </aside>
+
+          <div className="forced-password-main auth-main">
+            <div className="auth-heading forced-password-heading">
+              <span className="auth-icon forced-password-form-icon" aria-hidden="true">
+                <Icon name={isRegister ? 'user' : 'sparkle'} />
+              </span>
+              <div className="eyebrow"><span className="eyebrow-line" />AI HELP DESK</div>
+              <h1 id="auth-title">{isRegister ? text.registerTitle : text.loginTitle}</h1>
+              <p>{isRegister ? text.registerDescription : text.loginDescription}</p>
+            </div>
 
           <form
             aria-busy={isSubmitting}
-            className="auth-form"
+            className="auth-form forced-password-form"
             noValidate
             onSubmit={submitForm}
           >
@@ -315,7 +340,7 @@ export function AuthPage({
             </label>
 
             <button
-              className="button button-primary auth-submit"
+              className="button button-primary auth-submit forced-password-submit"
               disabled={isSubmitting}
               type="submit"
             >
@@ -343,6 +368,7 @@ export function AuthPage({
               </p>
             )}
           </form>
+          </div>
         </section>
         <div className="lab-signature">Developed by ScoderKu Lab</div>
       </main>
