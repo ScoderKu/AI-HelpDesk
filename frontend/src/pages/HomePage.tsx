@@ -12,7 +12,7 @@ type AppView = 'home' | 'tickets' | 'profile' | 'chat'
 type AppRoute = { view: AppView; conversationId: number | null }
 
 function readRoute(): AppRoute {
-  const [viewPart, idPart] = window.location.hash.replace(/^#\\/?/, '').split('/')
+  const [viewPart, idPart] = window.location.hash.slice(1).replace(/^\//, '').split('/')
   const view: AppView = viewPart === 'tickets' || viewPart === 'profile' || viewPart === 'chat' ? viewPart : 'home'
   const parsedId = idPart ? Number(idPart) : null
   return { view, conversationId: view === 'chat' && parsedId !== null && Number.isInteger(parsedId) && parsedId > 0 ? parsedId : null }
@@ -48,7 +48,30 @@ export function HomePage({
   onShowPreviewNotice,
 }: HomePageProps) {
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
-  const [activeView, navigateToView] = useState<'home' | 'tickets' | 'profile' | 'chat'>('home')
+  const [route, setRoute] = useState<AppRoute>(readRoute)
+  const activeView = route.view
+
+  const navigateToView = (view: AppView, conversationId: number | null = null) => {
+    const hash = view === 'chat' && conversationId !== null ? \`#chat/\${conversationId}\` : \`#\${view}\`
+    if (window.location.hash !== hash) window.history.pushState(null, '', hash)
+    setRoute({ view, conversationId: view === 'chat' ? conversationId : null })
+  }
+
+  const updateChatConversation = (conversationId: number | null) => {
+    const hash = conversationId === null ? '#chat' : \`#chat/\${conversationId}\`
+    if (window.location.hash !== hash) window.history.replaceState(null, '', hash)
+    setRoute({ view: 'chat', conversationId })
+  }
+
+  useEffect(() => {
+    const syncRoute = () => setRoute(readRoute())
+    window.addEventListener('hashchange', syncRoute)
+    window.addEventListener('popstate', syncRoute)
+    return () => {
+      window.removeEventListener('hashchange', syncRoute)
+      window.removeEventListener('popstate', syncRoute)
+    }
+  }, [])
   const [ticketSummary, setTicketSummary] = useState<TicketSummary>({ total: 0, open: 0, closed: 0 })
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [summaryError, setSummaryError] = useState('')
