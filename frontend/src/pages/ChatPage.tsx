@@ -191,6 +191,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     let requestId = conversationRequest.current
     let persistedUserMessageId: number | null = null
     let streamedAssistantMessageId: number | null = null
+    let rejectionDetail = ''
     const previousRetryMessageId = retryMessageId
     setSending(true)
     setError('')
@@ -230,6 +231,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
           const body = await response.json()
           detail = typeof body.detail === 'string' ? body.detail : ''
         } catch { /* The response may not contain JSON. */ }
+        rejectionDetail = detail
         throw new Error(detail || `HTTP ${response.status}`)
       }
 
@@ -294,6 +296,9 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
             ))
             if (draft === '') setDraft(content)
             setRetryMessageId(previousRetryMessageId)
+            if (item.detail?.includes('previous message') && conversationId !== null) {
+              void refreshMessages(conversationId, requestId).catch(() => undefined)
+            }
             setError(item.detail?.includes('previous message') ? t.chatPreviousUnanswered : t.chatSendError)
           }
         }
@@ -328,7 +333,10 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
         } else {
           if (draft === '') setDraft(content)
           setRetryMessageId(previousRetryMessageId)
-          setError(t.chatSendError)
+          if (rejectionDetail.includes('previous message') && conversationId !== null) {
+            try { await refreshMessages(conversationId, requestId) } catch { /* Keep the existing retry state. */ }
+          }
+          setError(rejectionDetail.includes('previous message') ? t.chatPreviousUnanswered : t.chatSendError)
         }
       }
     } finally {
