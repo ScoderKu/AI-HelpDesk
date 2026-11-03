@@ -1103,6 +1103,8 @@ def stream_chat_message(
     db.rollback()
 
     def event_stream():
+        user_message_id: int | None = None
+
         def event(name: str, payload: dict[str, object]) -> str:
             import json
             return json.dumps({"event": name, **payload}, ensure_ascii=False) + "\n"
@@ -1207,9 +1209,12 @@ def stream_chat_message(
             yield event("error", {"detail": error.detail})
         except Exception:
             logger.exception("Unexpected error while streaming chat for conversation %s", conversation_id)
-            yield event("error", {
+            payload: dict[str, object] = {
                 "detail": "The AI response could not be completed. Your message may have been saved."
-            })
+            }
+            if user_message_id is not None:
+                payload["saved_message_id"] = user_message_id
+            yield event("error", payload)
 
     return StreamingResponse(
         event_stream(),
