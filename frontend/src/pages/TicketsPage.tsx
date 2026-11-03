@@ -51,6 +51,7 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
   const [feedback, setFeedback] = useState('')
+  const [showValidation, setShowValidation] = useState(false)
 
   const loadTickets = async () => {
     setIsLoading(true)
@@ -77,6 +78,7 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
     setForm(emptyForm)
     setFeedback('')
     setError('')
+    setShowValidation(false)
     setMode('create')
   }
 
@@ -106,6 +108,7 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
 
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    setShowValidation(true)
     setError('')
     if (!form.title.trim()) { setError(text.ticketTitleRequired); return }
     if (!form.description.trim()) { setError(text.ticketDescriptionRequired); return }
@@ -127,6 +130,7 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
   const handleUpdate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!selectedTicket) return
+    setShowValidation(true)
     setError('')
     if (!form.title.trim()) { setError(text.ticketTitleRequired); return }
     if (!form.description.trim()) { setError(text.ticketDescriptionRequired); return }
@@ -166,22 +170,28 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
         <span>{text.ticketTitleLabel}</span>
         <input
           maxLength={200}
+          id="ticket-title-input"
           required
           value={form.title}
-          aria-invalid={!form.title.trim()}
+          aria-invalid={showValidation && !form.title.trim()}
+          aria-describedby={showValidation && !form.title.trim() ? 'ticket-title-error' : undefined}
           onChange={(event) => setForm({ ...form, title: event.target.value })}
         />
+        {showValidation && !form.title.trim() && <span className="ticket-field-error" id="ticket-title-error">{text.ticketTitleRequired}</span>}
       </label>
       <label className="ticket-field">
         <span>{text.ticketDescriptionLabel}</span>
         <textarea
           maxLength={65535}
+          id="ticket-description-input"
           required
           rows={6}
           value={form.description}
-          aria-invalid={!form.description.trim()}
+          aria-invalid={showValidation && !form.description.trim()}
+          aria-describedby={showValidation && !form.description.trim() ? 'ticket-description-error' : undefined}
           onChange={(event) => setForm({ ...form, description: event.target.value })}
         />
+        {showValidation && !form.description.trim() && <span className="ticket-field-error" id="ticket-description-error">{text.ticketDescriptionRequired}</span>}
       </label>
       <label className="ticket-field ticket-priority-field">
         <span>{text.ticketPriorityLabel}</span>
@@ -297,7 +307,7 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
               <div className="ticket-form-actions">
                 {selectedTicket.status === 'OPEN' && (
                   <>
-                    <button className="button button-secondary" disabled={isSaving} onClick={() => setIsEditing(true)} type="button">
+                    <button className="button button-secondary" disabled={isSaving} onClick={() => { setShowValidation(false); setIsEditing(true) }} type="button">
                       {text.ticketEdit}
                     </button>
                     <button className="button button-danger" disabled={isSaving} onClick={() => void handleClose()} type="button">
