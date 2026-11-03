@@ -144,6 +144,8 @@ AI Service välittää käyttäjän viestin Compose-ympäristössä toimivalle O
 
 Tekoälyn tuottamat vastaukset ovat ehdotuksia. Niiden oikeellisuutta ei voida taata kaikissa tilanteissa.
 
+Kun käyttäjä pyytää tukipyynnön luonnosta, AI Service muodostaa keskustelun perusteella lyhyen ongelmaa kuvaavan otsikon ja tekniselle tukihenkilölle suunnatun yhteenvedon. Yhteenveto sisältää vain keskustelussa mainitut tiedot, tehdyt vianmääritystoimet ja niiden tulokset; puuttuvia ympäristö-, syy- tai virhetietoja ei keksitä. Salaisuudet jätetään pois tai redaktoidaan. Käyttäjä tarkistaa ja voi muokata luonnosta ennen varsinaisen tukipyynnön vahvistamista. Keskusteluvastauksen lopussa AI voi lisäksi ilmoittaa koneellisesti, suositteleeko se tukipyynnön luomista, jos ongelma jää ratkaisematta luotettavasti. Tämä ilmoitus ei luo tukipyyntöä automaattisesti.
+
 ### 2.6 RAG MVP ja tietolähteet
 
 Knowledge Service käsittelee ennen toteutusta ryhmän rajaamaa, käyttöön hyväksyttyä Markdown- ja TXT-dokumenttikokoelmaa. Tarkka lähdekokoelma ja sen ylläpitopaikka vahvistetaan ennen toteutusta; dokumentteja ei haeta ennalta määrittelemättömistä tai ulkoisista lähteistä.
@@ -403,6 +405,8 @@ US-17 toteutetaan vain backendin ylläpitokomennolla. Se ei lisää julkista HTT
 |------------|----------|---------|--------------|
 | GET | `/api/v1/tickets` | Hakee kirjautuneen käyttäjän tukipyynnöt | Kyllä |
 | POST | `/api/v1/tickets` | Luo uuden tukipyynnön | Kyllä |
+| POST | `/api/v1/conversations/{conversation_id}/ticket-draft` | Pyytää tekoälyä muodostamaan keskustelun viimeisimpien viestien perusteella muokattavan tukipyynnön otsikon ja yhteenvedon; tarkistaa keskustelun omistajuuden ja pyynnön Origin-otsakkeen | Kyllä |
+| POST | `/api/v1/conversations/{conversation_id}/tickets` | Luo käyttäjän vahvistaman tukipyynnön ja liittää sen omistettuun lähdekeskusteluun | Kyllä |
 | GET | `/api/v1/tickets/summary` | Hakee käyttäjän tukipyyntöjen yhteenvedon | Kyllä |
 | GET | `/api/v1/tickets/{id}` | Hakee yksittäisen tukipyynnön | Kyllä |
 | PATCH | `/api/v1/tickets/{id}` | Päivittää avoimen tukipyynnön otsikon, kuvauksen tai prioriteetin | Kyllä |
