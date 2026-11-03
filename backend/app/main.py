@@ -25,7 +25,10 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal, engine, get_db
 from app.models import AuthSession, Conversation, Message, Ticket, User
 from app.schemas import (
-    ConversationCreateRequest,\n    ConversationResponse,\n    MessageResponse,\n    TicketCreateRequest,
+    ConversationCreateRequest,
+    ConversationResponse,
+    MessageResponse,
+    TicketCreateRequest,
     TicketResponse,
     TicketStatus,
     TicketSummaryResponse,
