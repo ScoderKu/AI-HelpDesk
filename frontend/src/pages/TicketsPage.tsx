@@ -257,7 +257,7 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
       )}
 
       {mode === 'create' && (
-        <form className="ticket-form-panel" onSubmit={(event) => void handleCreate(event)}>
+        <form className="ticket-form-panel" noValidate onSubmit={(event) => void handleCreate(event)}>
           {formFields}
           <div className="ticket-form-actions">
             <button className="button button-secondary" disabled={isSaving} onClick={() => setMode('list')} type="button">
@@ -282,7 +282,7 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
             </span>
           </div>
           {isEditing ? (
-            <form className="ticket-form" onSubmit={(event) => void handleUpdate(event)}>
+            <form className="ticket-form" noValidate onSubmit={(event) => void handleUpdate(event)}>
               {formFields}
               <div className="ticket-form-actions">
                 <button className="button button-secondary" disabled={isSaving} onClick={() => {
