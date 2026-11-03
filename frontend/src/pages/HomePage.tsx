@@ -231,7 +231,7 @@ export function HomePage({
               onChanged={() => setSummaryRefresh((value) => value + 1)}
             />
           ) : <>
-          <div className="preview-notice" role="note">
+          {!currentUser && <div className="preview-notice" role="note">
             <span className="notice-indicator"><Icon name="layers" /></span>
             <div>
               <strong>{text.preview}</strong>
