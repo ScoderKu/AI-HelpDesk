@@ -200,3 +200,16 @@
 
 .chat-message.assistant { animation: chat-message-appear 160ms ease-out; }
 @keyframes chat-message-appear { from { opacity: .65; } to { opacity: 1; } }
+
+
+.chat-ticket-actions { width: min(100%, 920px); margin-inline: auto; display: flex; justify-content: flex-end; }
+.chat-ticket-feedback { width: min(100%, 920px); margin: 0 auto; color: #176b3a; }
+.chat-ticket-feedback a { margin-left: .35rem; }
+.chat-ticket-editor { width: min(100%, 920px); max-height: min(48vh, 520px); overflow-y: auto; box-sizing: border-box; margin: 0 auto; padding: 1rem; border: 1px solid #d9dee7; border-radius: 14px; background: #f8f9fb; display: flex; flex-direction: column; gap: .7rem; }
+.chat-ticket-editor h3, .chat-ticket-editor p { margin: 0; }
+.chat-ticket-editor > p { color: #687386; font-size: .9rem; }
+.chat-ticket-field { display: flex; flex-direction: column; gap: .3rem; }
+.chat-ticket-field > span { font-size: .9rem; font-weight: 600; }
+.chat-ticket-field input, .chat-ticket-field textarea, .chat-ticket-field select { width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid #d9dee7; border-radius: 9px; padding: .65rem .75rem; background: #fff; color: inherit; font: inherit; }
+.chat-ticket-field textarea { resize: vertical; white-space: pre-wrap; }
+.chat-ticket-editor-actions { display: flex; justify-content: flex-end; gap: .6rem; flex-wrap: wrap; }
