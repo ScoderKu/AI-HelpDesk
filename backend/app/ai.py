@@ -395,11 +395,13 @@ def generate_reply_stream(
         raise OllamaUnavailableError("Incomplete streaming response from Ollama")
 
     ticket_recommended = False
+    trimmed_content = pending_content.rstrip()
     for marker in markers:
-        if pending_content.endswith(marker):
+        if trimmed_content.endswith(marker):
             ticket_recommended = marker == TICKET_RECOMMENDED_MARKER
-            pending_content = pending_content[:-len(marker)]
+            trimmed_content = trimmed_content[:-len(marker)].rstrip()
             break
+    pending_content = trimmed_content
     if pending_content:
         yield ("content", pending_content)
     yield ("ticket_recommendation", ticket_recommended)
