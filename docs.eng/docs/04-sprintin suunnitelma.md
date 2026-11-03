@@ -13,11 +13,11 @@ Detailed descriptions and acceptance criteria for the user stories are in the do
 | Sprint | Goal | User stories | SP |
 |-----------|----------|----------------|----|
 | Sprint 1 | Technical foundation, user authentication, and Docker Compose | US-01, US-02, US-10, US-11, US-12, US-16 | 33 |
-| Sprint 2 | Support request and profile management | US-03, US-04, US-05 | 13 |
+| Sprint 2 | Support request, profile, and password reset management | US-03, US-04, US-05, US-17 | 15 |
 | Sprint 3 | AI conversation and conversation history | US-06, US-07, US-08 | 18 |
 | Sprint 4 | Completing the user experience | US-09, US-13, US-14 | 9 |
 | Sprint 5 | Knowledge-based AI advice | US-15 | 13 |
-| **Total** |  | **16 user stories** | **86 SP** |
+| **Total** |  | **17 user stories** | **88 SP** |
 
 Story Point totals are agreed planning estimates. Sprint 1 will remain a whole of 33 SP, and the current Sprint allocation will remain unchanged. US-09, US-14, RAG, and the other features selected for the final delivery scope are not conditional on time being available. If capacity risk materializes, it will be raised for a decision and changes will be approved through change management; commitments will not be silently removed.
 
@@ -316,7 +316,7 @@ A Sprint is not automatically considered successful just because all planned Sto
 
 # 11. Summary
 
-The preliminary Sprint Plan for the AI HelpDesk application consists of five Sprints and 16 user stories. The initial total estimate for the stories is **86 Story Points**, including the 5 Story Point estimate for US-16 allocated to Sprint 1.
+The preliminary Sprint Plan for the AI HelpDesk application consists of five Sprints and 17 user stories. The initial total estimate for the stories is **88 Story Points**, including the 5 Story Point estimate for US-16 allocated to Sprint 1.
 
 1. Sprint 1 establishes the application's technical foundation.
 2. Sprint 2 implements profile and support request management.
