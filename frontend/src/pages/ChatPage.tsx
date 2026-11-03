@@ -52,6 +52,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
   const [draft, setDraft] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const [streaming, setStreaming] = useState(false)
   const [error, setError] = useState('')
   const [conversationListError, setConversationListError] = useState(false)
   const [messageLoadError, setMessageLoadError] = useState(false)
@@ -235,6 +236,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
       let buffer = ''
       let assistantMessageId = -optimisticId
       let streamFailed = false
+      let completed = false
 
       const processEvent = (line: string) => {
         if (!line.trim()) return
@@ -251,6 +253,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
             message.id === optimisticId ? item.message! : message,
           ))
         } else if (item.event === 'token' && typeof item.content === 'string') {
+          setStreaming(true)
           setMessages((current) => {
             const existing = current.some((message) => message.id === assistantMessageId)
             if (!existing) {
@@ -266,12 +269,15 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
               : message)
           })
         } else if (item.event === 'done' && item.assistant_message) {
+          completed = true
+          setStreaming(false)
           setMessages((current) => current.map((message) =>
             message.id === assistantMessageId ? item.assistant_message! : message,
           ))
           streamFailed = false
         } else if (item.event === 'error') {
           streamFailed = true
+          setStreaming(false)
           if (item.saved_message_id) {
             setRetryMessageId(item.saved_message_id)
             setError(t.chatAiUnavailable)
@@ -294,6 +300,9 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
       }
       buffer += decoder.decode()
       if (buffer.trim()) processEvent(buffer)
+      if (!completed && !streamFailed) {
+        throw new Error('The AI response stream ended before completion.')
+      }
       if (!streamFailed) {
         focusComposerAfterResponse.current = true
         setRetryMessageId(null)
@@ -305,6 +314,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
         setError(t.chatSendError)
       }
     } finally {
+      setStreaming(false)
       setSending(false)
     }
   }
@@ -382,7 +392,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
                 <p>{message.content}</p>
               </article>
             ))}
-            {sending && <p className="chat-empty" role="status">{t.chatSending}</p>}
+            {sending && !streaming && <p className="chat-empty" role="status">{t.chatSending}</p>}
           </div>
           {messageLoadError && (
             <div className="chat-error" role="alert">
