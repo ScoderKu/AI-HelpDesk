@@ -1074,10 +1074,12 @@ def list_conversation_messages(
     tags=["Tickets"],
 )
 async def create_conversation_ticket_draft(
+    request: Request,
     conversation_id: int = Path(gt=0),
     user: User = Depends(get_authenticated_user),
     db: Session = Depends(get_db),
 ) -> TicketDraftResponse:
+    require_trusted_origin(request)
     conversation = db.scalar(
         select(Conversation).where(
             Conversation.id == conversation_id,
