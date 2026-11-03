@@ -42,6 +42,29 @@ def make_user_message(message_id: int = 41) -> Message:
     )
 
 
+class ChatLockLeaseTests(unittest.TestCase):
+    def test_assert_owned_renews_the_token_owned_lock(self) -> None:
+        lease = main.ChatLockLease("chat:conversation:12", "lease-token")
+        with patch.object(main.redis_client, "eval", return_value=1) as renew:
+            lease.assert_owned()
+
+        renew.assert_called_once_with(
+            main.RENEW_CHAT_LOCK_SCRIPT,
+            1,
+            "chat:conversation:12",
+            "lease-token",
+            main.CHAT_LOCK_TTL_SECONDS,
+        )
+
+    def test_assert_owned_rejects_a_lock_that_expired_or_was_replaced(self) -> None:
+        lease = main.ChatLockLease("chat:conversation:12", "old-token")
+        with patch.object(main.redis_client, "eval", return_value=0):
+            with self.assertRaises(HTTPException) as raised:
+                lease.assert_owned()
+
+        self.assertEqual(raised.exception.status_code, 409)
+
+
 class ChatEndpointTests(unittest.TestCase):
     def setUp(self) -> None:
         self.user = User(id=7)
@@ -120,6 +143,7 @@ class ChatEndpointTests(unittest.TestCase):
         persistence_db = MagicMock()
         persistence_db.__enter__.return_value = persistence_db
         persistence_db.get.return_value = conversation
+        persistence_db.scalar.return_value = user_message
         persistence_db.refresh.side_effect = lambda item: setattr(item, "id", 42)
 
         async def generate_after_db_release(*_args):
@@ -156,7 +180,10 @@ class ChatEndpointTests(unittest.TestCase):
         )
         persistence_db.commit.assert_called_once()
         self.assertEqual(db.rollback.call_count, 2)
-        release_lock.assert_called_once()
+        release_calls = [
+            call for call in release_lock.call_args_list if call.args[0] == main.RELEASE_CHAT_LOCK_SCRIPT
+        ]
+        self.assertEqual(len(release_calls), 1)
 
     def test_failed_ai_response_identifies_saved_message_for_retry(self) -> None:
         conversation = make_conversation()
@@ -202,6 +229,7 @@ class ChatEndpointTests(unittest.TestCase):
         persistence_db = MagicMock()
         persistence_db.__enter__.return_value = persistence_db
         persistence_db.get.return_value = conversation
+        persistence_db.scalar.return_value = user_message
         persistence_db.refresh.side_effect = lambda item: setattr(item, "id", 42)
 
         with (
