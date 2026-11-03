@@ -86,7 +86,7 @@ MVP-version tavoitteena on toteuttaa AI HelpDesk -sovelluksen keskeinen käyttö
 
 - US-01: Käyttäjän rekisteröityminen
 - US-02: Käyttäjän kirjautuminen
-- US-03: Käyttäjäprofiilin hallinta (etunimen, sukunimen ja käyttäjänimen muokkaus; sähköpostin näyttäminen vain luettavana; salasanan vaihto nykyisen salasanan vahvistuksella)
+- US-03: Käyttäjäprofiilin tarkastelu ja käyttäjänimen muokkaus (etunimi, sukunimi ja sähköpostiosoite vain luettavina; salasanan vaihto nykyisen salasanan vahvistuksella)
 - US-04: Tukipyynnön luominen
 - US-05: Omien tukipyyntöjen tarkastelu ja sulkeminen
 - US-06: Tekoälypohjainen keskustelu
