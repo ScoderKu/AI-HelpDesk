@@ -1325,7 +1325,7 @@ async def send_chat_message(
         raise HTTPException(status_code=404, detail="Conversation not found.")
     db.rollback()
 
-    with lock_conversation_chat(conversation_id):
+    with lock_conversation_chat(conversation_id) as chat_lock:
         conversation = db.scalar(
             select(Conversation).where(
                 Conversation.id == conversation_id,
@@ -1414,7 +1414,7 @@ async def retry_chat_message(
         raise HTTPException(status_code=404, detail="Conversation not found.")
     db.rollback()
 
-    with lock_conversation_chat(conversation_id):
+    with lock_conversation_chat(conversation_id) as chat_lock:
         conversation = db.scalar(
             select(Conversation).where(
                 Conversation.id == conversation_id,
