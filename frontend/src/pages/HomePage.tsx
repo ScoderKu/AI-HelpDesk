@@ -8,6 +8,16 @@ import { ChatPage } from './ChatPage'
 import type { Copy } from '../i18n/copy'
 import type { AuthMode, AuthenticatedUser, Language, TicketSummary } from '../types'
 
+type AppView = 'home' | 'tickets' | 'profile' | 'chat'
+type AppRoute = { view: AppView; conversationId: number | null }
+
+function readRoute(): AppRoute {
+  const [viewPart, idPart] = window.location.hash.replace(/^#\\/?/, '').split('/')
+  const view: AppView = viewPart === 'tickets' || viewPart === 'profile' || viewPart === 'chat' ? viewPart : 'home'
+  const parsedId = idPart ? Number(idPart) : null
+  return { view, conversationId: view === 'chat' && parsedId !== null && Number.isInteger(parsedId) && parsedId > 0 ? parsedId : null }
+}
+
 type HomePageProps = {
   language: Language
   text: Copy
@@ -38,7 +48,7 @@ export function HomePage({
   onShowPreviewNotice,
 }: HomePageProps) {
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
-  const [activeView, setActiveView] = useState<'home' | 'tickets' | 'profile' | 'chat'>('home')
+  const [activeView, navigateToView] = useState<'home' | 'tickets' | 'profile' | 'chat'>('home')
   const [ticketSummary, setTicketSummary] = useState<TicketSummary>({ total: 0, open: 0, closed: 0 })
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [summaryError, setSummaryError] = useState('')
@@ -116,15 +126,15 @@ export function HomePage({
 
         <div className="sidebar-section-label">{text.workspace}</div>
         <nav className="main-nav" aria-label={text.workspace}>
-          <a className={`nav-link ${activeView === 'home' ? 'active' : ''}`} href="#home" aria-current={activeView === 'home' ? 'page' : undefined} onClick={() => setActiveView('home')}>
+          <a className={`nav-link ${activeView === 'home' ? 'active' : ''}`} href="#home" aria-current={activeView === 'home' ? 'page' : undefined} onClick={() => navigateToView('home')}>
             <Icon name="home" />
             <span>{text.home}</span>
           </a>
-          <button className={`nav-link ${activeView === "chat" ? "active" : ""}`} onClick={() => currentUser ? setActiveView("chat") : onShowPreviewNotice()} type="button">
+          <button className={`nav-link ${activeView === "chat" ? "active" : ""}`} onClick={() => currentUser ? navigateToView("chat") : onShowPreviewNotice()} type="button">
             <Icon name="message" />
             <span>{text.chat}</span>
           </button>
-          <button className={`nav-link ${activeView === 'tickets' ? 'active' : ''}`} onClick={() => currentUser ? setActiveView('tickets') : onShowPreviewNotice()} type="button">
+          <button className={`nav-link ${activeView === 'tickets' ? 'active' : ''}`} onClick={() => currentUser ? navigateToView('tickets') : onShowPreviewNotice()} type="button">
             <Icon name="ticket" />
             <span>{text.ticketsNav}</span>
           </button>
@@ -155,7 +165,7 @@ export function HomePage({
                     className="account-menu-item"
                     onClick={() => {
                       setIsAccountMenuOpen(false)
-                      setActiveView('profile')
+                      navigateToView('profile')
                     }}
                     type="button"
                   >
@@ -171,7 +181,7 @@ export function HomePage({
                       const succeeded = await onSignOut()
                       if (succeeded) {
                         setIsAccountMenuOpen(false)
-                        setActiveView('home')
+                        navigateToView('home')
                         pageTitleRef.current?.focus()
                       } else {
                         signOutButtonRef.current?.focus()
@@ -210,24 +220,24 @@ export function HomePage({
 
         <div className="page-content">
           {activeView === 'chat' && currentUser ? (
-            <ChatPage text={text} />
+            <ChatPage text={text} initialConversationId={route.conversationId} onConversationChange={updateChatConversation} />
           ) : activeView === 'profile' && currentUser ? (
             <ProfilePage
               currentUser={currentUser}
               language={language}
               text={text}
-              onBackHome={() => setActiveView('home')}
+              onBackHome={() => navigateToView('home')}
               onProfileUpdated={onUserUpdated}
               onPasswordChanged={() => {
                 onPasswordChanged()
-                setActiveView('home')
+                navigateToView('home')
               }}
             />
           ) : activeView === 'tickets' ? (
             <TicketsPage
               language={language}
               text={text}
-              onBackHome={() => setActiveView('home')}
+              onBackHome={() => navigateToView('home')}
               onChanged={() => setSummaryRefresh((value) => value + 1)}
             />
           ) : <>
@@ -259,7 +269,7 @@ export function HomePage({
               <h2>{text.actionTitle}</h2>
               <p>{text.actionDescription}</p>
             </div>
-            <button className="button button-primary" onClick={() => currentUser ? setActiveView("chat") : onShowPreviewNotice()} type="button">
+            <button className="button button-primary" onClick={() => currentUser ? navigateToView("chat") : onShowPreviewNotice()} type="button">
               {text.startChat}
               <Icon name="arrow" />
             </button>
@@ -271,7 +281,7 @@ export function HomePage({
                 <h2 id="summary-title">{text.summary}</h2>
                 <p>{text.summaryDetails}</p>
               </div>
-              <button className="text-link" onClick={() => currentUser ? setActiveView("tickets") : onShowPreviewNotice()} type="button">
+              <button className="text-link" onClick={() => currentUser ? navigateToView("tickets") : onShowPreviewNotice()} type="button">
                 {text.viewTickets}<Icon name="arrow" />
               </button>
             </div>
