@@ -398,7 +398,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
           )}
         </aside>
         <div className="chat-panel">
-          <div className="chat-messages" aria-live="polite" aria-relevant="additions text" ref={messagesRef}>
+          <div className="chat-messages" aria-live="polite" aria-relevant="additions" aria-busy={sending} ref={messagesRef}>
             {messages.length === 0 && !messageLoadError && <p className="chat-empty">{t.chatEmpty}</p>}
             {messages.map((message) => (
               <article key={message.id} className={`chat-message ${message.role.toLowerCase()}`}>
