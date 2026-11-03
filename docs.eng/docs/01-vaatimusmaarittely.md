@@ -21,7 +21,7 @@ AI HelpDesk aims to simplify this process by providing AI-powered advice, the ab
 ## 3. Project Objectives
 
 The objective of the project is to design and implement a working AI HelpDesk application that meets the following objectives:
-- Users can register, sign in, and edit their own profile information.
+- Users can register, sign in, view their profile, update their username, and change their password. First name, last name, and email address are read-only.
 - Users can discuss technical problems with AI.
 - AI can ask for additional information, such as the operating system, error message, or steps to reproduce the problem.
 - Users can create support requests, view their own requests, and close them.
@@ -76,7 +76,7 @@ The application must meet the following functional requirements.
 | ID | Requirement |
 |---|---|
 | FR-01 | Users can register and sign in. |
-| FR-02 | Users can view and edit their own profile information. |
+| FR-02 | Users can view their profile, update their username, and change their password. First name, last name, and email address are read-only. |
 | FR-03 | Users can create a new support request. |
 | FR-04 | Users can view and close their own support requests. |
 | FR-05 | A support request has a title, description, status, priority, creation time, and user identifier. |
