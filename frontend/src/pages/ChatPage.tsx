@@ -223,6 +223,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     let rejectionDetail = ''
     const previousRetryMessageId = retryMessageId
     setSending(true)
+    setTicketRecommendation(false)
     setError('')
     setDraft('')
     draftRef.current = ''
@@ -515,7 +516,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
           )}
           {error && <p className="chat-error" role="alert">{error}</p>}
           {ticketFeedback && <p className="chat-ticket-feedback" role="status">{ticketFeedback} <a href="#tickets">{t.viewTickets}</a></p>}
-          {ticketRecommendation && activeId !== null && ticketDraft === null && <p className="chat-ticket-feedback" role="status">{t.chatTicketRecommended}</p>}
+          {ticketRecommendation && !sending && activeId !== null && ticketDraft === null && <p className="chat-ticket-feedback" role="status">{t.chatTicketRecommended}</p>}
           {activeId !== null && messages.length > 0 && !sending && ticketDraft === null && (
             <div className="chat-ticket-actions">
               <button className="button button-secondary" type="button" disabled={ticketDraftLoading} onClick={() => void openTicketDraft()}>
