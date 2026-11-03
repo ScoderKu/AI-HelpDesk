@@ -23,7 +23,7 @@ const fi = {
     chatCreateRecommendedTicket: 'Valmistele tukipyyntö AI:n yhteenvedolla',
     chatTicketRecommended: 'AI ei pystynyt ratkaisemaan ongelmaa luotettavasti. Suosittelemme tukipyynnön luomista jatkokäsittelyä varten.',
     chatTicketDraftLoading: 'AI laatii tukipyynnön otsikkoa ja yhteenvetoa…',
-    chatTicketDraftError: 'AI ei pystynyt laatimaan tukipyynnön yhteenvetoa. Yritä uudelleen.
+    chatTicketDraftError: 'AI ei pystynyt laatimaan tukipyynnön yhteenvetoa. Yritä uudelleen.',
     chatTicketReviewTitle: 'Tarkista tukipyynnön tiedot',
     chatTicketReviewDescription: 'Otsikko ja kuvaus on ehdotettu keskustelun perusteella. Voit muokata niitä ennen vahvistamista.',
     chatTicketDefaultTitle: 'Tukipyyntö AI-keskustelusta',
