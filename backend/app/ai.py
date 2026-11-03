@@ -222,7 +222,7 @@ def generate_ticket_draft(
         "technical problem, not a generic label and not the first sentence copied verbatim. "
         "Create a clear, concise technical summary for a human support technician. Include "
         "only relevant facts available in the conversation: observed problem and impact; "
-        "environment or versions if stated; troubleshooting already attempted and outcomes; "
+        "environment or versions if stated; troubleshooting steps the user explicitly confirms they tried and the reported outcomes; assistant suggestions must not be described as completed unless the user confirms them; "
         "current result and useful next investigation. Omit sections for which no facts are "
         "available. Distinguish confirmed facts from user-reported observations. Do not "
         "invent causes, environment details, error codes, or troubleshooting steps. Remove "
