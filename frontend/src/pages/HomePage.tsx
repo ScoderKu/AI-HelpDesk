@@ -83,7 +83,8 @@ export function HomePage({
 
   useEffect(() => {
     if (authLoading || currentUser || (activeView !== 'chat' && activeView !== 'tickets' && activeView !== 'profile')) return
-    navigateToView('home')
+    window.history.replaceState(null, '', '#home')
+    setRoute({ view: 'home', conversationId: null })
   }, [authLoading, currentUser, activeView])
 
   useEffect(() => {
