@@ -1205,6 +1205,11 @@ def stream_chat_message(
                 yield event("done", {"assistant_message": assistant_payload})
         except HTTPException as error:
             yield event("error", {"detail": error.detail})
+        except Exception:
+            logger.exception("Unexpected error while streaming chat for conversation %s", conversation_id)
+            yield event("error", {
+                "detail": "The AI response could not be completed. Your message may have been saved."
+            })
 
     return StreamingResponse(
         event_stream(),
