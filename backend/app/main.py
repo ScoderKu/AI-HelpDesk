@@ -299,20 +299,23 @@ def cleanup_retained_data() -> None:
 
     with SessionLocal() as db:
         while True:
+            expired_ticket = (
+                Ticket.status == TicketStatus.CLOSED.value,
+                Ticket.closed_at.is_not(None),
+                Ticket.closed_at <= cutoff,
+            )
             ticket_ids = db.scalars(
                 select(Ticket.id)
-                .where(
-                    Ticket.status == TicketStatus.CLOSED.value,
-                    Ticket.closed_at.is_not(None),
-                    Ticket.closed_at <= cutoff,
-                )
+                .where(*expired_ticket)
                 .order_by(Ticket.id)
                 .limit(SESSION_CLEANUP_BATCH_SIZE)
             ).all()
             if not ticket_ids:
                 break
 
-            db.execute(delete(Ticket).where(Ticket.id.in_(ticket_ids)))
+            db.execute(
+                delete(Ticket).where(Ticket.id.in_(ticket_ids), *expired_ticket)
+            )
             db.commit()
             deleted_tickets += len(ticket_ids)
 
@@ -342,7 +345,11 @@ def cleanup_retained_data() -> None:
                 break
 
             db.execute(
-                delete(Conversation).where(Conversation.id.in_(conversation_ids))
+                delete(Conversation).where(
+                    Conversation.id.in_(conversation_ids),
+                    Conversation.updated_at <= cutoff,
+                    ~retained_ticket,
+                )
             )
             db.commit()
             deleted_conversations += len(conversation_ids)
@@ -1071,7 +1078,7 @@ async def send_chat_message(
             select(Conversation).where(
                 Conversation.id == conversation_id,
                 Conversation.user_id == authenticated_user_id,
-            )
+            ).with_for_update()
         )
         if conversation is None:
             raise HTTPException(status_code=404, detail="Conversation not found.")
@@ -1159,7 +1166,7 @@ async def retry_chat_message(
             select(Conversation).where(
                 Conversation.id == conversation_id,
                 Conversation.user_id == authenticated_user_id,
-            )
+            ).with_for_update()
         )
         if conversation is None:
             raise HTTPException(status_code=404, detail="Conversation not found.")

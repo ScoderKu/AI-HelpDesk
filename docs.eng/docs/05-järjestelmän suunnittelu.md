@@ -308,6 +308,8 @@ The backend runs an automatic daily cleanup in batches of at most 500 identifier
 
 The cleanup runs as a FastAPI lifespan background task in database worker threads. Database errors are logged and retried on the next daily run. The cleanup indexes are added by Alembic migration `0005_data_retention_indexes`. Deletion is irreversible; database backups and applicable privacy policies remain the operator's responsibility.
 
+Cleanup selects batch candidates without a long-running locking range scan and repeats the eligibility predicates in the actual `DELETE` statement. Deleting a conversation locks that row; chat send and retry lock the conversation row before saving a message. Thus, after a concurrent chat update, the `DELETE` rechecks the timestamp and does not remove a reactivated conversation. Foreign-key locking also serializes conversation deletion with the creation of a linked ticket.
+
 When a support ticket is created from a conversation, `tickets.conversation_id` refers to the source conversation. The backend ensures that the conversation belongs to the same logged-in user as the support ticket. For a support ticket created independently, `conversation_id` is `NULL`.
 
 ## 4.7 Data Storage Transactions
