@@ -163,7 +163,7 @@ The following table maps functional requirements to user stories, acceptance cri
 | Requirement | User story and acceptance criteria | Verification |
 |---|---|---|
 | FR-01 | US-01 (AC-01.1–AC-01.4), US-02 (AC-02.1–AC-02.3) | TEST-01: registration, sign-in, and permission check |
-| FR-02 | US-03 (AC-03.1–AC-03.3) | TEST-02: retrieving one's own profile and updating permitted information |
+| FR-02 | US-03 (AC-03.1–AC-03.5) | TEST-02: retrieving one's own profile and updating permitted information |
 | FR-03 | US-04 (AC-04.1–AC-04.3) | TEST-03: creating a support request and validating fields |
 | FR-04 | US-05 (AC-05.1–AC-05.4) | TEST-04: listing one's own requests, closing, and ownership check |
 | FR-05 | US-04 (AC-04.2) | TEST-05: support request fields, default values, and timestamps |
