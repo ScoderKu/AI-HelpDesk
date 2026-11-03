@@ -53,17 +53,6 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
   const [feedback, setFeedback] = useState('')
   const [showValidation, setShowValidation] = useState(false)
 
-  const loadTickets = async () => {
-    setIsLoading(true)
-    setError('')
-    try {
-      setTickets(await ticketsApi.list())
-    } catch {
-      setError(text.ticketLoadError)
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   useEffect(() => {
     let active = true
@@ -99,7 +88,7 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
     }
   }
 
-  const returnToList = async () => {
+  const returnToList = () => {
     setMode('list')
     setSelectedTicket(null)
     setIsEditing(false)
@@ -269,6 +258,8 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
           </div>
         </form>
       )}
+
+      {(ticketRoute.mode === 'detail' || ticketRoute.mode === 'edit') && isLoading && <p className="ticket-empty-state" role="status">{text.ticketLoading}</p>}
 
       {mode === 'detail' && selectedTicket && (
         <div className="ticket-detail-panel">
