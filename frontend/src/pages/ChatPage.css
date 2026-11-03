@@ -197,3 +197,6 @@
   white-space: nowrap;
   border: 0;
 }
+
+.chat-message.assistant { animation: chat-message-appear 160ms ease-out; }
+@keyframes chat-message-appear { from { opacity: .65; } to { opacity: 1; } }
