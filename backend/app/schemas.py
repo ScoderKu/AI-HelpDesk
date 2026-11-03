@@ -8,6 +8,7 @@ from pydantic import (
     ConfigDict,
     Field,
     SecretStr,
+    field_validator,
     field_serializer,
     model_validator,
 )
@@ -179,3 +180,60 @@ class UserPasswordChangeRequest(BaseModel):
         if self.current_password.get_secret_value() == self.new_password.get_secret_value():
             raise ValueError("New password must differ from current password.")
         return self
+
+
+class ConversationCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str | None = Field(default=None, max_length=200)
+
+    @field_validator("title")
+    @classmethod
+    def normalize_title(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        return value or None
+
+
+class ConversationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class MessageRole(str, Enum):
+    USER = "USER"
+    ASSISTANT = "ASSISTANT"
+
+
+class MessageResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    role: MessageRole
+    content: str
+    created_at: datetime
+
+
+
+class ChatMessageRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    content: str = Field(min_length=1, max_length=12000)
+
+    @field_validator("content")
+    @classmethod
+    def validate_content_size(cls, value: str) -> str:
+        if len(value.encode("utf-8")) > 48_000:
+            raise ValueError("Message exceeds the maximum allowed size.")
+        return value
+
+
+class ChatMessageResponse(BaseModel):
+    conversation_id: int
+    user_message: MessageResponse
+    assistant_message: MessageResponse

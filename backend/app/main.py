@@ -1,6 +1,6 @@
 import asyncio
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator, Iterator
+from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime, timezone
 from enum import Enum
 import hashlib
@@ -22,9 +22,15 @@ from sqlalchemy import case, delete, func, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.ai import OLLAMA_TIMEOUT_SECONDS, OllamaUnavailableError, generate_reply
 from app.database import SessionLocal, engine, get_db
-from app.models import AuthSession, Ticket, User
+from app.models import AuthSession, Conversation, Message, Ticket, User
 from app.schemas import (
+    ConversationCreateRequest,
+    ConversationResponse,
+    MessageResponse,
+    ChatMessageRequest,
+    ChatMessageResponse,
     TicketCreateRequest,
     TicketResponse,
     TicketStatus,
@@ -84,6 +90,18 @@ TRUSTED_PROXY_NETWORKS = tuple(
     for value in os.getenv("TRUSTED_PROXY_IPS", "").split(",")
     if value.strip()
 )
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "poro-helpdesk")
+OLLAMA_HEALTH_TIMEOUT_SECONDS = 3
+CHAT_LOCK_TTL_SECONDS = max(int(OLLAMA_TIMEOUT_SECONDS) + 30, 60)
+RELEASE_CHAT_LOCK_SCRIPT = """
+if redis.call('GET', KEYS[1]) == ARGV[1] then
+    return redis.call('DEL', KEYS[1])
+end
+return 0
+"""
+
+
 logger = logging.getLogger(__name__)
 redis_client: Redis = Redis.from_url(
     os.getenv("REDIS_URL", "redis://localhost:6379/0"),
@@ -91,6 +109,46 @@ redis_client: Redis = Redis.from_url(
     socket_connect_timeout=2,
     socket_timeout=2,
 )
+
+
+def require_trusted_origin(request: Request) -> None:
+    if request.headers.get("origin") not in FRONTEND_ORIGINS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Request origin is not allowed.",
+        )
+
+
+@contextmanager
+def lock_conversation_chat(conversation_id: int) -> Iterator[None]:
+    key = f"chat:conversation:{conversation_id}"
+    token = secrets.token_urlsafe(24)
+    try:
+        acquired = redis_client.set(
+            key,
+            token,
+            nx=True,
+            ex=CHAT_LOCK_TTL_SECONDS,
+        )
+    except RedisError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI chat is temporarily unavailable.",
+        ) from error
+
+    if not acquired:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A response is already being generated for this conversation.",
+        )
+
+    try:
+        yield
+    finally:
+        try:
+            redis_client.eval(RELEASE_CHAT_LOCK_SCRIPT, 1, key, token)
+        except RedisError:
+            logger.exception("Could not release chat lock for conversation %s", conversation_id)
 
 
 def get_client_ip(request: Request) -> str:
@@ -325,6 +383,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Chat-Message-Id", "X-Chat-Message-Saved"],
 )
 
 @app.exception_handler(RequestValidationError)
@@ -689,11 +748,7 @@ def logout_user(
     response: Response,
     db: Session = Depends(get_db),
 ) -> Response:
-    if request.headers.get("origin") not in FRONTEND_ORIGINS:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Request origin is not allowed.",
-        )
+    require_trusted_origin(request)
 
     response.headers["Cache-Control"] = "no-store"
     claims = get_session_claims(request.cookies.get(SESSION_COOKIE_NAME))
@@ -790,3 +845,346 @@ def database_health_check() -> dict[str, str]:
             status_code=503,
             detail="Database connection failed",
         )
+
+
+@app.get("/api/v1/conversations", response_model=list[ConversationResponse], tags=["Conversations"])
+def list_conversations(
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> list[ConversationResponse]:
+    items = db.scalars(
+        select(Conversation).where(Conversation.user_id == user.id)
+        .order_by(Conversation.updated_at.desc(), Conversation.id.desc())
+    ).all()
+    return [ConversationResponse.model_validate(item) for item in items]
+
+
+@app.post("/api/v1/conversations", response_model=ConversationResponse,
+          status_code=status.HTTP_201_CREATED, tags=["Conversations"])
+def create_conversation(
+    conversation_data: ConversationCreateRequest,
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> ConversationResponse:
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    item = Conversation(user_id=user.id, title=conversation_data.title,
+                        created_at=now, updated_at=now)
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return ConversationResponse.model_validate(item)
+
+
+@app.get("/api/v1/conversations/{conversation_id}",
+         response_model=ConversationResponse, tags=["Conversations"])
+def get_conversation(
+    conversation_id: int = Path(gt=0),
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> ConversationResponse:
+    item = db.scalar(select(Conversation).where(
+        Conversation.id == conversation_id, Conversation.user_id == user.id
+    ))
+    if item is None:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+    return ConversationResponse.model_validate(item)
+
+
+@app.get("/api/v1/conversations/{conversation_id}/messages",
+         response_model=list[MessageResponse], tags=["Conversations"])
+def list_conversation_messages(
+    conversation_id: int = Path(gt=0),
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> list[MessageResponse]:
+    owned_id = db.scalar(select(Conversation.id).where(
+        Conversation.id == conversation_id, Conversation.user_id == user.id
+    ))
+    if owned_id is None:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+    items = db.scalars(select(Message).where(
+        Message.conversation_id == conversation_id
+    ).order_by(Message.created_at.asc(), Message.id.asc())).all()
+    return [MessageResponse.model_validate(item) for item in items]
+
+
+async def generate_assistant_for_message(
+    conversation_id: int,
+    user_message_id: int,
+    db: Session,
+) -> MessageResponse:
+    history = db.scalars(
+        select(Message)
+        .where(
+            Message.conversation_id == conversation_id,
+            Message.id <= user_message_id,
+        )
+        .order_by(Message.created_at.desc(), Message.id.desc())
+        .limit(20)
+    ).all()
+    ollama_messages = [
+        {"role": "user" if item.role == "USER" else "assistant", "content": item.content}
+        for item in reversed(history)
+    ]
+
+    db.rollback()
+    answer = await asyncio.to_thread(generate_reply, ollama_messages)
+
+    assistant_message = Message(
+        conversation_id=conversation_id,
+        role="ASSISTANT",
+        content=answer,
+        created_at=datetime.now(timezone.utc).replace(tzinfo=None),
+    )
+    with SessionLocal() as persistence_db:
+        conversation = persistence_db.get(Conversation, conversation_id)
+        if conversation is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found.",
+            )
+        persistence_db.add(assistant_message)
+        conversation.updated_at = assistant_message.created_at
+        persistence_db.commit()
+        persistence_db.refresh(assistant_message)
+
+    return MessageResponse.model_validate(assistant_message)
+
+
+@app.post(
+    "/api/v1/conversations/{conversation_id}/messages",
+    response_model=ChatMessageResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Conversations"],
+)
+async def send_chat_message(
+    message_data: ChatMessageRequest,
+    request: Request,
+    conversation_id: int = Path(gt=0),
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> ChatMessageResponse:
+    require_trusted_origin(request)
+    authenticated_user_id = user.id
+
+    owned_conversation = db.scalar(
+        select(Conversation.id).where(
+            Conversation.id == conversation_id,
+            Conversation.user_id == authenticated_user_id,
+        )
+    )
+    if owned_conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+    db.rollback()
+
+    with lock_conversation_chat(conversation_id):
+        conversation = db.scalar(
+            select(Conversation).where(
+                Conversation.id == conversation_id,
+                Conversation.user_id == authenticated_user_id,
+            )
+        )
+        if conversation is None:
+            raise HTTPException(status_code=404, detail="Conversation not found.")
+
+        latest_message = db.scalar(
+            select(Message)
+            .where(Message.conversation_id == conversation_id)
+            .order_by(Message.id.desc())
+            .limit(1)
+        )
+        if latest_message is not None and latest_message.role == "USER":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Retry the previous message before sending another.",
+            )
+
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        user_message = Message(
+            conversation_id=conversation.id,
+            role="USER",
+            content=message_data.content,
+            created_at=now,
+        )
+        db.add(user_message)
+        if not conversation.title:
+            conversation.title = message_data.content[:80]
+        conversation.updated_at = now
+        db.commit()
+        db.refresh(user_message)
+        user_message_id = user_message.id
+        user_message_response = MessageResponse.model_validate(user_message)
+
+        try:
+            assistant_message_response = await generate_assistant_for_message(
+                conversation_id,
+                user_message_id,
+                db,
+            )
+        except OllamaUnavailableError as error:
+            logger.warning("Ollama chat request failed: %s", str(error))
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="AI assistant is temporarily unavailable. Your message was saved.",
+                headers={
+                    "X-Chat-Message-Saved": "true",
+                    "X-Chat-Message-Id": str(user_message_id),
+                },
+            ) from None
+
+        return ChatMessageResponse(
+            conversation_id=conversation_id,
+            user_message=user_message_response,
+            assistant_message=assistant_message_response,
+        )
+
+
+@app.post(
+    "/api/v1/conversations/{conversation_id}/messages/{message_id}/retry",
+    response_model=ChatMessageResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Conversations"],
+)
+async def retry_chat_message(
+    request: Request,
+    conversation_id: int = Path(gt=0),
+    message_id: int = Path(gt=0),
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> ChatMessageResponse:
+    require_trusted_origin(request)
+    authenticated_user_id = user.id
+
+    owned_conversation = db.scalar(
+        select(Conversation.id).where(
+            Conversation.id == conversation_id,
+            Conversation.user_id == authenticated_user_id,
+        )
+    )
+    if owned_conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+    db.rollback()
+
+    with lock_conversation_chat(conversation_id):
+        conversation = db.scalar(
+            select(Conversation).where(
+                Conversation.id == conversation_id,
+                Conversation.user_id == authenticated_user_id,
+            )
+        )
+        if conversation is None:
+            raise HTTPException(status_code=404, detail="Conversation not found.")
+
+        failed_message = db.scalar(
+            select(Message).where(
+                Message.id == message_id,
+                Message.conversation_id == conversation_id,
+                Message.role == "USER",
+            )
+        )
+        latest_message = db.scalar(
+            select(Message)
+            .where(Message.conversation_id == conversation_id)
+            .order_by(Message.id.desc())
+            .limit(1)
+        )
+        if failed_message is None or latest_message is None or latest_message.id != message_id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Only the latest unanswered message can be retried.",
+            )
+        user_message_response = MessageResponse.model_validate(failed_message)
+
+        try:
+            assistant_message_response = await generate_assistant_for_message(
+                conversation_id,
+                message_id,
+                db,
+            )
+        except OllamaUnavailableError as error:
+            logger.warning("Ollama chat retry failed: %s", str(error))
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="AI assistant is temporarily unavailable. Your message is still saved.",
+                headers={
+                    "X-Chat-Message-Saved": "true",
+                    "X-Chat-Message-Id": str(message_id),
+                },
+            ) from None
+
+        return ChatMessageResponse(
+            conversation_id=conversation_id,
+            user_message=user_message_response,
+            assistant_message=assistant_message_response,
+        )
+
+
+@app.get("/api/v1/ai/health", tags=["AI"])
+async def ollama_health_check(
+    _user: User = Depends(get_authenticated_user),
+) -> dict[str, object]:
+    """Check Ollama availability and whether the configured model is installed."""
+    import json
+    from urllib.error import URLError
+    from urllib.request import urlopen
+
+    def fetch_ollama_status() -> tuple[str | None, list[str] | None]:
+        version: str | None = None
+        model_names: list[str] | None = None
+
+        with urlopen(
+            f"{OLLAMA_BASE_URL}/api/version",
+            timeout=OLLAMA_HEALTH_TIMEOUT_SECONDS,
+        ) as response:
+            version_payload = json.loads(response.read().decode("utf-8"))
+            version = version_payload.get("version")
+
+        with urlopen(
+            f"{OLLAMA_BASE_URL}/api/tags",
+            timeout=OLLAMA_HEALTH_TIMEOUT_SECONDS,
+        ) as response:
+            tags_payload = json.loads(response.read().decode("utf-8"))
+            model_names = [
+                item.get("name", "")
+                for item in tags_payload.get("models", [])
+                if isinstance(item, dict)
+            ]
+        return version, model_names
+
+    try:
+        version, model_names = await asyncio.to_thread(fetch_ollama_status)
+    except (OSError, URLError, TimeoutError, ValueError) as error:
+        logger.warning("Ollama health check failed: %s", type(error).__name__)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "status": "unavailable",
+                "provider": "ollama",
+                "connected": False,
+                "model": OLLAMA_MODEL,
+                "model_available": False,
+            },
+        ) from None
+
+    available_models = set(model_names or [])
+    model_available = any(
+        name == OLLAMA_MODEL or name.startswith(f"{OLLAMA_MODEL}:")
+        for name in available_models
+    )
+    result: dict[str, object] = {
+        "status": "ok" if model_available else "degraded",
+        "provider": "ollama",
+        "connected": True,
+        "version": version,
+        "model": OLLAMA_MODEL,
+        "model_available": model_available,
+    }
+    if not model_available:
+        result["available_models"] = sorted(available_models)
+
+    if not model_available:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=result,
+        )
+    return result

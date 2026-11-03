@@ -4,6 +4,7 @@ import { LanguageSwitch } from '../components/LanguageSwitch'
 import { ticketsApi } from '../ticketsApi'
 import { TicketsPage } from './TicketsPage'
 import { ProfilePage } from './ProfilePage'
+import { ChatPage } from './ChatPage'
 import type { Copy } from '../i18n/copy'
 import type { AuthMode, AuthenticatedUser, Language, TicketSummary } from '../types'
 
@@ -37,7 +38,7 @@ export function HomePage({
   onShowPreviewNotice,
 }: HomePageProps) {
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
-  const [activeView, setActiveView] = useState<'home' | 'tickets' | 'profile'>('home')
+  const [activeView, setActiveView] = useState<'home' | 'tickets' | 'profile' | 'chat'>('home')
   const [ticketSummary, setTicketSummary] = useState<TicketSummary>({ total: 0, open: 0, closed: 0 })
   const [summaryError, setSummaryError] = useState('')
   const [summaryRefresh, setSummaryRefresh] = useState(0)
@@ -116,10 +117,9 @@ export function HomePage({
             <Icon name="home" />
             <span>{text.home}</span>
           </a>
-          <button className="nav-link" onClick={onShowPreviewNotice} type="button">
+          <button className={`nav-link ${activeView === "chat" ? "active" : ""}`} onClick={() => currentUser ? setActiveView("chat") : onShowPreviewNotice()} type="button">
             <Icon name="message" />
             <span>{text.chat}</span>
-            <span className="nav-soon">›</span>
           </button>
           <button className={`nav-link ${activeView === 'tickets' ? 'active' : ''}`} onClick={() => currentUser ? setActiveView('tickets') : onShowPreviewNotice()} type="button">
             <Icon name="ticket" />
@@ -206,7 +206,9 @@ export function HomePage({
         </header>
 
         <div className="page-content">
-          {activeView === 'profile' && currentUser ? (
+          {activeView === 'chat' && currentUser ? (
+            <ChatPage language={language} onBackHome={() => setActiveView('home')} />
+          ) : activeView === 'profile' && currentUser ? (
             <ProfilePage
               currentUser={currentUser}
               language={language}
@@ -254,7 +256,7 @@ export function HomePage({
               <h2>{text.actionTitle}</h2>
               <p>{text.actionDescription}</p>
             </div>
-            <button className="button button-primary" onClick={onShowPreviewNotice} type="button">
+            <button className="button button-primary" onClick={() => currentUser ? setActiveView("chat") : onShowPreviewNotice()} type="button">
               {text.startChat}
               <Icon name="arrow" />
             </button>
