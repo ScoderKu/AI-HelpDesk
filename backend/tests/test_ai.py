@@ -203,7 +203,7 @@ class OllamaResponseTests(unittest.TestCase):
                     {"message": {"content": "second."}, "done": False},
                     {"message": {"content": ""}, "done": True},
                 ]
-                return iter((json.dumps(item) + "\\n").encode() for item in chunks)
+                return iter((json.dumps(item) + "\n").encode() for item in chunks)
 
         with patch(
             "app.ai.urlopen",
