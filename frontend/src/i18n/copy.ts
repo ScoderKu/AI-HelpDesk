@@ -1,8 +1,26 @@
 import type { Language } from '../types'
 
-export const copy = {
-  fi: {
+const fi = {
     home: 'Etusivu',
+    chatTitle: 'AI-keskustelu',
+    chatNew: 'Uusi keskustelu',
+    chatPlaceholder: 'Kirjoita tekninen ongelmasi…',
+    chatSend: 'Lähetä',
+    chatSending: 'AI muodostaa vastausta…',
+    chatLoadingHistory: 'Ladataan keskusteluhistoriaa…',
+    chatHistoryEmpty: 'Aiemmat keskustelut näkyvät tässä.',
+    chatEmpty: 'Aloita kuvailemalla tekninen ongelmasi.',
+    chatLoadError: 'Keskusteluja ei voitu ladata. Yritä uudelleen.',
+    chatSendError: 'Viestin lähettäminen epäonnistui. Yritä uudelleen.',
+    chatRetry: 'Yritä uudelleen',
+    chatHistory: 'Keskusteluhistoria',
+    chatUser: 'Sinä',
+    chatAssistant: 'AI-avustaja',
+    chatComposerLabel: 'Kirjoita viesti AI-avustajalle',
+    chatAiUnavailable: 'Viesti tallennettiin, mutta AI ei vastannut. Yritä vastausta uudelleen.',
+    chatPreviousUnanswered: 'Edellinen viesti odottaa AI-vastausta. Yritä sen vastausta ensin.',
+    summaryLoading: 'Ladataan yhteenvetoa…',
+    summaryUnavailable: 'Yhteenvetoa ei voitu ladata. Yritä uudelleen.',
     chat: 'AI-keskustelu',
     tickets: 'Tukipyynnöt',
     profile: 'Profiili',
@@ -142,9 +160,29 @@ export const copy = {
     registrationValidationError: 'Tarkista antamasi tiedot ja yritä uudelleen.',
     registrationNetworkError: 'Palveluun ei saatu yhteyttä. Yritä myöhemmin uudelleen.',
     registrationError: 'Tilin luominen ei onnistunut. Yritä myöhemmin uudelleen.',
-  },
-  en: {
+}
+
+const en = {
     home: 'Home',
+    chatTitle: 'AI chat',
+    chatNew: 'New conversation',
+    chatPlaceholder: 'Describe your technical issue…',
+    chatSend: 'Send',
+    chatSending: 'AI is preparing a response…',
+    chatLoadingHistory: 'Loading conversation history…',
+    chatHistoryEmpty: 'Your previous conversations will appear here.',
+    chatEmpty: 'Start by describing your technical issue.',
+    chatLoadError: 'Could not load conversations. Please try again.',
+    chatSendError: 'Could not send the message. Please try again.',
+    chatRetry: 'Try again',
+    chatHistory: 'Conversation history',
+    chatUser: 'You',
+    chatAssistant: 'AI assistant',
+    chatComposerLabel: 'Write a message to the AI assistant',
+    chatAiUnavailable: 'Your message was saved, but AI did not respond. Retry the answer.',
+    chatPreviousUnanswered: 'The previous message is awaiting an AI response. Retry it first.',
+    summaryLoading: 'Loading summary…',
+    summaryUnavailable: 'Could not load the summary. Please try again.',
     chat: 'AI chat',
     tickets: 'Support tickets',
     profile: 'Profile',
@@ -284,7 +322,8 @@ export const copy = {
     registrationValidationError: 'Check the information you entered and try again.',
     registrationNetworkError: 'Could not connect to the service. Please try again later.',
     registrationError: 'The account could not be created. Please try again later.',
-  },
-} satisfies Record<Language, Record<string, string>>
+}
+
+export const copy = { fi, en } satisfies Record<Language, typeof fi>
 
 export type Copy = (typeof copy)[Language]

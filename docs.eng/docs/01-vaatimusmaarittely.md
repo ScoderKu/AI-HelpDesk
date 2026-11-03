@@ -21,7 +21,7 @@ AI HelpDesk aims to simplify this process by providing AI-powered advice, the ab
 ## 3. Project Objectives
 
 The objective of the project is to design and implement a working AI HelpDesk application that meets the following objectives:
-- Users can register, sign in, and edit their own profile information.
+- Users can register, sign in, view their profile, update their username, and change their password. First name, last name, and email address are read-only.
 - Users can discuss technical problems with AI.
 - AI can ask for additional information, such as the operating system, error message, or steps to reproduce the problem.
 - Users can create support requests, view their own requests, and close them.
@@ -76,7 +76,7 @@ The application must meet the following functional requirements.
 | ID | Requirement |
 |---|---|
 | FR-01 | Users can register and sign in. |
-| FR-02 | Users can view and edit their own profile information. |
+| FR-02 | Users can view their profile, update their username, and change their password. First name, last name, and email address are read-only. |
 | FR-03 | Users can create a new support request. |
 | FR-04 | Users can view and close their own support requests. |
 | FR-05 | A support request has a title, description, status, priority, creation time, and user identifier. |
@@ -163,7 +163,7 @@ The following table maps functional requirements to user stories, acceptance cri
 | Requirement | User story and acceptance criteria | Verification |
 |---|---|---|
 | FR-01 | US-01 (AC-01.1–AC-01.4), US-02 (AC-02.1–AC-02.3) | TEST-01: registration, sign-in, and permission check |
-| FR-02 | US-03 (AC-03.1–AC-03.3) | TEST-02: retrieving one's own profile and updating permitted information |
+| FR-02 | US-03 (AC-03.1–AC-03.5) | TEST-02: retrieving one's own profile and updating permitted information |
 | FR-03 | US-04 (AC-04.1–AC-04.3) | TEST-03: creating a support request and validating fields |
 | FR-04 | US-05 (AC-05.1–AC-05.4) | TEST-04: listing one's own requests, closing, and ownership check |
 | FR-05 | US-04 (AC-04.2) | TEST-05: support request fields, default values, and timestamps |

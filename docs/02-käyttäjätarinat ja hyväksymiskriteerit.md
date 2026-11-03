@@ -75,7 +75,7 @@ Sovelluksen kehittäjä vastaa sovelluksen teknisestä toteutuksesta, tietokanna
 ### US-03: Käyttäjäprofiilin hallinta
 
 - Roolina rekisteröityneenä käyttäjänä
-- Haluan tarkastella ja muokata omia profiilitietojani.
+- Haluan tarkastella profiilitietojani ja päivittää käyttäjänimeni.
 - Jotta tietoni pysyvät ajan tasalla.
 
 **Hyväksymiskriteerit**
@@ -90,9 +90,9 @@ Sovelluksen kehittäjä vastaa sovelluksen teknisestä toteutuksesta, tietokanna
 **AC-03.2 – Profiilitietojen päivittäminen**
 
 - Oletetaan, että käyttäjä on avannut oman profiilisivunsa.
-- Kun käyttäjä muokkaa etunimeään, sukunimeään tai käyttäjänimeään ja tallentaa muutokset.
+- Kun käyttäjä muokkaa käyttäjänimeään ja tallentaa muutokset.
 - Niin järjestelmä validoi tiedot, tallentaa sallitut muutokset ja näyttää päivitetyt tiedot.
-- Sähköpostiosoitetta ei voi muuttaa profiilin kautta, eikä backend hyväksy sen päivittämistä.
+- Etunimi, sukunimi ja sähköpostiosoite näytetään vain luettavina. Niitä ei voi muuttaa profiilin kautta, eikä backend hyväksy niiden päivittämistä.
 
 **AC-03.3 – Salasanan vaihtaminen**
 
@@ -560,7 +560,7 @@ US-16:n laajuuteen kuuluvat frontendin, backendin ja Ollaman Docker-konfiguraati
 |---|---|
 | US-01: Käyttäjän rekisteröityminen | P1 |
 | US-02: Käyttäjän kirjautuminen | P1 |
-| US-03: Käyttäjäprofiilin hallinta | P1 |
+| US-03: Käyttäjäprofiilin tarkastelu ja käyttäjänimen hallinta | P1 |
 | US-04: Tukipyynnön luominen | P1 |
 | US-05: Omien tukipyyntöjen tarkastelu ja sulkeminen | P1 |
 | US-06: Tekoälypohjainen keskustelu | P1 |

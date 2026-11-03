@@ -10,6 +10,17 @@ type TicketsPageProps = {
   onChanged: () => void
 }
 
+type TicketRoute = { mode: 'list' | 'create' | 'detail' | 'edit'; ticketId: number | null }
+
+function readTicketRoute(): TicketRoute {
+  const parts = window.location.hash.slice(1).replace(/^\//, '').split('/')
+  if (parts[0] !== 'tickets') return { mode: 'list', ticketId: null }
+  if (parts[1] === 'new') return { mode: 'create', ticketId: null }
+  const ticketId = parts[1] ? Number(parts[1]) : null
+  if (ticketId !== null && Number.isInteger(ticketId) && ticketId > 0) return { mode: parts[2] === 'edit' ? 'edit' : 'detail', ticketId }
+  return { mode: 'list', ticketId: null }
+}
+
 type TicketFormValues = {
   title: string
   description: string
@@ -44,68 +55,80 @@ function formatDate(value: string, language: Language): string {
 export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPageProps) {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
-  const [mode, setMode] = useState<'list' | 'create' | 'detail'>('list')
+  const [ticketRoute, setTicketRoute] = useState<TicketRoute>(readTicketRoute)
+  const mode = ticketRoute.mode === 'edit' ? 'detail' : ticketRoute.mode
+  const isEditing = ticketRoute.mode === 'edit'
   const [form, setForm] = useState<TicketFormValues>(emptyForm)
-  const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
   const [feedback, setFeedback] = useState('')
+  const [showValidation, setShowValidation] = useState(false)
 
-  const loadTickets = async () => {
-    setIsLoading(true)
-    setError('')
-    try {
-      setTickets(await ticketsApi.list())
-    } catch {
-      setError(text.ticketLoadError)
-    } finally {
-      setIsLoading(false)
-    }
+  const navigateTicket = (next: TicketRoute) => {
+    const hash = next.mode === 'list' ? '#tickets' : next.mode === 'create' ? '#tickets/new' : next.mode === 'edit' ? `#tickets/${next.ticketId}/edit` : `#tickets/${next.ticketId}`
+    if (window.location.hash !== hash) window.history.pushState(null, '', hash)
+    setTicketRoute(next)
   }
 
   useEffect(() => {
+    const syncRoute = () => setTicketRoute(readTicketRoute())
+    window.addEventListener('hashchange', syncRoute)
+    window.addEventListener('popstate', syncRoute)
+    return () => { window.removeEventListener('hashchange', syncRoute); window.removeEventListener('popstate', syncRoute) }
+  }, [])
+
+  useEffect(() => {
     let active = true
-    ticketsApi.list()
-      .then((items) => { if (active) setTickets(items) })
-      .catch(() => { if (active) setError(text.ticketLoadError) })
-      .finally(() => { if (active) setIsLoading(false) })
+    if (ticketRoute.mode === 'list') {
+      setIsLoading(true)
+      setError('')
+      ticketsApi.list().then((items) => { if (active) setTickets(items) })
+        .catch(() => { if (active) setError(text.ticketLoadError) })
+        .finally(() => { if (active) setIsLoading(false) })
+    } else if (ticketRoute.mode === 'detail' || ticketRoute.mode === 'edit') {
+      const id = ticketRoute.ticketId
+      if (id === null) return () => { active = false }
+      setIsLoading(true)
+      setError('')
+      setSelectedTicket(null)
+      ticketsApi.get(id).then((ticket) => {
+        if (!active) return
+        setSelectedTicket(ticket)
+        setForm({ title: ticket.title, description: ticket.description, priority: ticket.priority })
+        setShowValidation(false)
+      }).catch((requestError) => {
+        if (active) setError(getErrorStatus(requestError) === 404 ? text.ticketNotFound : text.ticketLoadError)
+      }).finally(() => { if (active) setIsLoading(false) })
+    } else {
+      setIsLoading(false)
+      setSelectedTicket(null)
+      setError('')
+    }
     return () => { active = false }
-  }, [text.ticketLoadError])
+  }, [ticketRoute, text.ticketLoadError, text.ticketNotFound])
 
   const openCreate = () => {
     setForm(emptyForm)
     setFeedback('')
     setError('')
-    setMode('create')
+    setShowValidation(false)
+    navigateTicket({ mode: 'create', ticketId: null })
   }
 
-  const openTicket = async (id: number) => {
-    setIsLoading(true)
-    setError('')
+  const openTicket = (id: number) => {
     setFeedback('')
-    try {
-      const ticket = await ticketsApi.get(id)
-      setSelectedTicket(ticket)
-      setForm({ title: ticket.title, description: ticket.description, priority: ticket.priority })
-      setIsEditing(false)
-      setMode('detail')
-    } catch (requestError) {
-      setError(getErrorStatus(requestError) === 404 ? text.ticketNotFound : text.ticketLoadError)
-    } finally {
-      setIsLoading(false)
-    }
+    navigateTicket({ mode: 'detail', ticketId: id })
   }
 
-  const returnToList = async () => {
-    setMode('list')
+  const returnToList = () => {
     setSelectedTicket(null)
-    setIsEditing(false)
-    await loadTickets()
+    navigateTicket({ mode: 'list', ticketId: null })
   }
 
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    setShowValidation(true)
     setError('')
     if (!form.title.trim()) { setError(text.ticketTitleRequired); return }
     if (!form.description.trim()) { setError(text.ticketDescriptionRequired); return }
@@ -114,7 +137,7 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
       const ticket = await ticketsApi.create({ ...form, title: form.title.trim(), description: form.description.trim() })
       setSelectedTicket(ticket)
       setForm({ title: ticket.title, description: ticket.description, priority: ticket.priority })
-      setMode('detail')
+      navigateTicket({ mode: 'detail', ticketId: ticket.id })
       setFeedback(text.ticketCreated)
       onChanged()
     } catch {
@@ -127,6 +150,7 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
   const handleUpdate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!selectedTicket) return
+    setShowValidation(true)
     setError('')
     if (!form.title.trim()) { setError(text.ticketTitleRequired); return }
     if (!form.description.trim()) { setError(text.ticketDescriptionRequired); return }
@@ -135,7 +159,7 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
       const ticket = await ticketsApi.update(selectedTicket.id, { ...form, title: form.title.trim(), description: form.description.trim() })
       setSelectedTicket(ticket)
       setForm({ title: ticket.title, description: ticket.description, priority: ticket.priority })
-      setIsEditing(false)
+      navigateTicket({ mode: 'detail', ticketId: ticket.id })
       setFeedback(text.ticketUpdated)
     } catch {
       setError(text.ticketActionError)
@@ -166,22 +190,28 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
         <span>{text.ticketTitleLabel}</span>
         <input
           maxLength={200}
+          id="ticket-title-input"
           required
           value={form.title}
-          aria-invalid={!form.title.trim()}
+          aria-invalid={showValidation && !form.title.trim()}
+          aria-describedby={showValidation && !form.title.trim() ? 'ticket-title-error' : undefined}
           onChange={(event) => setForm({ ...form, title: event.target.value })}
         />
+        {showValidation && !form.title.trim() && <span className="ticket-field-error" id="ticket-title-error">{text.ticketTitleRequired}</span>}
       </label>
       <label className="ticket-field">
         <span>{text.ticketDescriptionLabel}</span>
         <textarea
           maxLength={65535}
+          id="ticket-description-input"
           required
           rows={6}
           value={form.description}
-          aria-invalid={!form.description.trim()}
+          aria-invalid={showValidation && !form.description.trim()}
+          aria-describedby={showValidation && !form.description.trim() ? 'ticket-description-error' : undefined}
           onChange={(event) => setForm({ ...form, description: event.target.value })}
         />
+        {showValidation && !form.description.trim() && <span className="ticket-field-error" id="ticket-description-error">{text.ticketDescriptionRequired}</span>}
       </label>
       <label className="ticket-field ticket-priority-field">
         <span>{text.ticketPriorityLabel}</span>
@@ -247,10 +277,10 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
       )}
 
       {mode === 'create' && (
-        <form className="ticket-form-panel" onSubmit={(event) => void handleCreate(event)}>
+        <form className="ticket-form-panel" noValidate onSubmit={(event) => void handleCreate(event)}>
           {formFields}
           <div className="ticket-form-actions">
-            <button className="button button-secondary" disabled={isSaving} onClick={() => setMode('list')} type="button">
+            <button className="button button-secondary" disabled={isSaving} onClick={() => navigateTicket({ mode: 'list', ticketId: null })} type="button">
               {text.ticketCancel}
             </button>
             <button className="button button-primary" disabled={isSaving} type="submit">
@@ -259,6 +289,8 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
           </div>
         </form>
       )}
+
+      {(ticketRoute.mode === 'detail' || ticketRoute.mode === 'edit') && isLoading && <p className="ticket-empty-state" role="status">{text.ticketLoading}</p>}
 
       {mode === 'detail' && selectedTicket && (
         <div className="ticket-detail-panel">
@@ -272,12 +304,12 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
             </span>
           </div>
           {isEditing ? (
-            <form className="ticket-form" onSubmit={(event) => void handleUpdate(event)}>
+            <form className="ticket-form" noValidate onSubmit={(event) => void handleUpdate(event)}>
               {formFields}
               <div className="ticket-form-actions">
                 <button className="button button-secondary" disabled={isSaving} onClick={() => {
                   setForm({ title: selectedTicket.title, description: selectedTicket.description, priority: selectedTicket.priority })
-                  setIsEditing(false)
+                  navigateTicket({ mode: 'detail', ticketId: selectedTicket.id })
                 }} type="button">{text.ticketCancel}</button>
                 <button className="button button-primary" disabled={isSaving} type="submit">
                   {isSaving ? text.ticketLoading : text.ticketSave}
@@ -297,7 +329,7 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
               <div className="ticket-form-actions">
                 {selectedTicket.status === 'OPEN' && (
                   <>
-                    <button className="button button-secondary" disabled={isSaving} onClick={() => setIsEditing(true)} type="button">
+                    <button className="button button-secondary" disabled={isSaving} onClick={() => { setShowValidation(false); navigateTicket({ mode: 'edit', ticketId: selectedTicket.id }) }} type="button">
                       {text.ticketEdit}
                     </button>
                     <button className="button button-danger" disabled={isSaving} onClick={() => void handleClose()} type="button">
