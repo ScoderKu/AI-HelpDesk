@@ -254,7 +254,7 @@ export function ChatPage({ text: t }: ChatPageProps) {
         <aside className="chat-history" aria-label={t.chatHistory}>
           <div className="chat-history-heading">
             <h2>{t.chatHistory}</h2>
-            <button className="button button-primary" type="button" onClick={() => void startConversation}>{t.chatNew}</button>
+            <button className="button button-primary" type="button" onClick={() => void startConversation()}>{t.chatNew}</button>
           </div>
           <div className="chat-history-list" aria-busy={loading}>
             {loading ? <p role="status">{t.chatLoadingHistory}</p> : conversations.length === 0 ? (
