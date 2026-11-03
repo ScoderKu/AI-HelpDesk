@@ -1089,9 +1089,10 @@ async def create_conversation_ticket_draft(
     messages = db.scalars(
         select(Message)
         .where(Message.conversation_id == conversation_id)
-        .order_by(Message.created_at.asc(), Message.id.asc())
+        .order_by(Message.created_at.desc(), Message.id.desc())
         .limit(20)
     ).all()
+    messages.reverse()
     if not any(message.role == "USER" for message in messages):
         raise HTTPException(status_code=400, detail="The conversation has no user messages.")
     ollama_messages = [
