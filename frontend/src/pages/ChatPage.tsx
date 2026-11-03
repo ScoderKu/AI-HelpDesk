@@ -162,6 +162,8 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     onConversationChange(id)
     setMessages([])
     setRetryMessageId(null)
+    setTicketDraft(null)
+    setTicketFeedback('')
     setMessageLoadError(false)
     try {
       const items = await api<Message[]>(`/api/v1/conversations/${id}/messages`)
@@ -190,6 +192,8 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
       setConversations((current) => [item, ...current])
       setMessages([])
       setRetryMessageId(null)
+      setTicketDraft(null)
+      setTicketFeedback('')
     } catch {
       setError(t.chatLoadError)
     }
@@ -384,6 +388,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
   const createTicketFromConversation = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const conversationId = activeConversationId.current
+    const requestId = conversationRequest.current
     if (conversationId === null || ticketDraft === null || creatingTicket) return
     if (!ticketDraft.title.trim() || !ticketDraft.description.trim()) { setError(t.chatTicketFieldsRequired); return }
     setCreatingTicket(true)
@@ -394,10 +399,14 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
         method: 'POST',
         body: JSON.stringify({ title: ticketDraft.title.trim(), description: ticketDraft.description.trim(), priority: ticketDraft.priority }),
       })
-      setTicketDraft(null)
-      setTicketFeedback(t.chatTicketCreated)
+      if (activeConversationId.current === conversationId && conversationRequest.current === requestId) {
+        setTicketDraft(null)
+        setTicketFeedback(t.chatTicketCreated)
+      }
     } catch {
-      setError(t.chatTicketCreateError)
+      if (activeConversationId.current === conversationId && conversationRequest.current === requestId) {
+        setError(t.chatTicketCreateError)
+      }
     } finally {
       setCreatingTicket(false)
     }
