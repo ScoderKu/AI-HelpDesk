@@ -6,6 +6,7 @@ import type { Copy } from '../i18n/copy'
 
 type Conversation = { id: number; title: string | null; created_at: string; updated_at: string }
 type Message = { id: number; role: 'USER' | 'ASSISTANT'; content: string; created_at: string }
+type TicketDraft = { title: string; description: string; priority: 'LOW' | 'MEDIUM' | 'HIGH' }
 type ChatPageProps = { text: Copy; initialConversationId: number | null; onConversationChange: (id: number | null) => void }
 
 class ChatApiError extends Error {
@@ -17,6 +18,21 @@ class ChatApiError extends Error {
     this.status = status
     this.savedMessageId = savedMessageId
   }
+}
+
+function buildTicketDraft(messages: Message[], conversationTitle: string | null, userLabel: string, assistantLabel: string, fallbackTitle: string): TicketDraft {
+  const firstUserMessage = messages.find((message) => message.role === 'USER')
+  const suggestedTitle = conversationTitle?.trim() || firstUserMessage?.content.split('\n')[0]?.trim() || fallbackTitle
+  const transcript = messages.map((message) => `${message.role === 'USER' ? userLabel : assistantLabel}:\n${message.content}`).join('\n\n')
+  const encoder = new TextEncoder()
+  let byteLength = 0
+  const description = Array.from(transcript).filter((character) => {
+    const size = encoder.encode(character).length
+    if (byteLength + size > 60000) return false
+    byteLength += size
+    return true
+  }).join('')
+  return { title: suggestedTitle.slice(0, 200), description, priority: 'MEDIUM' }
 }
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -57,6 +73,9 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
   const [error, setError] = useState('')
   const [conversationListError, setConversationListError] = useState(false)
   const [messageLoadError, setMessageLoadError] = useState(false)
+  const [ticketDraft, setTicketDraft] = useState<TicketDraft | null>(null)
+  const [creatingTicket, setCreatingTicket] = useState(false)
+  const [ticketFeedback, setTicketFeedback] = useState('')
   const messagesRef = useRef<HTMLDivElement>(null)
   const composerRef = useRef<HTMLTextAreaElement>(null)
   const focusComposerAfterResponse = useRef(false)
@@ -353,6 +372,37 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     }
   }
 
+  const openTicketDraft = () => {
+    const conversationId = activeConversationId.current
+    if (conversationId === null || messages.length === 0 || sending) return
+    const conversation = conversations.find((item) => item.id === conversationId)
+    setTicketDraft(buildTicketDraft(messages, conversation?.title ?? null, t.chatUser, t.chatAssistant, t.chatTicketDefaultTitle))
+    setTicketFeedback('')
+    setError('')
+  }
+
+  const createTicketFromConversation = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const conversationId = activeConversationId.current
+    if (conversationId === null || ticketDraft === null || creatingTicket) return
+    if (!ticketDraft.title.trim() || !ticketDraft.description.trim()) { setError(t.chatTicketFieldsRequired); return }
+    setCreatingTicket(true)
+    setError('')
+    setTicketFeedback('')
+    try {
+      await api(`/api/v1/conversations/${conversationId}/tickets`, {
+        method: 'POST',
+        body: JSON.stringify({ title: ticketDraft.title.trim(), description: ticketDraft.description.trim(), priority: ticketDraft.priority }),
+      })
+      setTicketDraft(null)
+      setTicketFeedback(t.chatTicketCreated)
+    } catch {
+      setError(t.chatTicketCreateError)
+    } finally {
+      setCreatingTicket(false)
+    }
+  }
+
   const handleComposerKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey && !event.repeat && !event.nativeEvent.isComposing) {
       event.preventDefault()
@@ -438,6 +488,36 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
             </div>
           )}
           {error && <p className="chat-error" role="alert">{error}</p>}
+          {ticketFeedback && <p className="chat-ticket-feedback" role="status">{ticketFeedback} <a href="#tickets">{t.viewTickets}</a></p>}
+          {activeId !== null && messages.length > 0 && !sending && ticketDraft === null && (
+            <div className="chat-ticket-actions">
+              <button className="button button-secondary" type="button" onClick={openTicketDraft}>{t.chatCreateTicket}</button>
+            </div>
+          )}
+          {ticketDraft !== null && (
+            <form className="chat-ticket-editor" noValidate onSubmit={(event) => void createTicketFromConversation(event)}>
+              <h3>{t.chatTicketReviewTitle}</h3>
+              <p>{t.chatTicketReviewDescription}</p>
+              <label className="chat-ticket-field">
+                <span>{t.ticketTitleLabel}</span>
+                <input maxLength={200} required value={ticketDraft.title} onChange={(event) => setTicketDraft({ ...ticketDraft, title: event.target.value })} />
+              </label>
+              <label className="chat-ticket-field">
+                <span>{t.ticketDescriptionLabel}</span>
+                <textarea maxLength={60000} required rows={6} value={ticketDraft.description} onChange={(event) => setTicketDraft({ ...ticketDraft, description: event.target.value })} />
+              </label>
+              <label className="chat-ticket-field">
+                <span>{t.ticketPriorityLabel}</span>
+                <select value={ticketDraft.priority} onChange={(event) => setTicketDraft({ ...ticketDraft, priority: event.target.value as TicketDraft['priority'] })}>
+                  <option value="LOW">{t.priorityLow}</option><option value="MEDIUM">{t.priorityMedium}</option><option value="HIGH">{t.priorityHigh}</option>
+                </select>
+              </label>
+              <div className="chat-ticket-editor-actions">
+                <button className="button button-secondary" type="button" disabled={creatingTicket} onClick={() => setTicketDraft(null)}>{t.ticketCancel}</button>
+                <button className="button button-primary" type="submit" disabled={creatingTicket || !ticketDraft.title.trim() || !ticketDraft.description.trim()}>{creatingTicket ? t.chatTicketCreating : t.chatTicketConfirm}</button>
+              </div>
+            </form>
+          )}
           {retryMessageId !== null && (
             <button className="button button-secondary" type="button" onClick={() => void retryAnswer()} disabled={sending}>
               {t.chatRetry}
