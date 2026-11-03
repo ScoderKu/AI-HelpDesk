@@ -233,7 +233,7 @@ class OllamaResponseTests(unittest.TestCase):
     def test_ticket_draft_is_structured_concise_and_uses_conversation_language(self) -> None:
         draft_json = json.dumps({
             "title": "Wi-Fi disconnects every few minutes",
-            "description": "Problem: The Wi-Fi connection disconnects every few minutes.\\nTried: Restarting the router did not help.",
+            "description": "Problem: The Wi-Fi connection disconnects every few minutes.\nTried: Restarting the router did not help.",
         })
         messages = [
             {"role": "user", "content": "My Wi-Fi keeps disconnecting."},
@@ -245,7 +245,7 @@ class OllamaResponseTests(unittest.TestCase):
 
         self.assertEqual(result, GeneratedTicketDraft(
             "Wi-Fi disconnects every few minutes",
-            "Problem: The Wi-Fi connection disconnects every few minutes.\\nTried: Restarting the router did not help.",
+            "Problem: The Wi-Fi connection disconnects every few minutes.\nTried: Restarting the router did not help.",
         ))
         payload = json.loads(urlopen.call_args.args[0].data)
         self.assertIn("Do not invent causes", payload["messages"][0]["content"])
@@ -267,17 +267,17 @@ class OllamaResponseTests(unittest.TestCase):
             def __iter__(self):
                 chunks = [
                     {"message": {"content": "I could not solve this reliably. "}, "done": False},
-                    {"message": {"content": "Please create a support ticket.\\n[TICKET_"}, "done": False},
+                    {"message": {"content": "Please create a support ticket.\n[TICKET_"}, "done": False},
                     {"message": {"content": "RECOMMENDED]"}, "done": False},
                     {"message": {"content": ""}, "done": True},
                 ]
-                return iter((json.dumps(item) + "\\n").encode() for item in chunks)
+                return iter((json.dumps(item) + "\n").encode() for item in chunks)
         with patch("app.ai.urlopen", side_effect=[
             ollama_response(json.dumps({"input_language": "English", "requested_language": None})),
             StreamResponse(),
         ]):
             events = list(generate_reply_stream([{"role": "user", "content": "Nothing works"}]))
         content = "".join(value for kind, value in events if kind == "content")
-        self.assertEqual(content, "I could not solve this reliably. Please create a support ticket.\\n")
+        self.assertEqual(content, "I could not solve this reliably. Please create a support ticket.\n")
         self.assertEqual(events[-1], ("ticket_recommendation", True))
         self.assertNotIn(marker, content)
