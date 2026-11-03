@@ -127,6 +127,8 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
       setActiveId(null)
       setMessages([])
       setRetryMessageId(null)
+      setTicketDraft(null)
+      setTicketFeedback('')
       setMessageLoadError(false)
       setError('')
     }
