@@ -195,7 +195,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 clamp(24px, 5vw, 72px);
+  padding: 0 clamp(24px, 4vw, 64px);
   border-bottom: 1px solid var(--line);
   background: #ffffffcc;
 }
@@ -233,8 +233,8 @@
 }
 
 .page-content {
-  width: min(100% - 112px, 1020px);
-  margin: 34px auto 0;
+  width: min(calc(100% - clamp(40px, 6vw, 112px)), 1480px);
+  margin: 30px auto 0;
 }
 
 .preview-notice {
@@ -584,10 +584,20 @@
 .tickets-page-heading,
 .ticket-detail-heading {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 18px;
   margin-bottom: 22px;
+}
+
+.tickets-page:not(.profile-page) .tickets-page-heading,
+.tickets-page:not(.profile-page) > .ticket-list-panel,
+.tickets-page:not(.profile-page) > .ticket-form-panel,
+.tickets-page:not(.profile-page) > .ticket-detail-panel {
+  width: 100%;
+  max-width: 1160px;
+  box-sizing: border-box;
+  margin-inline: auto;
 }
 
 .tickets-page-heading h1 {
@@ -622,9 +632,11 @@
 
 .ticket-list-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  width: 100%;
+  box-sizing: border-box;
+  grid-template-columns: minmax(0, 1fr) 112px 112px;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   padding: 15px 8px;
   border: 0;
   border-bottom: 1px solid var(--line);
@@ -645,10 +657,12 @@
 
 .ticket-list-main {
   display: grid;
+  min-width: 0;
   gap: 5px;
 }
 
 .ticket-list-main strong {
+  overflow-wrap: anywhere;
   font-size: 14px;
 }
 
@@ -660,19 +674,21 @@
 .ticket-badge {
   display: inline-flex;
   align-items: center;
-  min-height: 25px;
-  padding: 3px 9px;
+  justify-content: center;
+  min-height: 28px;
+  padding: 3px 10px;
+  border: 1px solid transparent;
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 650;
+  font-size: 12px;
+  font-weight: 750;
   white-space: nowrap;
 }
 
 .ticket-status-open { color: #9a5b1b; background: #fff4e6; }
 .ticket-status-closed { color: #267153; background: #eaf8f2; }
-.ticket-priority-low { color: #555d73; background: #f0f1f5; }
-.ticket-priority-medium { color: #6651a4; background: #f1edff; }
-.ticket-priority-high { color: #a53e48; background: #fff0f0; }
+.ticket-priority-low { color: #28527a; background: #edf5ff; border-color: #b7d1ef; }
+.ticket-priority-medium { color: #804600; background: #fff0c2; border-color: #e7b750; }
+.ticket-priority-high { color: #a61b1b; background: #ffe0df; border-color: #f29a93; }
 
 .ticket-empty-state {
   padding: 26px 12px;
@@ -744,7 +760,7 @@
 
 .ticket-detail-panel > .ticket-home-link { margin-bottom: 19px; }
 .ticket-detail-heading { align-items: center; margin-bottom: 17px; }
-.ticket-detail-heading h2 { margin: 0; color: var(--ink); font-size: 21px; }
+.ticket-detail-heading h2 { min-width: 0; margin: 0; color: var(--ink); font-size: 21px; overflow-wrap: anywhere; }
 
 .ticket-detail-meta {
   display: flex;
@@ -1008,10 +1024,12 @@ a:focus-visible {
   .ticket-list-panel,
   .ticket-form-panel,
   .ticket-detail-panel { padding: 15px; }
-  .ticket-list-row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+  .ticket-list-row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; }
   .ticket-list-row .ticket-priority-low,
   .ticket-list-row .ticket-priority-medium,
-  .ticket-list-row .ticket-priority-high { grid-column: 2; }
+  .ticket-list-row .ticket-priority-high { grid-column: 2; justify-self: end; }
+  .ticket-list-row .ticket-status-open,
+  .ticket-list-row .ticket-status-closed { grid-column: 2; justify-self: end; }
   .ticket-list-main { grid-row: span 2; }
   .ticket-detail-heading { align-items: flex-start; }
   .ticket-detail-heading h2 { font-size: 18px; }
@@ -1522,7 +1540,7 @@ a:focus-visible {
 }
 
 
-.profile-page { max-width: 760px; margin: 0 auto; }
+.profile-page { max-width: 1080px; margin: 0 auto; }
 .profile-panel { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 24px; margin-top: 18px; }
 .profile-panel h2 { margin: 0 0 18px; font-size: 18px; }
 .profile-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
@@ -1576,6 +1594,10 @@ a:focus-visible {
   border-radius: 24px;
   background: #fff;
   box-shadow: 0 28px 80px #29294a14, 0 3px 12px #29294a08;
+}
+
+.auth-card.forced-password-card {
+  padding: 0;
 }
 
 .forced-password-aside {

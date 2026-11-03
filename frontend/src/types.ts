@@ -30,7 +30,7 @@ export type TicketSummary = {
 }
 
 
-export type UserProfileUpdate = Pick<AuthenticatedUser, 'first_name' | 'last_name' | 'username'>
+export type UserProfileUpdate = Pick<AuthenticatedUser, 'username'>
 
 export type PasswordChange = {
   current_password: string

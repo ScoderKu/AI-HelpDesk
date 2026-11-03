@@ -1,4 +1,5 @@
 import asyncio
+import calendar
 from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime, timezone
@@ -18,7 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from redis import Redis
 from redis.exceptions import RedisError
-from sqlalchemy import case, delete, func, select, text
+from sqlalchemy import case, delete, func, or_, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -50,6 +51,8 @@ SESSION_COOKIE_NAME = "ai_helpdesk_session"
 SESSION_COOKIE_MAX_AGE = 60 * 60 * 8
 SESSION_CLEANUP_INTERVAL_SECONDS = 60 * 60
 SESSION_CLEANUP_BATCH_SIZE = 500
+DATA_RETENTION_MONTHS = 3
+DATA_RETENTION_INTERVAL_SECONDS = 24 * 60 * 60
 SESSION_COOKIE_SECURE = os.getenv("AUTH_COOKIE_SECURE", "true").lower() == "true"
 FRONTEND_ORIGINS = tuple(
     origin.strip()
@@ -280,6 +283,94 @@ async def cleanup_expired_sessions_periodically() -> None:
         await asyncio.sleep(SESSION_CLEANUP_INTERVAL_SECONDS)
 
 
+def data_retention_cutoff(now: datetime | None = None) -> datetime:
+    current = now or datetime.now(timezone.utc).replace(tzinfo=None)
+    month_index = current.year * 12 + current.month - 1 - DATA_RETENTION_MONTHS
+    year, month_index = divmod(month_index, 12)
+    month = month_index + 1
+    day = min(current.day, calendar.monthrange(year, month)[1])
+    return current.replace(year=year, month=month, day=day)
+
+
+def cleanup_retained_data() -> None:
+    cutoff = data_retention_cutoff()
+    deleted_tickets = 0
+    deleted_conversations = 0
+
+    with SessionLocal() as db:
+        while True:
+            expired_ticket = (
+                Ticket.status == TicketStatus.CLOSED.value,
+                Ticket.closed_at.is_not(None),
+                Ticket.closed_at <= cutoff,
+            )
+            ticket_ids = db.scalars(
+                select(Ticket.id)
+                .where(*expired_ticket)
+                .order_by(Ticket.id)
+                .limit(SESSION_CLEANUP_BATCH_SIZE)
+            ).all()
+            if not ticket_ids:
+                break
+
+            db.execute(
+                delete(Ticket).where(Ticket.id.in_(ticket_ids), *expired_ticket)
+            )
+            db.commit()
+            deleted_tickets += len(ticket_ids)
+
+        retained_ticket = (
+            select(Ticket.id)
+            .where(
+                Ticket.conversation_id == Conversation.id,
+                or_(
+                    Ticket.status != TicketStatus.CLOSED.value,
+                    Ticket.closed_at.is_(None),
+                    Ticket.closed_at > cutoff,
+                ),
+            )
+            .exists()
+        )
+        while True:
+            conversation_ids = db.scalars(
+                select(Conversation.id)
+                .where(
+                    Conversation.updated_at <= cutoff,
+                    ~retained_ticket,
+                )
+                .order_by(Conversation.id)
+                .limit(SESSION_CLEANUP_BATCH_SIZE)
+            ).all()
+            if not conversation_ids:
+                break
+
+            db.execute(
+                delete(Conversation).where(
+                    Conversation.id.in_(conversation_ids),
+                    Conversation.updated_at <= cutoff,
+                    ~retained_ticket,
+                )
+            )
+            db.commit()
+            deleted_conversations += len(conversation_ids)
+
+    if deleted_tickets or deleted_conversations:
+        logger.info(
+            "Data retention removed %s closed tickets and %s inactive conversations.",
+            deleted_tickets,
+            deleted_conversations,
+        )
+
+
+async def cleanup_retained_data_periodically() -> None:
+    while True:
+        try:
+            await asyncio.to_thread(cleanup_retained_data)
+        except SQLAlchemyError:
+            logger.exception("Failed to clean up retained conversations and tickets.")
+        await asyncio.sleep(DATA_RETENTION_INTERVAL_SECONDS)
+
+
 def create_session_token(user_id: int, expires_at: int, session_id: str) -> str:
     payload = f"{user_id}.{expires_at}.{session_id}"
     signature = hmac.new(
@@ -359,14 +450,19 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     session_cleanup_task = asyncio.create_task(
         cleanup_expired_sessions_periodically()
     )
+    retention_cleanup_task = asyncio.create_task(
+        cleanup_retained_data_periodically()
+    )
     try:
         yield
     finally:
-        session_cleanup_task.cancel()
-        try:
-            await session_cleanup_task
-        except asyncio.CancelledError:
-            pass
+        for task in (session_cleanup_task, retention_cleanup_task):
+            task.cancel()
+        for task in (session_cleanup_task, retention_cleanup_task):
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
         redis_client.close()
 
 
@@ -982,7 +1078,7 @@ async def send_chat_message(
             select(Conversation).where(
                 Conversation.id == conversation_id,
                 Conversation.user_id == authenticated_user_id,
-            )
+            ).with_for_update()
         )
         if conversation is None:
             raise HTTPException(status_code=404, detail="Conversation not found.")
@@ -1070,7 +1166,7 @@ async def retry_chat_message(
             select(Conversation).where(
                 Conversation.id == conversation_id,
                 Conversation.user_id == authenticated_user_id,
-            )
+            ).with_for_update()
         )
         if conversation is None:
             raise HTTPException(status_code=404, detail="Conversation not found.")
