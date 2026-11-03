@@ -11,6 +11,7 @@ import logging
 import os
 import secrets
 import time
+import threading
 
 from fastapi import Depends, FastAPI, HTTPException, Path, Request, Response, status
 from fastapi.encoders import jsonable_encoder
@@ -109,6 +110,56 @@ if redis.call('GET', KEYS[1]) == ARGV[1] then
 end
 return 0
 """
+RENEW_CHAT_LOCK_SCRIPT = """
+if redis.call('GET', KEYS[1]) == ARGV[1] then
+    return redis.call('EXPIRE', KEYS[1], ARGV[2])
+end
+return 0
+"""
+
+
+class ChatLockLease:
+    def __init__(self, key: str, token: str) -> None:
+        self.key = key
+        self.token = token
+        self._stop = threading.Event()
+        self._lost = threading.Event()
+        self._thread = threading.Thread(target=self._renew_until_stopped, daemon=True)
+
+    def start(self) -> None:
+        self._thread.start()
+
+    def _renew_until_stopped(self) -> None:
+        interval = max(1, CHAT_LOCK_TTL_SECONDS // 3)
+        while not self._stop.wait(interval):
+            try:
+                renewed = redis_client.eval(
+                    RENEW_CHAT_LOCK_SCRIPT, 1, self.key, self.token, CHAT_LOCK_TTL_SECONDS
+                )
+            except RedisError:
+                logger.exception("Could not renew chat lock %s", self.key)
+                continue
+            if not renewed:
+                self._lost.set()
+                return
+
+    def assert_owned(self) -> None:
+        if self._lost.is_set():
+            raise HTTPException(status_code=409, detail="The chat generation lock was lost. Please retry.")
+        try:
+            renewed = redis_client.eval(
+                RENEW_CHAT_LOCK_SCRIPT, 1, self.key, self.token, CHAT_LOCK_TTL_SECONDS
+            )
+        except RedisError as error:
+            raise HTTPException(status_code=503, detail="AI chat lock could not be verified. Please retry.") from error
+        if not renewed:
+            self._lost.set()
+            raise HTTPException(status_code=409, detail="The chat generation lock was lost. Please retry.")
+
+    def stop(self) -> None:
+        self._stop.set()
+        if self._thread.is_alive():
+            self._thread.join(timeout=2)
 
 
 logger = logging.getLogger(__name__)
@@ -129,31 +180,22 @@ def require_trusted_origin(request: Request) -> None:
 
 
 @contextmanager
-def lock_conversation_chat(conversation_id: int) -> Iterator[None]:
+def lock_conversation_chat(conversation_id: int) -> Iterator[ChatLockLease]:
     key = f"chat:conversation:{conversation_id}"
     token = secrets.token_urlsafe(24)
     try:
-        acquired = redis_client.set(
-            key,
-            token,
-            nx=True,
-            ex=CHAT_LOCK_TTL_SECONDS,
-        )
+        acquired = redis_client.set(key, token, nx=True, ex=CHAT_LOCK_TTL_SECONDS)
     except RedisError as error:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="AI chat is temporarily unavailable.",
-        ) from error
-
+        raise HTTPException(status_code=503, detail="AI chat is temporarily unavailable.") from error
     if not acquired:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="A response is already being generated for this conversation.",
-        )
+        raise HTTPException(status_code=409, detail="A response is already being generated for this conversation.")
 
+    lease = ChatLockLease(key, token)
+    lease.start()
     try:
-        yield
+        yield lease
     finally:
+        lease.stop()
         try:
             redis_client.eval(RELEASE_CHAT_LOCK_SCRIPT, 1, key, token)
         except RedisError:
@@ -1028,6 +1070,7 @@ async def generate_assistant_for_message(
     conversation_id: int,
     user_message_id: int,
     db: Session,
+    chat_lock: ChatLockLease,
 ) -> MessageResponse:
     history = db.scalars(
         select(Message)
@@ -1057,6 +1100,7 @@ async def generate_assistant_for_message(
         response_language,
     )
 
+    chat_lock.assert_owned()
     assistant_message = Message(
         conversation_id=conversation_id,
         role="ASSISTANT",
@@ -1070,6 +1114,7 @@ async def generate_assistant_for_message(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Conversation not found.",
             )
+        chat_lock.assert_owned()
         persistence_db.add(assistant_message)
         conversation.response_language = generated_reply.response_language
         conversation.updated_at = assistant_message.created_at
@@ -1110,7 +1155,7 @@ def stream_chat_message(
             return json.dumps({"event": name, **payload}, ensure_ascii=False) + "\n"
 
         try:
-            with lock_conversation_chat(conversation_id):
+            with lock_conversation_chat(conversation_id) as chat_lock:
                 with SessionLocal() as message_db:
                     conversation = message_db.scalar(
                         select(Conversation).where(
@@ -1167,6 +1212,7 @@ def stream_chat_message(
                 saved_language = response_language
                 try:
                     for kind, value in generate_reply_stream(ollama_messages, response_language):
+                        chat_lock.assert_owned()
                         if kind == "language":
                             saved_language = value
                         elif kind == "content":
@@ -1187,6 +1233,7 @@ def stream_chat_message(
                     })
                     return
 
+                chat_lock.assert_owned()
                 assistant_message = Message(
                     conversation_id=conversation_id,
                     role="ASSISTANT",
@@ -1198,6 +1245,7 @@ def stream_chat_message(
                     if conversation is None or conversation.user_id != authenticated_user_id:
                         yield event("error", {"detail": "Conversation not found."})
                         return
+                    chat_lock.assert_owned()
                     persistence_db.add(assistant_message)
                     conversation.response_language = saved_language
                     conversation.updated_at = assistant_message.created_at
@@ -1206,7 +1254,10 @@ def stream_chat_message(
                     assistant_payload = MessageResponse.model_validate(assistant_message).model_dump(mode="json")
                 yield event("done", {"assistant_message": assistant_payload})
         except HTTPException as error:
-            yield event("error", {"detail": error.detail})
+            payload: dict[str, object] = {"detail": error.detail}
+            if user_message_id is not None:
+                payload["saved_message_id"] = user_message_id
+            yield event("error", payload)
         except Exception:
             logger.exception("Unexpected error while streaming chat for conversation %s", conversation_id)
             payload: dict[str, object] = {
@@ -1292,6 +1343,7 @@ async def send_chat_message(
                 conversation_id,
                 user_message_id,
                 db,
+                chat_lock,
             )
         except OllamaUnavailableError as error:
             logger.warning("Ollama chat request failed: %s", str(error))
@@ -1372,6 +1424,7 @@ async def retry_chat_message(
                 conversation_id,
                 message_id,
                 db,
+                chat_lock,
             )
         except OllamaUnavailableError as error:
             logger.warning("Ollama chat retry failed: %s", str(error))
