@@ -52,13 +52,13 @@ export function HomePage({
   const activeView = route.view
 
   const navigateToView = (view: AppView, conversationId: number | null = null) => {
-    const hash = view === 'chat' && conversationId !== null ? `#chat/\${conversationId}` : `#\${view}`
+    const hash = view === 'chat' && conversationId !== null ? `#chat/${conversationId}` : `#${view}`
     if (window.location.hash !== hash) window.history.pushState(null, '', hash)
     setRoute({ view, conversationId: view === 'chat' ? conversationId : null })
   }
 
   const updateChatConversation = (conversationId: number | null) => {
-    const hash = conversationId === null ? '#chat' : `#chat/\${conversationId}`
+    const hash = conversationId === null ? '#chat' : `#chat/${conversationId}`
     if (window.location.hash !== hash) window.history.replaceState(null, '', hash)
     setRoute({ view: 'chat', conversationId })
   }
