@@ -11,6 +11,7 @@ os.environ.setdefault("MYSQL_DATABASE", "test")
 from fastapi import HTTPException, Request
 
 from app import main
+from app.ai import GeneratedReply
 from app.models import Conversation, Message, User
 
 
@@ -25,6 +26,7 @@ def make_conversation() -> Conversation:
         id=12,
         user_id=7,
         title=None,
+        response_language=None,
         created_at=now,
         updated_at=now,
     )
@@ -108,24 +110,31 @@ class ChatEndpointTests(unittest.TestCase):
 
     def test_db_transaction_is_ended_before_ai_and_assistant_uses_new_session(self) -> None:
         conversation = make_conversation()
+        conversation.response_language = "French"
         user_message = make_user_message()
         db = MagicMock()
         db.scalar.side_effect = [conversation.id, conversation, None]
+        db.get.return_value = conversation
         db.refresh.side_effect = lambda item: setattr(item, "id", 41)
         db.scalars.return_value.all.return_value = [user_message]
         persistence_db = MagicMock()
         persistence_db.__enter__.return_value = persistence_db
+        persistence_db.get.return_value = conversation
         persistence_db.refresh.side_effect = lambda item: setattr(item, "id", 42)
 
         async def generate_after_db_release(*_args):
             self.assertEqual(db.rollback.call_count, 2)
-            return "Restart the router."
+            return GeneratedReply("Restart the router.", "Finnish")
 
         with (
             patch.object(main.redis_client, "set", return_value=True),
             patch.object(main.redis_client, "eval", return_value=1) as release_lock,
             patch.object(main, "SessionLocal", return_value=persistence_db),
-            patch.object(main.asyncio, "to_thread", new=AsyncMock(side_effect=generate_after_db_release)),
+            patch.object(
+                main.asyncio,
+                "to_thread",
+                new=AsyncMock(side_effect=generate_after_db_release),
+            ) as generate_call,
         ):
             response = asyncio.run(
                 main.send_chat_message(
@@ -139,6 +148,12 @@ class ChatEndpointTests(unittest.TestCase):
 
         self.assertEqual(response.user_message.id, 41)
         self.assertEqual(response.assistant_message.content, "Restart the router.")
+        self.assertEqual(conversation.response_language, "Finnish")
+        generate_call.assert_awaited_once_with(
+            main.generate_reply,
+            [{"role": "user", "content": "Help with Wi-Fi"}],
+            "French",
+        )
         persistence_db.commit.assert_called_once()
         self.assertEqual(db.rollback.call_count, 2)
         release_lock.assert_called_once()
@@ -182,16 +197,18 @@ class ChatEndpointTests(unittest.TestCase):
             user_message,
             user_message,
         ]
+        db.get.return_value = conversation
         db.scalars.return_value.all.return_value = [user_message]
         persistence_db = MagicMock()
         persistence_db.__enter__.return_value = persistence_db
+        persistence_db.get.return_value = conversation
         persistence_db.refresh.side_effect = lambda item: setattr(item, "id", 42)
 
         with (
             patch.object(main.redis_client, "set", return_value=True),
             patch.object(main.redis_client, "eval", return_value=1),
             patch.object(main, "SessionLocal", return_value=persistence_db),
-            patch.object(main.asyncio, "to_thread", new=AsyncMock(return_value="Restart the router.")),
+            patch.object(main.asyncio, "to_thread", new=AsyncMock(return_value=GeneratedReply("Restart the router.", None))),
         ):
             response = asyncio.run(
                 main.retry_chat_message(

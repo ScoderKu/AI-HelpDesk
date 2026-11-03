@@ -23,7 +23,12 @@ from sqlalchemy import case, delete, func, or_, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.ai import OLLAMA_TIMEOUT_SECONDS, OllamaUnavailableError, generate_reply
+from app.ai import (
+    OLLAMA_TIMEOUT_SECONDS,
+    OllamaUnavailableError,
+    generate_reply,
+    preload_model,
+)
 from app.database import SessionLocal, engine, get_db
 from app.models import AuthSession, Conversation, Message, Ticket, User
 from app.schemas import (
@@ -447,6 +452,20 @@ def get_authenticated_user(
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     redis_client.ping()
+    preload_attempts = 0
+    while True:
+        try:
+            await asyncio.to_thread(preload_model)
+            break
+        except OllamaUnavailableError as error:
+            preload_attempts += 1
+            if preload_attempts == 1 or preload_attempts % 12 == 0:
+                logger.warning(
+                    "Ollama model is not ready yet; retrying startup preload: %s",
+                    str(error),
+                )
+            await asyncio.sleep(5)
+
     session_cleanup_task = asyncio.create_task(
         cleanup_expired_sessions_periodically()
     )
@@ -1023,13 +1042,24 @@ async def generate_assistant_for_message(
         for item in reversed(history)
     ]
 
+    conversation = db.get(Conversation, conversation_id)
+    if conversation is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Conversation not found.",
+        )
+    response_language = conversation.response_language
     db.rollback()
-    answer = await asyncio.to_thread(generate_reply, ollama_messages)
+    generated_reply = await asyncio.to_thread(
+        generate_reply,
+        ollama_messages,
+        response_language,
+    )
 
     assistant_message = Message(
         conversation_id=conversation_id,
         role="ASSISTANT",
-        content=answer,
+        content=generated_reply.content,
         created_at=datetime.now(timezone.utc).replace(tzinfo=None),
     )
     with SessionLocal() as persistence_db:
@@ -1040,6 +1070,7 @@ async def generate_assistant_for_message(
                 detail="Conversation not found.",
             )
         persistence_db.add(assistant_message)
+        conversation.response_language = generated_reply.response_language
         conversation.updated_at = assistant_message.created_at
         persistence_db.commit()
         persistence_db.refresh(assistant_message)

@@ -1,6 +1,7 @@
 """Ollama client used by the AI HelpDesk backend."""
 import json
 import os
+from dataclasses import dataclass
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -8,30 +9,61 @@ from urllib.request import Request, urlopen
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "poro-helpdesk")
 OLLAMA_TIMEOUT_SECONDS = float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "90"))
+OLLAMA_PRELOAD_TIMEOUT_SECONDS = max(OLLAMA_TIMEOUT_SECONDS, 600)
+OLLAMA_KEEP_ALIVE = "24h"
 MAX_CONTEXT_MESSAGES = 20
-SYSTEM_PROMPT = (
-    "You are the AI HelpDesk technical support assistant. "
-    "Reply in the language used by the user (Finnish or English). "
-    "Give clear, safe, step-by-step troubleshooting guidance. "
-    "Ask one relevant clarifying question when essential information is missing. "
-    "Never claim to have changed anything or created a support ticket. "
-    "Never ask for passwords, one-time codes, or other secrets."
+LANGUAGE_CLASSIFICATION_PROMPT = (
+    "Classify two independent properties of the latest user message. Do NOT answer it. "
+    "1. input_language: exact one of Finnish, English, other. Use Finnish only if the "
+    "message is Finnish, English only if it is English, otherwise other. "
+    "2. requested_language: set only if the user explicitly instructs the assistant "
+    "to answer in or change to a language. Ordinary message content is NOT a language "
+    "instruction. Translation requests are NOT response-language instructions. "
+    "Otherwise return null. These fields are independent; never copy input_language "
+    "into requested_language. "
+    "Examples: 'Mitä DNS tarkoittaa?' => Finnish, null; '¿Qué significa DNS?' => "
+    "other, null; 'What is DNS?' => English, null; 'Vastaa jatkossa englanniksi.' "
+    "=> Finnish, English; 'From now on, answer in French.' => English, French; "
+    "'Translate hello into French.' => English, null. Return only the required JSON."
 )
+REPLY_SYSTEM_PROMPT = (
+    "You are an AI HelpDesk technical support assistant. Give clear, safe, step-by-step "
+    "troubleshooting guidance. Ask one relevant clarifying question only when essential. "
+    "Never claim to have changed anything or created a support ticket. Never ask for "
+    "passwords, one-time codes, or other secrets. Return only a JSON object with a "
+    "non-empty `reply` string."
+)
+
+
+@dataclass(frozen=True)
+class GeneratedReply:
+    content: str
+    response_language: str | None
 
 
 class OllamaUnavailableError(Exception):
     """Ollama could not be reached or did not return a valid response."""
 
 
-def generate_reply(messages: list[dict[str, str]]) -> str:
-    payload = {
-        "model": OLLAMA_MODEL,
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            *messages[-MAX_CONTEXT_MESSAGES:],
-        ],
-        "stream": False,
-    }
+def preload_model() -> None:
+    payload = {"model": OLLAMA_MODEL, "keep_alive": OLLAMA_KEEP_ALIVE}
+    request = Request(
+        f"{OLLAMA_BASE_URL}/api/generate",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urlopen(request, timeout=OLLAMA_PRELOAD_TIMEOUT_SECONDS) as response:
+            result = json.loads(response.read().decode("utf-8"))
+    except (HTTPError, URLError, TimeoutError, OSError, ValueError) as error:
+        raise OllamaUnavailableError(type(error).__name__) from None
+
+    if not isinstance(result, dict) or result.get("done") is not True:
+        raise OllamaUnavailableError("Invalid response from Ollama preload")
+
+
+def _request_chat(payload: dict[str, object]) -> str:
     request = Request(
         f"{OLLAMA_BASE_URL}/api/chat",
         data=json.dumps(payload).encode("utf-8"),
@@ -55,3 +87,107 @@ def generate_reply(messages: list[dict[str, str]]) -> str:
     if not isinstance(content, str) or not content.strip():
         raise OllamaUnavailableError("Invalid response from Ollama")
     return content.strip()
+
+
+def _parse_json_object(content: str) -> dict[str, object]:
+    try:
+        generated = json.loads(content)
+    except json.JSONDecodeError:
+        raise OllamaUnavailableError("Invalid structured response from Ollama") from None
+    if not isinstance(generated, dict):
+        raise OllamaUnavailableError("Invalid structured response from Ollama")
+    return generated
+
+
+def generate_reply(
+    messages: list[dict[str, str]],
+    response_language: str | None = None,
+) -> GeneratedReply:
+    latest_user_message = next(
+        (message for message in reversed(messages) if message.get("role") == "user"),
+        None,
+    )
+    if latest_user_message is None:
+        raise OllamaUnavailableError("A user message is required to generate a reply")
+
+    classification = _parse_json_object(
+        _request_chat(
+            {
+                "model": OLLAMA_MODEL,
+                "format": {
+                    "type": "object",
+                    "properties": {
+                        "input_language": {
+                            "type": "string",
+                            "enum": ["Finnish", "English", "other"],
+                        },
+                        "requested_language": {
+                            "anyOf": [{"type": "string"}, {"type": "null"}],
+                            "maxLength": 100,
+                        },
+                    },
+                    "required": ["input_language", "requested_language"],
+                    "additionalProperties": False,
+                },
+                "messages": [
+                    {"role": "system", "content": LANGUAGE_CLASSIFICATION_PROMPT},
+                    latest_user_message,
+                ],
+                "stream": False,
+            }
+        )
+    )
+    input_language = classification.get("input_language")
+    requested_language = classification.get("requested_language")
+    if (
+        not isinstance(input_language, str)
+        or input_language not in {"Finnish", "English", "other"}
+        or (
+            requested_language is not None
+            and (
+                not isinstance(requested_language, str)
+                or not requested_language.strip()
+                or len(requested_language.strip()) > 100
+            )
+        )
+    ):
+        raise OllamaUnavailableError("Invalid language classification from Ollama")
+
+    saved_language = (
+        requested_language.strip()
+        if isinstance(requested_language, str)
+        else response_language
+    )
+    reply_language = saved_language or (
+        "Finnish" if input_language == "Finnish" else "English"
+    )
+    system_prompt = (
+        f"MANDATORY RESPONSE LANGUAGE: {reply_language}. Write every sentence of the "
+        "reply in this language, regardless of the user's language. Do not output in "
+        "another language.\n\n"
+        f"{REPLY_SYSTEM_PROMPT}"
+    )
+    reply = _parse_json_object(
+        _request_chat(
+            {
+                "model": OLLAMA_MODEL,
+                "format": {
+                    "type": "object",
+                    "properties": {"reply": {"type": "string"}},
+                    "required": ["reply"],
+                    "additionalProperties": False,
+                },
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    *messages[-MAX_CONTEXT_MESSAGES:],
+                ],
+                "stream": False,
+            }
+        )
+    )
+
+    content = reply.get("reply")
+    if not isinstance(content, str) or not content.strip():
+        raise OllamaUnavailableError("Invalid structured response from Ollama")
+
+    return GeneratedReply(content=content.strip(), response_language=saved_language)
