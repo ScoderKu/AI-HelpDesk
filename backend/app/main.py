@@ -1114,10 +1114,22 @@ async def generate_assistant_for_message(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Conversation not found.",
             )
+        latest_message = persistence_db.scalar(
+            select(Message)
+            .where(Message.conversation_id == conversation_id)
+            .order_by(Message.id.desc())
+            .limit(1)
+        )
+        if latest_message is None or latest_message.id != user_message_id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="The unanswered message has changed. Please reload the conversation.",
+            )
         chat_lock.assert_owned()
         persistence_db.add(assistant_message)
         conversation.response_language = generated_reply.response_language
         conversation.updated_at = assistant_message.created_at
+        chat_lock.assert_owned()
         persistence_db.commit()
         persistence_db.refresh(assistant_message)
 
@@ -1245,10 +1257,23 @@ def stream_chat_message(
                     if conversation is None or conversation.user_id != authenticated_user_id:
                         yield event("error", {"detail": "Conversation not found."})
                         return
+                    latest_message = persistence_db.scalar(
+                        select(Message)
+                        .where(Message.conversation_id == conversation_id)
+                        .order_by(Message.id.desc())
+                        .limit(1)
+                    )
+                    if latest_message is None or latest_message.id != user_message_id:
+                        yield event("error", {
+                            "detail": "The unanswered message has changed. Please reload the conversation.",
+                            "saved_message_id": user_message_id,
+                        })
+                        return
                     chat_lock.assert_owned()
                     persistence_db.add(assistant_message)
                     conversation.response_language = saved_language
                     conversation.updated_at = assistant_message.created_at
+                    chat_lock.assert_owned()
                     persistence_db.commit()
                     persistence_db.refresh(assistant_message)
                     assistant_payload = MessageResponse.model_validate(assistant_message).model_dump(mode="json")
