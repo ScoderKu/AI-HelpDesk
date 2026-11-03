@@ -237,7 +237,7 @@ export function HomePage({
               <strong>{text.preview}</strong>
               <p>{text.previewDetails}</p>
             </div>
-          </div>
+          </div>}
 
           <section className="welcome-section" aria-labelledby="page-title">
             <div className="welcome-copy">
