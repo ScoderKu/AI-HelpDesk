@@ -66,7 +66,7 @@ Frontend tarjoaa käyttäjälle visuaalisen käyttöliittymän ja välittää k�
 #### Frontendin vastuut
 
 - Rekisteröitymis- ja kirjautumisnäkymät.
-- Käyttäjäprofiilin tarkastelu ja päivittäminen (etunimi, sukunimi ja käyttäjänimi); sähköpostiosoite on vain luettavissa.
+- Käyttäjäprofiilin tarkastelu; käyttäjä voi päivittää vain käyttäjänimensä. Etunimi, sukunimi ja sähköpostiosoite ovat vain luettavissa.
 - Salasanan vaihtaminen nykyisen salasanan vahvistuksella.
 - Tukipyyntöjen luominen, tarkastelu ja sulkeminen.
 - Tekoälykeskustelun näyttäminen.
@@ -136,6 +136,8 @@ AI Service välittää käyttäjän viestin Compose-ympäristössä toimivalle O
 - Käsitellä aikakatkaisut, palveluvirheet ja käyttörajoitukset.
 - Rajoittaa tekoälylle lähetettävän keskustelukontekstin määrää.
 - Tallentaa keskusteluviestit sovelluksen määrittelemien tallennuskäytäntöjen mukaisesti.
+- Sarjoittaa saman keskustelun AI-vuorot Redis-lukolla, vapauttaa tietokantayhteyden Ollama-kutsun ajaksi ja tallentaa assistant-vastauksen lyhyessä erillisessä tietokantaistunnossa.
+- Mahdollistaa jo tallennetun käyttäjäviestin vastauksen uudelleenyrityksen ilman käyttäjäviestin kaksoistallennusta; virheellisesti muotoiltu Ollama-vastaus käsitellään palveluvirheenä.
 - Välttää tarpeettomien henkilötietojen lähettämistä mallille.
 
 Tekoälyn tuottamat vastaukset ovat ehdotuksia. Niiden oikeellisuutta ei voida taata kaikissa tilanteissa.
@@ -292,12 +294,23 @@ Järjestelmän sisäisiä ohjeita tai työkaluviestejä varten tarvitaan erillin
 | tickets | INDEX(user_id, created_at) | Käyttäjän tukipyyntöjen hakeminen |
 | tickets | INDEX(user_id, status) | Tukipyyntöjen haku tilan perusteella |
 | tickets | INDEX(conversation_id) | Keskusteluun liittyvien tukipyyntöjen hakeminen |
+| tickets | INDEX(status, closed_at) | Suljettujen tukipyyntöjen säilytyssiivous |
 | conversations | INDEX(user_id, updated_at) | Käyttäjän keskusteluhistorian hakeminen |
+| conversations | INDEX(updated_at) | Passiivisten keskustelujen säilytyssiivous |
 | messages | INDEX(conversation_id, created_at, id) | Keskusteluviestien hakeminen järjestyksessä |
 
 Viiteavaimille määritellään tietojen poistamiseen ja päivittämiseen sopivat säännöt. Esimerkiksi käyttäjän poistamista ei tule toteuttaa siten, että siihen liittyvät tiedot jäävät tietokantaan hallitsemattomasti.
 
-Käyttäjän poistaminen ja keskusteluhistorian säilyttäminen tulee määritellä erikseen tietosuojan ja sovelluksen vaatimusten perusteella.
+### Tietojen säilytys ja siivous
+
+Backend suorittaa päivittäin erissä (enintään 500 tunnistetta kerrallaan) automaattisen siivouksen. Aikaraja on kolme kalenterikuukautta, ei kiinteä 90 päivän jakso:
+
+- `CLOSED`-tukipyyntö poistetaan pysyvästi, kun `closed_at` on aikarajalla tai sitä vanhempi.
+- Keskustelu poistetaan pysyvästi, kun `updated_at` on aikarajalla tai sitä vanhempi.
+- Keskustelua ei poisteta, jos siihen liittyy avoin tukipyyntö tai suljettu tukipyyntö, jonka `closed_at` ei ole vielä saavuttanut säilytysrajaa.
+- Keskustelun viestit poistuvat viiteavaimen `ON DELETE CASCADE` -säännön mukaisesti. Tukipyynnön viite keskusteluun on `ON DELETE SET NULL`.
+
+Siivous suoritetaan FastAPI:n elinkaaren taustatehtävässä tietokantatyössä, ja tietokantavirhe kirjataan lokiin sekä yritetään uudelleen seuraavalla päivittäisellä jaksolla. Siivousindeksit lisätään Alembic-migraatiolla `0005_data_retention_indexes`. Poisto on peruuttamaton; tietokannan varmuuskopiointi ja sovellettavat tietosuojakäytännöt ovat ylläpidon vastuulla.
 
 Kun tukipyyntö luodaan keskustelusta, `tickets.conversation_id` viittaa lähdekeskusteluun. Backend varmistaa, että keskustelu kuuluu samalle kirjautuneelle käyttäjälle kuin tukipyyntö. Itsenäisesti luodun tukipyynnön `conversation_id` on `NULL`.
 
@@ -312,7 +325,7 @@ Esimerkiksi tukipyynnön luomisessa järjestelmä:
 3. Tallentaa tukipyynnön tietokantaan.
 4. Palauttaa luodun tukipyynnön tunnisteen ja tiedot.
 
-Keskusteluviestin tallennuksessa käyttäjän viesti ja tekoälyn vastaus käsitellään erillisinä tallennettavina tapahtumina. Tekoälypalvelun virhe ei saa aiheuttaa virheellistä tai keksittyä vastausta keskusteluhistoriaan.
+Keskusteluviestin tallennuksessa käyttäjän viesti ja tekoälyn vastaus käsitellään erillisinä tallennettavina tapahtumina. Saman keskustelun samanaikaiset AI-vuorot sarjoitetaan Redis-lukolla, eikä uutta viestiä hyväksytä, jos viimeinen käyttäjäviesti odottaa vielä vastausta. Käyttäjäviesti tallennetaan ennen Ollama-kutsua; historian lukemisen jälkeen SQLAlchemy-transaktio suljetaan ennen AI-palvelun odottamista. Assistant-vastaus tallennetaan lyhytkestoisessa erillisessä tietokantaistunnossa. AI-virhe ei tuota keksittyä vastausta: tallennetun viestin vastausta voi yrittää uudelleen erillisellä retry-reitillä ilman uuden käyttäjäviestin kaksoistallennusta.
 
 ---
 
@@ -335,7 +348,7 @@ REST API toimii frontendin ja backendin välisenä rajapintana.
 
 ## 5.2 Endpointit
 
-Autentikointireitit sekä tukipyyntöjen listaus-, luonti-, haku-, päivitys-, yhteenveto- ja sulkemisreitit on toteutettu. Keskustelu-, haku- ja profiilireitit ovat vielä suunniteltuja.
+Autentikointi-, profiili-, tukipyyntö- ja keskustelureitit on toteutettu. RAG-hakureitti on suunniteltu, eikä sitä pidä merkitä valmiiksi ennen Sprint 5:n toteutusta.
 
 ### Autentikointi ja käyttäjätili
 
@@ -344,12 +357,12 @@ Autentikointireitit sekä tukipyyntöjen listaus-, luonti-, haku-, päivitys-, y
 | POST | `/api/v1/auth/register` | Luo käyttäjätilin | Ei |
 | POST | `/api/v1/auth/login` | Kirjaa käyttäjän sisään | Ei |
 | POST | `/api/v1/auth/logout` | Kirjaa käyttäjän ulos ja mitätöi nykyisen istunnon, jos eväste on voimassa | Istuntoeväste |
-| GET | `/api/v1/auth/me` | Palauttaa nykyisen kirjautuneen käyttäjän | Kyllä |
+| GET | `/api/v1/auth/me` | Palauttaa kirjautumistilan ja mahdollisen pakotetun salasananvaihdon tilan | Istuntoeväste |
 | GET | `/api/v1/users/me` | Hakee kirjautuneen käyttäjän profiilin ilman salasanatiivistettä | Toteutettu (US-03) |
-| PATCH | `/api/v1/users/me` | Päivittää vain etunimen, sukunimen ja käyttäjänimen; sähköpostikenttää ei hyväksytä päivitettäväksi | Toteutettu (US-03) |
+| PATCH | `/api/v1/users/me` | Päivittää vain käyttäjänimen; etunimeä, sukunimeä tai sähköpostia ei voi muuttaa | Toteutettu (US-03) |
 | POST | `/api/v1/users/me/password` | Vaihtaa salasanan nykyisen salasanan ja uuden salasanan vahvistuksen jälkeen; tallentaa vain tiivisteen ja mitätöi käyttäjän aktiiviset istunnot | Toteutettu (US-03) |
 
-#### Unohtuneen salasanan palautus (US-17 – toteutetaan vasta US-04:n, US-05:n ja US-03:n valmistuttua)
+#### Ylläpidon toteuttama unohtuneen salasanan palautus (US-17)
 
 US-17 toteutetaan vain backendin ylläpitokomennolla. Se ei lisää julkista HTTP-reset-endpointia, salasanan palautusnäkymää, sähköpostiviestiä, OTP-koodia eikä sovelluksen ADMIN-käyttöliittymää. Tässä määrittelyssä ADMIN tarkoittaa ylläpitotoimintoon valtuutettua henkilöä, joka on varmistanut käyttäjän henkilöllisyyden sovelluksen ulkopuolella. Oikeus komentoon perustuu backend-ympäristön käyttöoikeuksiin, ei tavallisen käyttäjän istuntoon tai asiakkaan lähettämään roolikenttään.
 
@@ -379,9 +392,7 @@ US-17 toteutetaan vain backendin ylläpitokomennolla. Se ei lisää julkista HTT
 - Lokeihin saa kirjata komennon suorittamisen ajankohdan, kohdekäyttäjän sisäisen tunnisteen ja onnistumis-/epäonnistumistiedon vain siinä laajuudessa kuin ylläpidon auditointi edellyttää. Salasanaa, sen tiivistettä, istuntotunnisteita tai evästeitä ei kirjata.
 - Ylläpitoympäristön käyttöoikeudet ja terminaalin tulosteen käsittely ovat ylläpitäjän vastuulla. Väliaikainen salasana on kertakäyttöinen toimitustieto, eikä sitä pidä jättää jaettuihin lokeihin tai tallenteisiin.
 
-**Toteutuksen rajaus**
-
-Tämä on tekninen sopimus US-17:n toteutukselle, ei väite siitä, että ylläpitokomento tai pakotetun vaihdon backend-tarkistukset olisivat jo toteutettuja. Ennen toteutusta tarkistetaan nykyinen users- ja auth_sessions-malli, migraatiot, salasanan tiivistysfunktio, autentikoinnin yhteinen riippuvuus ja salasanan vaihtoreitti. Nykyinen users.must_change_password-kenttä on suunnittelussa määritelty; jos sitä ei löydy käytössä olevasta skeemasta, se lisätään tarkistetulla Alembic-migraatiolla. Komennon tarkka moduuli- ja komentorivisyntaksi päätetään toteutuksessa olemassa olevan backend-rakenteen perusteella.
+**Toteutuksen tila:** ylläpitokomento on toteutettu moduulissa `app.admin`, ja käyttöohje on README:ssä. Pakotetun salasanan vaihdon backend-rajoitus, istuntojen mitätöinti ja `must_change_password`-skeema ovat käytössä. Komennon suoritus edellyttää suojatun backend-/Docker-ympäristön käyttöoikeutta; sovelluksessa ei ole ADMIN-käyttöliittymää.
 ### Tukipyynnöt
 
 | HTTP-metodi | Endpoint | Kuvaus | Autentikointi |
@@ -403,8 +414,8 @@ Staattinen `/summary`-reitti määritellään ennen dynaamista `{id}`-reittiä, 
 | POST | `/api/v1/conversations` | Luo uuden keskustelun | Kyllä |
 | GET | `/api/v1/conversations/{id}` | Hakee keskustelun tiedot | Kyllä |
 | GET | `/api/v1/conversations/{id}/messages` | Hakee keskustelun viestit | Kyllä |
-| POST | `/api/v1/conversations/{id}/messages` | Lähettää viestin tekoälykeskusteluun | Kyllä |
-| POST | `/api/v1/conversations/{id}/tickets` | Luo tukipyynnön keskustelun perusteella | Kyllä |
+| POST | `/api/v1/conversations/{id}/messages` | Tallentaa käyttäjäviestin ja pyytää tekoälyvastausta; chat-pyynnön `Origin` tarkistetaan allowlististä | Kyllä |
+| POST | `/api/v1/conversations/{id}/messages/{message_id}/retry` | Yrittää luoda vastauksen jo tallennetulle vastaamattomalle käyttäjäviestille | Kyllä |
 
 ### Tietopohjainen tekoälyneuvonta
 
@@ -461,15 +472,11 @@ POST /api/v1/auth/login
 
 ```json
 {
-  "id": 12,
-  "first_name": "Example",
-  "last_name": "User",
-  "username": "exampleuser",
-  "email": "user@example.com"
+  "must_change_password": false
 }
 ```
 
-Onnistunut kirjautuminen palauttaa HTTP 200 -vastauksen ja `Set-Cookie`-otsakkeen. Virheelliset tunnukset palauttavat yleisen HTTP 401 -vastauksen; käyttörajan ylitys palauttaa HTTP 429 -vastauksen. `GET /api/v1/auth/me` palauttaa saman käyttäjäobjektin vain voimassa olevalle istunnolle.
+Onnistunut kirjautuminen palauttaa HTTP 200 -vastauksen, `Set-Cookie`-otsakkeen ja `must_change_password`-tilan. Virheelliset tunnukset palauttavat yleisen HTTP 401 -vastauksen; käyttörajan ylitys palauttaa HTTP 429 -vastauksen. `GET /api/v1/auth/me` palauttaa autentikoinnin tilan, ei käyttäjän profiilia. Profiilitiedot haetaan erillisestä `/api/v1/users/me`-reitistä.
 
 ## 5.4 Esimerkkipyyntö: tukipyynnön luominen
 
@@ -549,18 +556,19 @@ POST /api/v1/conversations/25/messages
 | 422 Unprocessable Content | Validointi epäonnistui | Virheelliset kenttäarvot |
 | 429 Too Many Requests | Pyyntöjä on liikaa | Rate limiting |
 | 500 Internal Server Error | Odottamaton palvelinvirhe | Käsittelemätön virhe |
-| 502 Bad Gateway | Ulkoisen palvelun virhe | Tekoälypalvelun virhe |
+| 503 Service Unavailable | Palvelu ei ole käytettävissä | Tekoälypalvelun tai Redis-palvelun virhe |
 
 ## 5.7 Rajapinnan tietoturva
 
 1. Salasanat tiivistetään turvallisella salasanatiivistealgoritmilla.
 2. ADMINin palautuskomento on käytettävissä vain backendin ylläpitoympäristössä; väliaikainen salasana näytetään kerran, pakotettu vaihto estää muut suojatut toiminnot ja kaikki aiemmat istunnot mitätöidään.
-2. Autentikointi toteutetaan turvallisella istunto- tai token-mekanismilla.
-3. HTTPS on pakollinen tuotantoympäristössä.
-4. Backend tarkistaa käyttäjän oikeudet ennen resurssien palauttamista tai muuttamista.
-5. Syötteet validoidaan palvelinpuolella.
-6. Tietokantakyselyissä käytetään parametrisoituja kyselyitä.
-7. Kirjautumisyrityksiä rajoitetaan Redisissä asiakkaan IP-osoitteen ja normalisoidun sähköpostiosoitteen perusteella; raja palauttaa HTTP 429 -vastauksen ja `Retry-After`-otsakkeen. IP-osoite otetaan välitetystä otsakkeesta vain suoraan yhdistetyn, erikseen luotetuksi määritetyn proxyn tapauksessa. Luotetut proxy-verkot määritetään `TRUSTED_PROXY_IPS`-ympäristömuuttujassa pilkuin eroteltuina IP-osoitteina tai CIDR-verkkoina. Proxy-ketjussa luotetut hopit ohitetaan oikealta vasemmalle, ja ensimmäistä luottamatonta osoitetta käytetään asiakkaana. Proxyn on lisättävä tai korvattava välitystieto turvallisesti; luottamattoman yhteyden lähettämää `X-Forwarded-For`-otsaketta ei pidä hyväksyä asiakkaan IP:nä.
-8. API-avaimia ja muita salaisuuksia ei tallenneta lähdekoodiin.
-9. Virhelokeihin ei tallenneta salasanoja, autentikointitunnuksia tai tarpeettomia henkilötietoja.
-10. Tekoälypalvelulle lähetetään vain pyynnön käsittelyn kannalta tarpeelliset tiedot.
+3. Autentikointi toteutetaan turvallisella istuntomekanismilla.
+4. HTTPS on pakollinen tuotantoympäristössä.
+5. Backend tarkistaa käyttäjän oikeudet ennen resurssien palauttamista tai muuttamista.
+6. Syötteet validoidaan palvelinpuolella.
+7. Tietokantakyselyissä käytetään parametrisoituja kyselyitä.
+8. Kirjautumisyrityksiä rajoitetaan Redisissä asiakkaan IP-osoitteen ja normalisoidun sähköpostiosoitteen perusteella; raja palauttaa HTTP 429 -vastauksen ja `Retry-After`-otsakkeen. IP-osoite otetaan välitetystä otsakkeesta vain suoraan yhdistetyn, erikseen luotetuksi määritetyn proxyn tapauksessa. Luotetut proxy-verkot määritetään `TRUSTED_PROXY_IPS`-ympäristömuuttujassa pilkuin eroteltuina IP-osoitteina tai CIDR-verkkoina. Proxy-ketjussa luotetut hopit ohitetaan oikealta vasemmalle, ja ensimmäistä luottamatonta osoitetta käytetään asiakkaana. Proxyn on lisättävä tai korvattava välitystieto turvallisesti; luottamattoman yhteyden lähettämää `X-Forwarded-For`-otsaketta ei pidä hyväksyä asiakkaan IP:nä.
+9. Istuntoevästeellä lähetettävä chat POST hyväksytään vain, jos pyyntö sisältää `FRONTEND_ORIGINS`-asetukseen täsmäävän `Origin`-otsakkeen; muiden alkuperien pyynnöt hylätään.
+10. API-avaimia ja muita salaisuuksia ei tallenneta lähdekoodiin.
+11. Virhelokeihin ei tallenneta salasanoja, autentikointitunnuksia tai tarpeettomia henkilötietoja.
+12. Tekoälypalvelulle lähetetään vain pyynnön käsittelyn kannalta tarpeelliset tiedot.

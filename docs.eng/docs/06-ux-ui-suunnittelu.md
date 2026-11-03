@@ -161,6 +161,8 @@ Example layout:
 - link to registration;
 - error and loading states.
 
+The login and registration views use a two-panel card with promotional content on the left and the form on the right. It follows the visual style of the forced-password-change view; on narrow screens, the panels stack vertically.
+
 **Behavior**
 - Required fields are validated.
 - During login, the button shows a loading state and prevents accidental repeated submissions.
@@ -186,6 +188,8 @@ Example layout:
 - **Create account** button;
 - link to login;
 - field-specific validation messages.
+
+The registration form uses the same two-panel card structure as the login and forced-password-change views.
 
 **Behavior**
 - Required fields and password requirements are explained before submission.
@@ -257,6 +261,7 @@ On mobile, conversation history can be opened from a separate button so that the
 - priorities: `LOW`, `MEDIUM`, and `HIGH`.
 
 Statuses are shown to the user in the selected user interface language, even though technical values are used in the database. For example, `OPEN` is displayed as **Avoin** in Finnish and **Open** in English.
+The three priority badges use distinct colors and borders as well as readable labels; the LOW badge uses a pale blue palette that is visually distinct from the green CLOSED status.
 
 **Behavior**
 - Selecting a support ticket title or row opens the detail view.
@@ -446,6 +451,9 @@ The following criteria supplement the acceptance criteria for user stories. They
 | UX-14 | The user sees only their own support tickets and conversations. | Test with two different test users |
 | UX-15 | The user's message is retained after an AI service error if it has already been written or sent. | Simulate an AI service error |
 | UX-16 | The home page displays only the logged-in user's total support ticket count and `OPEN` and `CLOSED` counts; values for an empty account are zero. | Test an account with tickets and an empty account; compare counts with the database |
+| UX-17 | Only the username is editable in the profile; first name, last name, and email address are read-only. | Try to change locked fields in the UI and API; update the username |
+| UX-18 | Password change asks for the current password, new password, and confirmation, and displays success or error feedback. | Test a correct and incorrect current password and a mismatched confirmation |
+| UX-19 | Login and registration use a two-panel card matching the forced-password-change style and stack vertically on mobile. | Check login and registration at desktop and mobile widths |
 
 ## 12. Usability Testing Plan
 

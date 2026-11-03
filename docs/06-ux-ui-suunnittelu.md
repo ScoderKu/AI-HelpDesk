@@ -161,6 +161,8 @@ Esimerkkirunko:
 - linkki rekisteröitymiseen;
 - virhe- ja lataustila.
 
+Kirjautumis- ja rekisteröitymisnäkymä käyttää kaksiosaista korttia: esittelysisältö vasemmalla ja lomake oikealla. Rakenne ja visuaalinen tyyli vastaavat pakotetun salasananvaihdon näkymää; kapealla näytöllä osiot asettuvat päällekkäin.
+
 **Käyttäytyminen**
 - Pakolliset kentät validoidaan.
 - Kirjautumisen aikana painike näyttää lataustilan ja estää vahingossa toistuvat lähetykset.
@@ -252,11 +254,14 @@ Mobiilissa keskusteluhistoria voidaan avata erillisestä painikkeesta, jotta var
 - lista tai taulukko, jossa näkyvät otsikko, tila, prioriteetti ja luontiaika;
 - listan tyhjä-, lataus- ja virhetilat.
 
+Desktop-näkymässä tukipyyntölista pysyy rajatun levyisenä ja keskitettynä, jotta rivit ovat helppolukuisia. Mobiilissa lista mukautuu kapeaan näyttöön.
+
 **Tilat ja prioriteetit**
 - tilat: `OPEN` ja `CLOSED`;
 - prioriteetit: `LOW`, `MEDIUM` ja `HIGH`.
 
 Tilat näytetään käyttäjälle valitulla käyttöliittymän kielellä, vaikka tietokannassa käytetään teknisiä arvoja. Esimerkiksi `OPEN` näytetään suomeksi **Avoin** ja englanniksi **Open**.
+Prioriteettien tunnisteissa käytetään erottuvia värejä, reunaviivoja ja tekstilabelia. `LOW` käyttää vaaleansinistä palettia, joka ei sekoitu vihreään `CLOSED`-tilaan.
 
 **Käyttäytyminen**
 - Tukipyynnön otsikkoa tai riviä valitsemalla avataan yksityiskohtanäkymä.
@@ -323,10 +328,12 @@ Jos lomake avataan AI-keskustelusta, otsikko ja kuvaus voidaan esitäyttää kes
 **Tarkoitus:** näyttää käyttäjän tiedot, mahdollistaa sallittujen profiilitietojen päivittäminen, salasanan vaihtaminen ja käyttöliittymän kielen hallinta.
 
 **Profiilitiedot**
-- etunimi – muokattavissa;
-- sukunimi – muokattavissa;
+- etunimi – näytetään vain luettavana;
+- sukunimi – näytetään vain luettavana;
 - käyttäjänimi – muokattavissa;
 - sähköpostiosoite – näytetään vain luettavana, eikä käyttöliittymä tarjoa sen muuttamista.
+
+Kirjautumis- ja rekisteröitymisnäkymät käyttävät samaa kaksiosaista korttirakennetta kuin salasanan palautuksen jälkeinen pakollinen salasananvaihto.
 
 **Salasanan vaihtaminen**
 - erillinen **Vaihda salasana** -toiminto;
@@ -457,8 +464,9 @@ Seuraavat kriteerit täydentävät käyttäjätarinoiden hyväksymiskriteerejä.
 | UX-14 | Käyttäjä näkee vain omat tukipyyntönsä ja keskustelunsa. | Testaa kahdella eri testikäyttäjällä |
 | UX-15 | Käyttäjän viesti säilyy AI-palvelun virheen jälkeen, jos se on jo kirjoitettu tai lähetetty. | Simuloi AI-palvelun virhe |
 | UX-16 | Etusivu näyttää vain kirjautuneen käyttäjän tukipyyntöjen kokonaismäärän sekä `OPEN`- ja `CLOSED`-määrät; tyhjän tilin arvot ovat nollia. | Testaa käyttäjätilillä, jolla on pyyntöjä ja tyhjällä tilillä; vertaa lukumääriä tietokantaan |
-| UX-17 | Profiilissa etunimi, sukunimi ja käyttäjänimi ovat muokattavissa, mutta sähköpostiosoite on vain luettavissa. | Muokkaa sallittuja kenttiä ja varmista, ettei sähköpostille ole muokkaustoimintoa |
+| UX-17 | Profiilissa vain käyttäjänimi on muokattavissa; etunimi, sukunimi ja sähköpostiosoite ovat vain luettavissa. | Yritä muuttaa lukittuja kenttiä käyttöliittymässä ja API-pyynnössä; päivitä käyttäjänimi |
 | UX-18 | Salasanan vaihto pyytää nykyisen salasanan, uuden salasanan ja vahvistuksen sekä näyttää onnistumis- tai virhepalautteen. | Testaa oikea ja väärä nykyinen salasana sekä poikkeava vahvistus |
+| UX-19 | Kirjautuminen ja rekisteröityminen käyttävät kaksiosaista korttia, joka vastaa salasanan pakotetun vaihdon tyyliä; mobiilissa osat asettuvat allekkain. | Tarkista kirjautuminen ja rekisteröityminen työpöytä- ja mobiilileveydellä |
 
 ## 12. Käytettävyystestaussuunnitelma
 

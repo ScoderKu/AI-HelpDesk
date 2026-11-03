@@ -15,19 +15,13 @@ from app.schemas import UserPasswordChangeRequest, UserProfileUpdateRequest
 
 
 class UserProfileSchemaTests(unittest.TestCase):
-    def test_profile_accepts_only_editable_fields(self) -> None:
-        request = UserProfileUpdateRequest(
-            first_name=" Ada ",
-            last_name=" Lovelace ",
-            username=" ada ",
-        )
-        self.assertEqual(request.model_dump(), {
-            "first_name": "Ada", "last_name": "Lovelace", "username": "ada"
-        })
+    def test_profile_accepts_username_as_the_only_editable_field(self) -> None:
+        request = UserProfileUpdateRequest(username=" ada ")
+        self.assertEqual(request.model_dump(), {"username": "ada"})
         with self.assertRaises(ValidationError):
             UserProfileUpdateRequest(
-                first_name="Ada", last_name="Lovelace", username="ada",
-                email="changed@example.com",
+                username="ada",
+                first_name="Changed",
             )
 
     def test_profile_accepts_partial_updates(self) -> None:
@@ -39,10 +33,8 @@ class UserProfileSchemaTests(unittest.TestCase):
         invalid_payloads = (
             {},
             {"username": None},
-            {"first_name": None},
-            {"last_name": None},
-            {"first_name": " "},
-            {"last_name": " "},
+            {"first_name": "Ada"},
+            {"last_name": "Lovelace"},
             {"username": "ab"},
         )
         for values in invalid_payloads:
@@ -120,15 +112,6 @@ class UserProfileEndpointTests(unittest.TestCase):
         db.scalar.assert_called_once()
         db.commit.assert_called_once_with()
         db.refresh.assert_called_once_with(self.user)
-
-    def test_profile_update_does_not_check_username_when_not_supplied(self) -> None:
-        db = MagicMock()
-        request = UserProfileUpdateRequest(first_name="Augusta")
-        result = main.update_current_user_profile(request, self.user, db)
-        self.assertEqual(result.first_name, "Augusta")
-        self.assertEqual(result.username, "ada")
-        db.scalar.assert_not_called()
-        db.commit.assert_called_once_with()
 
     def test_profile_update_rejects_username_owned_by_another_user(self) -> None:
         db = MagicMock()

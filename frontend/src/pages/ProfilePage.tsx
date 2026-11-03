@@ -28,8 +28,6 @@ async function send<T>(path: string, body: unknown): Promise<T> {
 }
 
 export function ProfilePage({ currentUser, text, onBackHome, onProfileUpdated, onPasswordChanged }: Props) {
-  const [firstName, setFirstName] = useState(currentUser.first_name)
-  const [lastName, setLastName] = useState(currentUser.last_name)
   const [username, setUsername] = useState(currentUser.username)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -48,7 +46,7 @@ export function ProfilePage({ currentUser, text, onBackHome, onProfileUpdated, o
     setSavingProfile(true)
     try {
       const updated = await send<AuthenticatedUser>('/api/v1/users/me', {
-        first_name: firstName.trim(), last_name: lastName.trim(), username: username.trim(),
+        username: username.trim(),
       })
       onProfileUpdated(updated)
       setProfileNotice(text.profileSaved)
@@ -91,12 +89,12 @@ export function ProfilePage({ currentUser, text, onBackHome, onProfileUpdated, o
     <form className="profile-panel" onSubmit={(event) => void saveProfile(event)}>
       <h2>{text.profileTitle}</h2>
       <div className="profile-grid">
-        <label className="profile-field">{text.firstName}<input required maxLength={100} value={firstName} onChange={e => setFirstName(e.target.value)} /></label>
-        <label className="profile-field">{text.lastName}<input required maxLength={100} value={lastName} onChange={e => setLastName(e.target.value)} /></label>
+        <label className="profile-field">{text.firstName}<input value={currentUser.first_name} disabled readOnly /></label>
+        <label className="profile-field">{text.lastName}<input value={currentUser.last_name} disabled readOnly /></label>
         <label className="profile-field">{text.username}<input required minLength={3} maxLength={100} value={username} onChange={e => setUsername(e.target.value)} /></label>
         <label className="profile-field">{text.email}<input value={currentUser.email} disabled readOnly aria-describedby="profile-email-help" /></label>
       </div>
-      <p className="profile-message" id="profile-email-help">{text.emailReadOnly}</p>
+      <p className="profile-message" id="profile-email-help">{text.profileDetailsReadOnly}</p>
       {profileError && <p className="profile-message" role="alert">{profileError}</p>}
       {profileNotice && <p className="profile-message" role="status">{profileNotice}</p>}
       <div className="profile-actions"><button className="button button-primary" disabled={savingProfile} type="submit">{text.profileSave}</button></div>

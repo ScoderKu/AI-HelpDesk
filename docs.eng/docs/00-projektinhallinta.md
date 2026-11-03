@@ -16,7 +16,7 @@
 | Key stakeholders | Project implementer, teacher, and application end users |
 | Document status | Living document; updated as the project progresses |
 
-**Current status on 26.10.2026:** the requirements specification, user stories with acceptance criteria, Product Backlog, Sprint Plan, system design, and UX/UI design have been aligned before implementation begins. The `backend` and `frontend` directories do not yet contain application source files. Implementation progress will henceforth be updated in the project tracking and GitHub tasks, not in this status snapshot.
+**Status snapshot scope:** information dated 26.10.2026 describes the planning phase, not the current implementation. The current implementation and verification summary is maintained in section 8.3 of this document.
 
 ## 2. Project Purpose and Objectives
 
@@ -207,6 +207,16 @@ Progress is described primarily through verifiable outcomes, not merely a percen
 
 **Status on 01.11.2026 – Sprint 1:** Implementations for all six Sprint stories are present in the current branch. The backend `unittest` suite passed 31/31 tests. The frontend TypeScript check and production build succeeded, and lint is clean. Alembic migrations were tested twice against a separate empty MySQL database; the active database is at `0002_conversations_and_tickets (head)`. Ticket API ORM paths were exercised against MySQL inside a transaction that was rolled back. First-time Ollama model initialization was tested with an empty temporary model volume: `poro-helpdesk` was created from the `Modelfile`, and the temporary Docker resources were removed. The entire Compose stack has not yet been started at once with both MySQL and Ollama volumes empty. Remaining checks are registration/sign-in API integration tests, a manual UI acceptance review, concurrent sign-ins against MySQL, and LAN forwarding. LAN access and frontend production deployment remain deferred as previously agreed.
 
+**Status on 03.11.2026 – Sprints 1–3 and follow-on work:** Core functionality for Sprints 1–3 is implemented in the current local working tree: account and session authentication, support tickets and profiles, the US-17 administrator password-reset workflow, and Ollama-backed chat with persisted history. Sprint 4's US-13 language selection and US-14 ticket summary are in place; US-09, creating a support ticket from a conversation with user review and confirmation, remains to be implemented. Sprint 5 RAG assistance and final integrated acceptance testing remain in progress.
+
+Recent technical changes: Redis locks serialize AI requests within a conversation; the database transaction and connection are released before waiting for Ollama, and the assistant response is saved in a separate short-lived database session. A saved user message can have its response retried without saving the same user message twice. Malformed Ollama response shapes are handled as service failures, and chat POST requests validate their `Origin` against the allowed frontend origins. A daily cleanup job permanently deletes closed tickets and inactive conversations older than three calendar months in batches; conversations linked to an open ticket or a ticket still within its retention period are preserved.
+
+The UI now uses wider workspace layouts, visually distinct LOW/MEDIUM/HIGH ticket priorities, read-only first and last names and email on the profile page, and a two-panel sign-in/sign-up card consistent with the forced-password-change screen. The profile API accepts only username changes.
+
+Verification on 03.11.2026: all 57 backend `unittest` tests passed; frontend `npm run lint`, TypeScript checks, and `npm run build` succeeded; the Alembic migration history includes the new head revision `0005_data_retention_indexes`. The sign-in/sign-up view was checked in a browser at desktop and mobile widths. Applying the migration to the active Compose database, starting the full Compose stack with empty database and model volumes, forwarding from a real LAN device, and manual acceptance testing of the full application have not been verified in this check.
+
+This status describes the local working tree as of 03.11.2026; the latest changes have not yet been confirmed in a Git commit or push. Sprint completion percentages are not reported because acceptance testing is still incomplete.
+
 ### 8.4 Definition of Done
 
 A user story or function can be marked complete when:
@@ -256,6 +266,8 @@ Significant technical and project management decisions are recorded in this tabl
 | D-09 | 31.10.2026 | The frontend uses only the proxy network and calls the backend through the `backend-proxy` network alias | Ensure the proxy-to-backend connection uses the network on which the proxy IP is trusted | Frontend and backend proxy-network addresses and the `/api/health` route were verified after recreating the containers |
 | D-10 | 31.10.2026 | Expired sessions are cleaned by an hourly task outside the login transaction, deleting rows in batches by ID | Avoid deadlocks between MySQL `expires_at` range-delete gap locks and login session inserts | The login transaction only creates a new session; the cleanup task logs database errors and retries on its next interval |
 | D-08 | 31.10.2026 | The backend trusts only the frontend proxy defined on the Compose network and uses the first untrusted hop in the trusted proxy's forwarded address chain as the login IP-rate-limit key | Prevent shared-proxy IPs from cross-limiting users and prevent misuse of forwarded headers | The frontend address is `172.30.0.2`, the trusted network is configured through `TRUSTED_PROXY_IPS`, and the logic is tested automatically; actual LAN forwarding will be verified later |
+| D-11 | 03.11.2026 | Closed support tickets and inactive conversations are permanently deleted after three calendar months | Limit database growth under the agreed retention policy | A daily batch task uses `closed_at` and `updated_at`; conversations linked to an open or not-yet-expired ticket are retained |
+| D-12 | 03.11.2026 | Users cannot change their first or last name from their profile; username is the only editable profile field | User-confirmed profile and access policy | Names are displayed as read-only, and the backend PATCH schema rejects name updates |
 
 ## 11. Change Log
 
@@ -267,6 +279,7 @@ Significant technical and project management decisions are recorded in this tabl
 | 31.10.2026 | 0.4 | Documented the proxy-based login IP rate-limit change, test results, and outstanding LAN verification | Project implementer |
 | 31.10.2026 | 0.5 | Routed frontend traffic through the trusted proxy network and moved expired-session cleanup outside the login transaction | Project implementer |
 | 01.11.2026 | 0.6 | Fixed Compose handling for Ollama model initialization; verified empty model-volume initialization, Sprint 1 test results, and remaining checks; corrected Modelfile paths and HomePage focus handling | Project implementer |
+| 03.11.2026 | 0.7 | Updated Sprint 1–5 status, backend chat and retention design, profile editing policy, and remaining verification items | Project implementer |
 
 ## 12. Links to Other Project Documents
 

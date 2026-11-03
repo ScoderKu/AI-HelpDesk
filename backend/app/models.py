@@ -38,6 +38,9 @@ class AuthSession(Base):
 
 class Conversation(Base):
     __tablename__ = "conversations"
+    __table_args__ = (
+        Index("ix_conversations_updated_at", "updated_at"),
+    )
 
     id: Mapped[int] = mapped_column(
         BigInteger, primary_key=True, autoincrement=True
@@ -54,6 +57,9 @@ class Conversation(Base):
 
 class Ticket(Base):
     __tablename__ = "tickets"
+    __table_args__ = (
+        Index("ix_tickets_status_closed_at", "status", "closed_at"),
+    )
 
     id: Mapped[int] = mapped_column(
         BigInteger, primary_key=True, autoincrement=True

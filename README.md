@@ -4,17 +4,17 @@
 
 AI HelpDesk on kehitteillä oleva verkkopohjainen tukipalvelusovellus. Käyttäjä voi keskustella tekoälyn kanssa tietotekniikkaan ja ohjelmistokehitykseen liittyvistä ongelmista sekä hallita omia tukipyyntöjään.
 
-> **Projektin tila:** Docker Compose käynnistää frontendin, FastAPI-backendin, MySQL:n, Redisin ja Ollaman paikalliseen kehityskäyttöön. Rekisteröityminen, kirjautuminen ja uloskirjautuminen käyttävät backendin istuntoautentikointia. Tukipyyntöjen luettelo, luominen, muokkaaminen, sulkeminen ja etusivun yhteenveto käyttävät REST-rajapintaa. AI-chat on edelleen esikatselunäkymä.
+> **Projektin tila 03.11.2026:** kirjautuminen, tukipyynnöt, AI-chat ja keskusteluhistoria toimivat backendin kautta. Projektin tämänhetkisessä työkopiossa backendin 57 testiä sekä frontendin lint- ja tuotantobuild-tarkistukset läpäisevät. Sprinttien 4–5 ominaisuuksia ja koko sovelluksen hyväksymistestausta on vielä kesken; tarkempi tilanne on [projektinhallintadokumentissa](docs/00-projektinhallinta.md).
 
 ### Keskeiset ominaisuudet
 
-- Käyttäjätilin luominen ja kirjautuminen; käyttäjätietojen tarkastelu.
-- Tekoälychat ja keskusteluhistoria.
+- Käyttäjätilin luominen, kirjautuminen ja uloskirjautuminen; profiilissa etu- ja sukunimi sekä sähköpostiosoite ovat vain luettavia, käyttäjänimi on muokattavissa.
+- Ollama-pohjainen tekoälychat, tallennettu keskusteluhistoria ja epäonnistuneen AI-vastauksen erillinen uudelleenyritys.
 - Tukipyyntöjen luominen, tarkastelu ja sulkeminen.
-- Tukipyynnön luominen AI-keskustelusta vasta käyttäjän tarkistuksen ja vahvistuksen jälkeen.
+- Tukipyyntöjen prioriteetit LOW, MEDIUM ja HIGH erotetaan visuaalisesti toisistaan.
 - Etusivun rajattu yhteenveto käyttäjän omista tukipyynnöistä: kokonaismäärä sekä `OPEN`- ja `CLOSED`-määrät.
 - Suomen- ja englanninkielinen käyttöliittymä.
-- RAG-neuvonta rajatusta Markdown- ja TXT-dokumenttikokoelmasta avainsanahaulla. Semanttista hakua harkitaan vain, jos testit osoittavat avainsanahaun riittämättömäksi.
+- RAG-neuvonta rajatusta Markdown- ja TXT-dokumenttikokoelmasta on suunniteltu Sprint 5:n työtä, eikä sitä pidä pitää nykyisen käyttöliittymän valmiina ominaisuutena.
 - Kehitys- ja esittely-ympäristön käynnistäminen Docker Composella, mukaan lukien Ollama ja valittu tekoälymalli.
 
 ### Teknologiapino
@@ -82,6 +82,16 @@ Backend ajaa `alembic upgrade head` -migraatiot automaattisesti ennen käynnisty
 
 LAN-käytössä lisää `FRONTEND_ORIGINS`-asetukseen sovelluksen tarkka alkuperä, esimerkiksi `http://helpdesk.lan:8088`, ja pidä logoutin `Origin`-tarkistus käytössä. Suosi HTTPS:ää ja `AUTH_COOKIE_SECURE=true`-asetusta istuntokeksin suojaamiseksi.
 
+### Sovelluksen käyttö
+
+1. Avaa Compose-käynnistyksen jälkeen `http://localhost:8088` ja luo käyttäjätili tai kirjaudu sisään.
+2. Tukipyynnöt-näkymässä voit luoda pyynnön, valita prioriteetin, muokata avointa pyyntöä ja sulkea sen. Suljetun pyynnön tietoja ei voi enää muokata.
+3. AI-keskustelu-näkymässä voit luoda keskustelun, lähettää viestejä ja palata aiempiin keskusteluihin. Jos AI-palvelu ei vastaa, jo tallennettu käyttäjän viesti säilyy historiassa; käytä kyseisen viestin **Yritä uudelleen** -toimintoa sen sijaan, että lähettäisit saman viestin uudestaan uutena viestinä.
+4. Profiilissa voit vaihtaa käyttäjänimen. Etunimi, sukunimi ja sähköpostiosoite näkyvät vain luettavina tietoina.
+5. Vaihda käyttöliittymän kieltä FI/EN-valinnalla. Valinta tallentuu samaan selaimeen.
+
+**Tietojen säilytys:** taustatehtävä suoritetaan päivittäin ja poistaa pysyvästi yli kolme kalenterikuukautta suljettuina olleet tukipyynnöt (`closed_at`) sekä yli kolme kalenterikuukautta käyttämättöminä olleet keskustelut (`updated_at`). Keskustelu säilytetään, jos siihen liittyy avoin tukipyyntö tai tukipyyntö, jonka oma säilytysaika ei ole vielä täyttynyt. Keskustelun viestit poistuvat keskustelun mukana. Poistoa ei voi peruuttaa; ota tarvittavat varmuuskopiot ja noudata organisaation tietojen säilytyskäytäntöjä.
+
 ### Ylläpitäjän ohje: unohtuneen salasanan palautus (US-17)
 
 US-17:n salasanan palautus tehdään vain backendin ylläpitokomennolla. Sovelluksessa ei ole julkista salasanan palautusrajapintaa, käyttäjän palautusnäkymää, sähköpostipalautusta tai ADMIN-käyttöliittymää.
@@ -125,13 +135,13 @@ Backendin koko `unittest`-testisarjan voi ajaa projektin juuresta Dockerilla:
 docker compose exec backend python -m unittest discover -s tests -v
 ```
 
-Testit kattavat proxy-IP:n poiminnan, kirjautumisen rate limiting -laskurit ja Redis-virheet, vanhentuneiden istuntojen siivouskyselyn sekä Ticket API:n validoinnin, omistajuusrajauksen ja keskeiset toiminnot. Testit eivät korvaa rekisteröitymisen ja kirjautumisen API-integraatiotestejä, rinnakkaisten kirjautumisten testiä MySQL:llä tai oikeassa LAN-verkossa tehtävää IP-välitystestiä. Frontendin build ja lint ajetaan erikseen frontend-kansiossa.
+Testit kattavat proxy-IP:n poiminnan, kirjautumisen rate limiting -laskurit ja Redis-virheet, vanhentuneiden istuntojen siivouskyselyn, kolmen kalenterikuukauden tietojen säilytyssäännöt sekä Ticket API:n validoinnin, omistajuusrajauksen ja keskeiset toiminnot. Testit eivät korvaa rekisteröitymisen ja kirjautumisen API-integraatiotestejä, rinnakkaisten kirjautumisten testiä MySQL:llä tai oikeassa LAN-verkossa tehtävää IP-välitystestiä. Frontendin build ja lint ajetaan erikseen frontend-kansiossa.
 
-Viimeisimmässä Sprint 1 -tarkistuksessa backendin 31 testiä läpäisivät (`31/31`), frontendin tuotantobuild onnistui ja lint-tarkistus ei raportoinut virheitä tai varoituksia. Työpistekohtaiset ja ympäristöriippuvaiset tarkistukset kirjataan projektinhallinnan Sprint-tilanteeseen.
+03.11.2026 tehdyssä tarkistuksessa backendin kaikki 57 `unittest`-testiä läpäisivät, frontendin lint oli puhdas ja TypeScript-tarkistus sekä tuotantobuild onnistuivat. Testit ajettiin päivitetyllä lähdekoodilla Docker-kontissa. Tämä ei korvaa käyttöönotetun tietokannan migraation, tyhjistä Docker-volyymeista käynnistyksen, todellisen LAN-välityksen eikä manuaalisen toiminnallisen hyväksymistestauksen tarkistusta; ajantasainen projektitilanne on projektinhallintadokumentissa.
 
 ### Kuvat
 
-Sovelluksen käyttöliittymän kuvakaappaukset lisätään toteutuksen valmistuttua. Arkkitehtuuri- ja käyttöliittymäsuunnitelmat löytyvät [järjestelmän suunnittelusta](<docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>) ja [UX/UI-suunnittelusta](docs/06-ux-ui-suunnittelu.md).
+Arkkitehtuuri- ja käyttöliittymäsuunnitelmat löytyvät [järjestelmän suunnittelusta](<docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>) ja [UX/UI-suunnittelusta](docs/06-ux-ui-suunnittelu.md>). Kuvakaappauksia ei tällä hetkellä ylläpidetä projektissa.
 
 ### Lisenssi
 
@@ -143,17 +153,17 @@ Projektin lisenssiä ei ole vielä määritelty. Myös kolmannen osapuolen malli
 
 AI HelpDesk is a web-based support application under development. Users can discuss IT and software development issues with an AI assistant and manage their own support tickets.
 
-> **Project status:** Docker Compose starts the frontend, FastAPI backend, MySQL, Redis, and Ollama for local development. Registration, sign-in, and sign-out use backend session authentication. The support-ticket list, creation, editing, closing, and home summary use the REST API. AI chat is still a preview screen.
+> **Project status on 03.11.2026:** Sign-in, support tickets, AI chat, and conversation history are connected to the backend. In the current local working tree, all 57 backend tests and the frontend lint and production-build checks pass. Sprint 4–5 work and full application acceptance testing remain in progress; see the [project management document](docs/00-projektinhallinta.md) for details.
 
 ### Main features
 
-- User registration and sign-in; viewing account details.
-- AI chat and conversation history.
+- User registration, sign-in, and sign-out; first name, last name, and email are read-only on the profile, while username can be changed.
+- Ollama-backed AI chat, saved conversation history, and a separate retry for a failed AI response.
 - Creating, viewing, and closing support tickets.
-- Creating a ticket from an AI conversation only after the user reviews and confirms the proposed details.
+- Support-ticket priorities LOW, MEDIUM, and HIGH are visually distinguished.
 - A limited dashboard for the signed-in user's tickets: total count and `OPEN`/`CLOSED` counts.
 - Finnish and English user interface.
-- RAG over a selected Markdown and TXT document collection using keyword search. Semantic search will only be considered if tests show that keyword search is insufficient.
+- RAG over a selected Markdown and TXT document collection is planned Sprint 5 work and is not yet a completed user-facing feature.
 - Starting the development and demo environment with Docker Compose, including Ollama and the selected AI model.
 
 ### Technology stack
@@ -213,13 +223,23 @@ Start the frontend, backend, MySQL, Redis, and Ollama with:
 docker compose up --build
 ```
 
-For local HTTP development, set `AUTH_COOKIE_SECURE=false` in `.env`. Compose binds the frontend and backend to `127.0.0.1`, so this setup is not accessible from other devices on the LAN. The frontend sends `/api` requests through the same-origin proxy. In Compose, the frontend uses only the dedicated proxy network at `172.30.0.2` and connects to the backend through the `backend-proxy` network alias, ensuring the connection uses the interface trusted by the backend. The default `TRUSTED_PROXY_IPS` value trusts only the frontend IP. The backend uses the first untrusted address in the chain forwarded by a trusted proxy as the client IP. If you change the Compose network or proxy address, update `TRUSTED_PROXY_IPS` as well. Expired login sessions are cleaned by a separate hourly background task, not during login. Forwarding has not yet been verified using two real LAN devices. For an HTTPS deployment, use `AUTH_COOKIE_SECURE=true`, set `FRONTEND_ORIGINS` to include the exact HTTPS application origin, and use an HTTPS reverse proxy; configure trust for that proxy separately. Set frontend `VITE_API_BASE_URL` only when the backend API uses a different origin; its value must be the backend origin without an `/api` path.
+For local HTTP development, set `AUTH_COOKIE_SECURE=false` in `.env`. Compose binds the frontend and backend to `127.0.0.1`, so this setup is not accessible from other devices on the LAN. The frontend sends `/api` requests through the same-origin proxy. In Compose, the frontend uses only the dedicated proxy network at `172.30.0.2` and connects to the backend through the `backend-proxy` network alias, ensuring the connection uses the interface trusted by the backend. The default `TRUSTED_PROXY_IPS` value trusts only the frontend IP. The backend uses the first untrusted address in the chain forwarded by a trusted proxy as the client IP. If you change the Compose network or proxy address, update `TRUSTED_PROXY_IPS` as well. Expired login sessions are cleaned by an hourly background task. A separate daily task permanently deletes closed tickets after three calendar months and inactive conversations after three calendar months without activity. Conversations linked to an open ticket or a ticket that has not yet reached its retention date are preserved. Forwarding has not yet been verified using two real LAN devices. For an HTTPS deployment, use `AUTH_COOKIE_SECURE=true`, set `FRONTEND_ORIGINS` to include the exact HTTPS application origin, and use an HTTPS reverse proxy; configure trust for that proxy separately. Set frontend `VITE_API_BASE_URL` only when the backend API uses a different origin; its value must be the backend origin without an `/api` path.
 
 If you run the frontend directly with the Vite development server instead of Compose (default port 5173), add `http://localhost:5173` and `http://127.0.0.1:5173` to `FRONTEND_ORIGINS`. The setting must include the exact frontend origin so the logout Origin check accepts the request.
 
 Before startup, the backend automatically runs `alembic upgrade head`. The initial baseline migration creates the `users` and `auth_sessions` tables in a new database or adopts tables created by the previous startup path without changing them. Verify the schema of a database created by an earlier version and back up the MySQL volume before upgrading. Alembic autogeneration produces a candidate migration; review each migration file before merging it.
 
 For LAN access, add the exact application origin to `FRONTEND_ORIGINS`, for example `http://helpdesk.lan:8088`, and keep the logout `Origin` check enabled. Prefer HTTPS with `AUTH_COOKIE_SECURE=true` to protect the session cookie.
+
+### Using the application
+
+1. After starting Compose, open `http://localhost:8088` and create an account or sign in.
+2. In **Support tickets**, create a ticket, select a priority, edit an open ticket, or close it. Closed tickets cannot be edited.
+3. In **AI chat**, create a conversation, send messages, and return to saved conversations. If the AI service fails, the user message remains in history; use **Retry** for that message rather than sending the same text as a new message.
+4. In **Profile**, change the username. First name, last name, and email are read-only.
+5. Switch the interface language with the FI/EN control. The selection is stored in the same browser.
+
+**Data retention:** a daily background task permanently deletes closed support tickets after three calendar months based on `closed_at`, and conversations inactive for three calendar months based on `updated_at`. A conversation is retained while it is linked to an open ticket or a ticket that has not yet reached its own retention date. Messages are deleted with their conversation. Deletion cannot be undone; keep any required backups and follow the organization's data-retention policies.
 
 ### Administrator guide: forgotten password reset (US-17)
 
@@ -264,13 +284,13 @@ Run the complete backend `unittest` suite from the project root using Docker:
 docker compose exec backend python -m unittest discover -s tests -v
 ```
 
-The tests cover proxy client-IP resolution, login rate-limit counters and Redis failures, expired-session cleanup, and Ticket API validation, ownership checks, and core actions. They do not replace registration/sign-in API integration tests, a concurrent sign-in test against MySQL, or an IP-forwarding test on a real LAN. Run the frontend build and lint separately from the frontend directory.
+The tests cover proxy client-IP resolution, login rate-limit counters and Redis failures, expired-session cleanup, three-calendar-month data-retention rules, and Ticket API validation, ownership checks, and core actions. They do not replace registration/sign-in API integration tests, a concurrent sign-in test against MySQL, or an IP-forwarding test on a real LAN. Run the frontend build and lint separately from the frontend directory.
 
-In the latest Sprint 1 check, all 31 backend tests passed (`31/31`), the frontend production build succeeded, and lint reported no errors or warnings. Environment-dependent checks are recorded in the Sprint status in project management.
+In the 03.11.2026 check, all 57 backend `unittest` tests passed; frontend lint, TypeScript checks, and the production build succeeded. Tests ran against the updated source in a Docker container. This does not replace verifying migration application to the active database, startup from empty Docker volumes, actual LAN forwarding, or full manual acceptance testing; see project management for the current status.
 
 ### Screenshots
 
-Application screenshots will be added after the interface has been implemented. Architecture and interface design materials are available in the [system design](<docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>) and [UX/UI design](docs/06-ux-ui-suunnittelu.md) documents.
+Architecture and interface design materials are available in the [system design](<docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>) and [UX/UI design](docs/06-ux-ui-suunnittelu.md) documents. Screenshots are not currently maintained in the project.
 
 ### License
 
