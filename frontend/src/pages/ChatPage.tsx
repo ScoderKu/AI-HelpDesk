@@ -304,7 +304,6 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
             {messages.length === 0 && !messageLoadError && <p className="chat-empty">{t.chatEmpty}</p>}
             {messages.map((message) => (
               <article key={message.id} className={`chat-message ${message.role.toLowerCase()}`}>
-                <span>{message.role === 'USER' ? t.chatUser : t.chatAssistant}</span>
                 <p>{message.content}</p>
               </article>
             ))}
