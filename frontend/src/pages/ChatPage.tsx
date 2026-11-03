@@ -6,7 +6,7 @@ import type { Copy } from '../i18n/copy'
 
 type Conversation = { id: number; title: string | null; created_at: string; updated_at: string }
 type Message = { id: number; role: 'USER' | 'ASSISTANT'; content: string; created_at: string }
-type ChatPageProps = { text: Copy }
+type ChatPageProps = { text: Copy; initialConversationId: number | null; onConversationChange: (id: number | null) => void }
 
 class ChatApiError extends Error {
   readonly status: number
@@ -44,7 +44,7 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return response.status === 204 ? undefined as T : response.json()
 }
 
-export function ChatPage({ text: t }: ChatPageProps) {
+export function ChatPage({ text: t, initialConversationId, onConversationChange }: ChatPageProps) {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [activeId, setActiveId] = useState<number | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -97,6 +97,12 @@ export function ChatPage({ text: t }: ChatPageProps) {
   }, [fetchConversations])
 
   useEffect(() => {
+    if (!loading && initialConversationId !== null) void openConversation(initialConversationId)
+  // Restore the selected conversation after the history list is ready.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, initialConversationId])
+
+  useEffect(() => {
     const messagesElement = messagesRef.current
     if (messagesElement) messagesElement.scrollTop = messagesElement.scrollHeight
   }, [messages, sending])
@@ -121,6 +127,7 @@ export function ChatPage({ text: t }: ChatPageProps) {
     const requestId = ++conversationRequest.current
     activeConversationId.current = id
     setActiveId(id)
+    onConversationChange(id)
     setMessages([])
     setRetryMessageId(null)
     setMessageLoadError(false)
@@ -147,6 +154,7 @@ export function ChatPage({ text: t }: ChatPageProps) {
       ++conversationRequest.current
       activeConversationId.current = item.id
       setActiveId(item.id)
+      onConversationChange(item.id)
       setConversations((current) => [item, ...current])
       setMessages([])
       setRetryMessageId(null)
@@ -175,6 +183,7 @@ export function ChatPage({ text: t }: ChatPageProps) {
           requestId = ++conversationRequest.current
           activeConversationId.current = created.id
           setActiveId(created.id)
+          onConversationChange(created.id)
         }
         setConversations((current) => [created, ...current])
       }
