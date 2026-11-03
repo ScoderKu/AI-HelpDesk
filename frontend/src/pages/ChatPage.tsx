@@ -97,8 +97,19 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
   }, [fetchConversations])
 
   useEffect(() => {
-    if (!loading && initialConversationId !== null) void openConversation(initialConversationId)
-  // Restore the selected conversation after the history list is ready.
+    if (loading) return
+    if (initialConversationId !== null && activeConversationId.current !== initialConversationId) {
+      void openConversation(initialConversationId)
+    } else if (initialConversationId === null && activeConversationId.current !== null) {
+      ++conversationRequest.current
+      activeConversationId.current = null
+      setActiveId(null)
+      setMessages([])
+      setRetryMessageId(null)
+      setMessageLoadError(false)
+      setError('')
+    }
+  // Restore the URL-selected conversation after history is ready or browser navigation changes it.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, initialConversationId])
 
