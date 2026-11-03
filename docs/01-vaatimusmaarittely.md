@@ -21,7 +21,7 @@ AI HelpDesk pyrkii helpottamaan tätä prosessia tarjoamalla tekoälypohjaista n
 
 Projektin tavoitteena on suunnitella ja toteuttaa toimiva AI HelpDesk -sovellus, joka täyttää seuraavat tavoitteet:
 - Käyttäjä voi rekisteröityä ja kirjautua sisään.
-- Käyttäjä voi tarkastella profiilitietojaan, muokata etunimeä, sukunimeä ja käyttäjänimeä sekä vaihtaa salasanansa nykyisen salasanan vahvistuksella. Sähköpostiosoite on vain luettavissa eikä sitä voi muuttaa.
+- Käyttäjä voi tarkastella profiilitietojaan, muokata käyttäjänimeään sekä vaihtaa salasanansa nykyisen salasanan vahvistuksella. Etunimi, sukunimi ja sähköpostiosoite ovat vain luettavissa.
 - ADMIN voi palauttaa unohtuneen salasanan backendin hallintakomennolla; käyttäjä saa satunnaisen väliaikaisen salasanan ja joutuu vaihtamaan sen seuraavalla kirjautumiskerralla.
 - Käyttäjä voi keskustella tekoälyn kanssa teknisistä ongelmista.
 - Tekoäly voi pyytää lisätietoja, kuten käyttöjärjestelmän, virheilmoituksen tai ongelman toistamiseen liittyvät vaiheet.
@@ -46,7 +46,7 @@ Projektin laajuus rajataan siten, että sovellus voidaan toteuttaa ja testata vi
 ### 5.1 Toteutukseen sisältyvät ominaisuudet
 
 - Käyttäjän rekisteröityminen ja kirjautuminen.
-- Käyttäjäprofiilin tarkastelu ja muokkaaminen.
+- Käyttäjäprofiilin tarkastelu ja käyttäjänimen muokkaaminen.
 - Unohtuneen salasanan palauttaminen ADMINin backend-hallintakomennolla ilman erillistä käyttöliittymää.
 - Tukipyyntöjen luominen, tarkastelu ja sulkeminen.
 - Tukipyyntöjen tilan ja prioriteetin hallinta.
@@ -78,7 +78,7 @@ Sovelluksen on täytettävä seuraavat toiminnalliset vaatimukset.
 | Tunnus | Vaatimus |
 |---|---|
 | FR-01 | Käyttäjä voi rekisteröityä ja kirjautua sisään. |
-| FR-02 | Käyttäjä voi tarkastella profiilitietojaan, muokata etunimeä, sukunimeä ja käyttäjänimeä sekä vaihtaa salasanansa nykyisen salasanan vahvistuksella. Sähköpostiosoite on vain luettavissa eikä sitä voi muuttaa. |
+| FR-02 | Käyttäjä voi tarkastella profiilitietojaan, muokata käyttäjänimeään sekä vaihtaa salasanansa nykyisen salasanan vahvistuksella. Etunimi, sukunimi ja sähköpostiosoite ovat vain luettavissa. |
 | FR-03 | Käyttäjä voi luoda uuden tukipyynnön. |
 | FR-04 | Käyttäjä voi tarkastella ja sulkea omia tukipyyntöjään. |
 | FR-05 | Tukipyynnössä on otsikko, kuvaus, tila, prioriteetti, luontiaika ja käyttäjän tunniste. |

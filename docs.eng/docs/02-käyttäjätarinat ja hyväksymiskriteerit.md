@@ -74,7 +74,7 @@ The application developer is responsible for the application's technical impleme
 ### US-03: Managing the User Profile
 
 - As a registered user
-- I want to view and edit my own profile information.
+- I want to view my profile information and update my username.
 - So that my information stays up to date.
 
 **Acceptance Criteria**
@@ -83,20 +83,34 @@ The application developer is responsible for the application's technical impleme
 
 - Given that the user is logged in.
 - When the user opens the profile page.
-- Then the system displays the user's own profile information.
+- Then the system displays the user's first name, last name, username, and email address.
+- First name, last name, and email address are read-only.
 
 **AC-03.2 – Updating the Profile**
 
 - Given that the user has opened their profile page.
-- When the user edits their first name, last name, or username and saves the changes.
-- Then the system saves the changes to the database and displays the updated information.
-- In the MVP, the email address and password are not changed when updating the profile. Any possible changes to them require a separate, verified action.
+- When the user edits their username and saves the changes.
+- Then the system validates and saves the username and displays the updated value.
+- First name, last name, and email address remain read-only and cannot be changed through the profile interface or API.
 
-**AC-03.3 – Invalid Profile Information**
+**AC-03.3 – Changing the Password**
 
-- Given that the user edits their profile information.
-- When the user enters invalid information.
-- Then the system displays an error message and does not save the invalid changes.
+- Given that the user is signed in and has opened the password change form.
+- When the user provides their current password, a new password, and confirmation of the new password.
+- Then the backend verifies the current password, validates the new password, and checks that the confirmation matches.
+- After a successful change, the new password is stored as a secure hash; plaintext passwords are never stored or returned.
+
+**AC-03.4 – Invalid Profile or Password Information**
+
+- Given that the user attempts to update their username or change their password.
+- When the username is invalid, the current password is incorrect, the new password does not meet the requirements, or confirmation does not match.
+- Then the system displays an understandable error and does not save invalid changes.
+
+**AC-03.5 – Preventing Email Address Changes**
+
+- Given that the user views or updates their profile.
+- When the user attempts to change the email address, including through a modified API request.
+- Then the backend rejects the change and the email address remains unchanged.
 
 ### US-04: Creating a Support Ticket
 

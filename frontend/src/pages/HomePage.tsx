@@ -8,6 +8,16 @@ import { ChatPage } from './ChatPage'
 import type { Copy } from '../i18n/copy'
 import type { AuthMode, AuthenticatedUser, Language, TicketSummary } from '../types'
 
+type AppView = 'home' | 'tickets' | 'profile' | 'chat'
+type AppRoute = { view: AppView; conversationId: number | null }
+
+function readRoute(): AppRoute {
+  const [viewPart, idPart] = window.location.hash.slice(1).replace(/^\//, '').split('/')
+  const view: AppView = viewPart === 'tickets' || viewPart === 'profile' || viewPart === 'chat' ? viewPart : 'home'
+  const parsedId = idPart ? Number(idPart) : null
+  return { view, conversationId: view === 'chat' && parsedId !== null && Number.isInteger(parsedId) && parsedId > 0 ? parsedId : null }
+}
+
 type HomePageProps = {
   language: Language
   text: Copy
@@ -38,8 +48,32 @@ export function HomePage({
   onShowPreviewNotice,
 }: HomePageProps) {
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
-  const [activeView, setActiveView] = useState<'home' | 'tickets' | 'profile' | 'chat'>('home')
+  const [route, setRoute] = useState<AppRoute>(readRoute)
+  const activeView = route.view
+
+  const navigateToView = (view: AppView, conversationId: number | null = null) => {
+    const hash = view === 'chat' && conversationId !== null ? `#chat/${conversationId}` : `#${view}`
+    if (window.location.hash !== hash) window.history.pushState(null, '', hash)
+    setRoute({ view, conversationId: view === 'chat' ? conversationId : null })
+  }
+
+  const updateChatConversation = (conversationId: number | null) => {
+    const hash = conversationId === null ? '#chat' : `#chat/${conversationId}`
+    if (window.location.hash !== hash) window.history.replaceState(null, '', hash)
+    setRoute({ view: 'chat', conversationId })
+  }
+
+  useEffect(() => {
+    const syncRoute = () => setRoute(readRoute())
+    window.addEventListener('hashchange', syncRoute)
+    window.addEventListener('popstate', syncRoute)
+    return () => {
+      window.removeEventListener('hashchange', syncRoute)
+      window.removeEventListener('popstate', syncRoute)
+    }
+  }, [])
   const [ticketSummary, setTicketSummary] = useState<TicketSummary>({ total: 0, open: 0, closed: 0 })
+  const [summaryLoading, setSummaryLoading] = useState(false)
   const [summaryError, setSummaryError] = useState('')
   const [summaryRefresh, setSummaryRefresh] = useState(0)
   const accountMenuRef = useRef<HTMLDivElement>(null)
@@ -48,8 +82,15 @@ export function HomePage({
   const pageTitleRef = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
+    if (authLoading || currentUser || (activeView !== 'chat' && activeView !== 'tickets' && activeView !== 'profile')) return
+    window.history.replaceState(null, '', '#home')
+    setRoute({ view: 'home', conversationId: null })
+  }, [authLoading, currentUser, activeView])
+
+  useEffect(() => {
     let active = true
-    if (!currentUser) return () => { active = false }
+    if (!currentUser) { setSummaryLoading(false); return () => { active = false } }
+    setSummaryLoading(true)
     void ticketsApi.summary()
       .then((summary) => {
         if (active) {
@@ -58,10 +99,11 @@ export function HomePage({
         }
       })
       .catch(() => {
-        if (active) setSummaryError(text.ticketLoadError)
+        if (active) setSummaryError(text.summaryUnavailable)
       })
+      .finally(() => { if (active) setSummaryLoading(false) })
     return () => { active = false }
-  }, [currentUser, summaryRefresh, text.ticketLoadError])
+  }, [currentUser, summaryRefresh, text.summaryUnavailable])
 
   useEffect(() => {
     if (!isAccountMenuOpen) return
@@ -113,15 +155,15 @@ export function HomePage({
 
         <div className="sidebar-section-label">{text.workspace}</div>
         <nav className="main-nav" aria-label={text.workspace}>
-          <a className={`nav-link ${activeView === 'home' ? 'active' : ''}`} href="#home" aria-current={activeView === 'home' ? 'page' : undefined} onClick={() => setActiveView('home')}>
+          <a className={`nav-link ${activeView === 'home' ? 'active' : ''}`} href="#home" aria-current={activeView === 'home' ? 'page' : undefined} onClick={() => navigateToView('home')}>
             <Icon name="home" />
             <span>{text.home}</span>
           </a>
-          <button className={`nav-link ${activeView === "chat" ? "active" : ""}`} onClick={() => currentUser ? setActiveView("chat") : onShowPreviewNotice()} type="button">
+          <button className={`nav-link ${activeView === "chat" ? "active" : ""}`} onClick={() => currentUser ? navigateToView("chat") : onShowPreviewNotice()} type="button">
             <Icon name="message" />
             <span>{text.chat}</span>
           </button>
-          <button className={`nav-link ${activeView === 'tickets' ? 'active' : ''}`} onClick={() => currentUser ? setActiveView('tickets') : onShowPreviewNotice()} type="button">
+          <button className={`nav-link ${activeView === 'tickets' ? 'active' : ''}`} onClick={() => currentUser ? navigateToView('tickets') : onShowPreviewNotice()} type="button">
             <Icon name="ticket" />
             <span>{text.ticketsNav}</span>
           </button>
@@ -152,7 +194,7 @@ export function HomePage({
                     className="account-menu-item"
                     onClick={() => {
                       setIsAccountMenuOpen(false)
-                      setActiveView('profile')
+                      navigateToView('profile')
                     }}
                     type="button"
                   >
@@ -168,7 +210,7 @@ export function HomePage({
                       const succeeded = await onSignOut()
                       if (succeeded) {
                         setIsAccountMenuOpen(false)
-                        setActiveView('home')
+                        navigateToView('home')
                         pageTitleRef.current?.focus()
                       } else {
                         signOutButtonRef.current?.focus()
@@ -189,7 +231,7 @@ export function HomePage({
         <header className="topbar">
           <div className="breadcrumb"><span>HelpDesk</span><span className="breadcrumb-divider">/</span>{text.home}</div>
           <div className="topbar-actions">
-            <div className="topbar-status"><span className="status-dot" />{text.preview}</div>
+            <div className="topbar-status"><span className="status-dot" />{currentUser ? text.workspace : text.preview}</div>
             {currentUser ? (
               <span className="signed-in-user" title={currentUser.email}>
                 {text.signedInAs} {currentUser.username}
@@ -207,34 +249,34 @@ export function HomePage({
 
         <div className="page-content">
           {activeView === 'chat' && currentUser ? (
-            <ChatPage language={language} />
+            <ChatPage text={text} initialConversationId={route.conversationId} onConversationChange={updateChatConversation} />
           ) : activeView === 'profile' && currentUser ? (
             <ProfilePage
               currentUser={currentUser}
               language={language}
               text={text}
-              onBackHome={() => setActiveView('home')}
+              onBackHome={() => navigateToView('home')}
               onProfileUpdated={onUserUpdated}
               onPasswordChanged={() => {
                 onPasswordChanged()
-                setActiveView('home')
+                navigateToView('home')
               }}
             />
           ) : activeView === 'tickets' ? (
             <TicketsPage
               language={language}
               text={text}
-              onBackHome={() => setActiveView('home')}
+              onBackHome={() => navigateToView('home')}
               onChanged={() => setSummaryRefresh((value) => value + 1)}
             />
           ) : <>
-          <div className="preview-notice" role="note">
+          {!currentUser && <div className="preview-notice" role="note">
             <span className="notice-indicator"><Icon name="layers" /></span>
             <div>
               <strong>{text.preview}</strong>
               <p>{text.previewDetails}</p>
             </div>
-          </div>
+          </div>}
 
           <section className="welcome-section" aria-labelledby="page-title">
             <div className="welcome-copy">
@@ -256,7 +298,7 @@ export function HomePage({
               <h2>{text.actionTitle}</h2>
               <p>{text.actionDescription}</p>
             </div>
-            <button className="button button-primary" onClick={() => currentUser ? setActiveView("chat") : onShowPreviewNotice()} type="button">
+            <button className="button button-primary" onClick={() => currentUser ? navigateToView("chat") : onShowPreviewNotice()} type="button">
               {text.startChat}
               <Icon name="arrow" />
             </button>
@@ -268,7 +310,7 @@ export function HomePage({
                 <h2 id="summary-title">{text.summary}</h2>
                 <p>{text.summaryDetails}</p>
               </div>
-              <button className="text-link" onClick={onShowPreviewNotice} type="button">
+              <button className="text-link" onClick={() => currentUser ? navigateToView("tickets") : onShowPreviewNotice()} type="button">
                 {text.viewTickets}<Icon name="arrow" />
               </button>
             </div>
@@ -279,7 +321,7 @@ export function HomePage({
                   <span className="stat-icon"><Icon name="layers" /></span>
                   <span className="stat-label">{text.total}</span>
                 </div>
-                <div className="stat-value">{currentUser ? ticketSummary.total : 0}</div>
+                <div className="stat-value">{currentUser ? summaryLoading ? '—' : ticketSummary.total : 0}</div>
                 <p>{text.totalHint}</p>
               </article>
               <article className="stat-card stat-open">
@@ -287,7 +329,7 @@ export function HomePage({
                   <span className="stat-icon"><Icon name="circle" /></span>
                   <span className="stat-label">{text.open}</span>
                 </div>
-                <div className="stat-value">{currentUser ? ticketSummary.open : 0}</div>
+                <div className="stat-value">{currentUser ? summaryLoading ? '—' : ticketSummary.open : 0}</div>
                 <p>{text.openHint}</p>
               </article>
               <article className="stat-card stat-closed">
@@ -295,13 +337,13 @@ export function HomePage({
                   <span className="stat-icon"><Icon name="check" /></span>
                   <span className="stat-label">{text.closed}</span>
                 </div>
-                <div className="stat-value">{currentUser ? ticketSummary.closed : 0}</div>
+                <div className="stat-value">{currentUser ? summaryLoading ? '—' : ticketSummary.closed : 0}</div>
                 <p>{text.closedHint}</p>
               </article>
             </div>
           </section>
 
-          {currentUser && summaryError && <div aria-live="polite" className="action-feedback" role="status"><span>{summaryError}</span></div>}
+          {currentUser && summaryError && <div aria-live="polite" className="action-feedback" role="status"><span>{summaryError}</span><button className="text-link" type="button" onClick={() => setSummaryRefresh(value => value + 1)}>{text.chatRetry}</button></div>}
           <div aria-live="polite" className="action-feedback" role="status">
             {notice && <span>{notice}</span>}
           </div>
