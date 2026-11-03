@@ -548,8 +548,8 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
                 setDraft(event.target.value)
               }}
               onKeyDown={handleComposerKeyDown}
-              placeholder={t.chatPlaceholder} maxLength={12000} rows={3} disabled={sending} />
-            <button className="button button-primary" type="submit" disabled={sending || !draft.trim()}>
+              placeholder={t.chatPlaceholder} maxLength={12000} rows={3} disabled={sending || ticketDraft !== null} />
+            <button className="button button-primary" type="submit" disabled={sending || ticketDraft !== null || !draft.trim()}>
               {t.chatSend}
             </button>
           </form>
