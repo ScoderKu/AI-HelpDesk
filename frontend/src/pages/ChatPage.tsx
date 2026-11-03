@@ -248,6 +248,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
           detail?: string
           saved_message_id?: number
         }
+        if (activeConversationId.current !== conversationId || conversationRequest.current !== requestId) return
         if (item.event === 'user_message' && item.message) {
           setMessages((current) => current.map((message) =>
             message.id === optimisticId ? item.message! : message,
