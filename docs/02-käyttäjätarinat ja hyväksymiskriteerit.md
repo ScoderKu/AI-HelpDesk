@@ -271,12 +271,12 @@ Sovelluksen kehittäjä vastaa sovelluksen teknisestä toteutuksesta, tietokanna
 
 - Oletetaan, että käyttäjän ongelma ei ratkea keskustelun aikana.
 - Kun ongelma tarvitsee jatkokäsittelyä ja käyttäjä on kirjautunut sisään.
-- Niin järjestelmä tarjoaa käyttäjälle mahdollisuuden luoda tukipyynnön.
+- Niin tekoäly kertoo, ettei ongelmaa voida ratkaista luotettavasti, ja ehdottaa käyttäjälle tukipyynnön luomista. Käyttäjällä on edelleen mahdollisuus luoda tukipyyntö myös itse keskustelun aikana.
 
 **AC-09.2 – Tarkistaminen ja vahvistettu luominen**
 
 - Oletetaan, että käyttäjä valitsee tukipyynnön luomisen keskustelusta.
-- Kun järjestelmä avaa keskustelun perusteella ehdotetun otsikon ja kuvauksen ja käyttäjä voi tarkistaa tai muokata niitä sekä vahvistaa luomisen.
+- Kun järjestelmä pyytää tekoälymallia muodostamaan keskustelun perusteella ongelmaa kuvaavan otsikon ja tiiviin, tekniselle tukihenkilölle hyödyllisen yhteenvedon, jotka käyttäjä voi tarkistaa ja muokata ennen luomisen vahvistamista.
 - Niin järjestelmä luo tukipyynnön ja tallentaa sen tietokantaan.
 - Tukipyyntö linkitetään keskusteluun vain, jos keskustelu kuuluu samalle kirjautuneelle käyttäjälle.
 
