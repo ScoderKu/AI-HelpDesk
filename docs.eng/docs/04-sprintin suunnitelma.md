@@ -92,7 +92,7 @@ At the end of the Sprint, users can create a support request, view their own req
 
 ## 4.3 Key Development Tasks
 
-1. Implement retrieval and updating of profile information.
+1. Implement profile retrieval and username updates; first name, last name, and email address remain read-only.
 2. Implement the support request creation form and data validation.
 3. Save the support request title, description, status, priority, creation time, and owner.
 4. Implement a list view of the user's own support requests.
@@ -106,7 +106,7 @@ At the end of the Sprint, users can create a support request, view their own req
 
 ## 4.4 Expected Outcomes
 
-1. Users can view and update their own profile information.
+1. Users can view their profile and update their username; first name, last name, and email address are read-only.
 2. Users can create a support request.
 3. Users can see their own support requests and their statuses.
 4. Users can close their own open support request.
