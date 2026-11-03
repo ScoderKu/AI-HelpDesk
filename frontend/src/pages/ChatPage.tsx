@@ -46,6 +46,7 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function ChatPage({ text: t }: ChatPageProps) {
   const [conversations, setConversations] = useState<Conversation[]>([])
+  const [activeId, setActiveId] = useState<number | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [retryMessageId, setRetryMessageId] = useState<number | null>(null)
   const [draft, setDraft] = useState('')
@@ -116,6 +117,7 @@ export function ChatPage({ text: t }: ChatPageProps) {
   const openConversation = async (id: number) => {
     const requestId = ++conversationRequest.current
     activeConversationId.current = id
+    setActiveId(id)
     setMessages([])
     setRetryMessageId(null)
     setError('')
@@ -140,6 +142,7 @@ export function ChatPage({ text: t }: ChatPageProps) {
       })
       ++conversationRequest.current
       activeConversationId.current = item.id
+      setActiveId(item.id)
       setConversations((current) => [item, ...current])
       setMessages([])
       setRetryMessageId(null)
@@ -167,6 +170,7 @@ export function ChatPage({ text: t }: ChatPageProps) {
         if (stillCurrent) {
           requestId = ++conversationRequest.current
           activeConversationId.current = created.id
+          setActiveId(created.id)
         }
         setConversations((current) => [created, ...current])
       }
