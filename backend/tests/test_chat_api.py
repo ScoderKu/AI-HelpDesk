@@ -42,6 +42,29 @@ def make_user_message(message_id: int = 41) -> Message:
     )
 
 
+class ChatLockLeaseTests(unittest.TestCase):
+    def test_assert_owned_renews_the_token_owned_lock(self) -> None:
+        lease = main.ChatLockLease("chat:conversation:12", "lease-token")
+        with patch.object(main.redis_client, "eval", return_value=1) as renew:
+            lease.assert_owned()
+
+        renew.assert_called_once_with(
+            main.RENEW_CHAT_LOCK_SCRIPT,
+            1,
+            "chat:conversation:12",
+            "lease-token",
+            main.CHAT_LOCK_TTL_SECONDS,
+        )
+
+    def test_assert_owned_rejects_a_lock_that_expired_or_was_replaced(self) -> None:
+        lease = main.ChatLockLease("chat:conversation:12", "old-token")
+        with patch.object(main.redis_client, "eval", return_value=0):
+            with self.assertRaises(HTTPException) as raised:
+                lease.assert_owned()
+
+        self.assertEqual(raised.exception.status_code, 409)
+
+
 class ChatEndpointTests(unittest.TestCase):
     def setUp(self) -> None:
         self.user = User(id=7)
