@@ -50,6 +50,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
   const [messages, setMessages] = useState<Message[]>([])
   const [retryMessageId, setRetryMessageId] = useState<number | null>(null)
   const [draft, setDraft] = useState('')
+  const draftRef = useRef('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [streaming, setStreaming] = useState(false)
@@ -196,6 +197,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     setSending(true)
     setError('')
     setDraft('')
+    draftRef.current = ''
     setMessages((current) => [...current, optimisticMessage])
 
     try {
@@ -294,7 +296,10 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
             setMessages((current) => current.filter((message) =>
               message.id !== optimisticId && message.id !== assistantMessageId,
             ))
-            if (draft === '') setDraft(content)
+            if (draftRef.current === '') {
+              draftRef.current = content
+              setDraft(content)
+            }
             setRetryMessageId(previousRetryMessageId)
             if (item.detail?.includes('previous message') && conversationId !== null) {
               void refreshMessages(conversationId, requestId).catch(() => undefined)
@@ -331,7 +336,10 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
           setRetryMessageId(persistedUserMessageId)
           setError(t.chatAiUnavailable)
         } else {
-          if (draft === '') setDraft(content)
+          if (draftRef.current === '') {
+            draftRef.current = content
+            setDraft(content)
+          }
           setRetryMessageId(previousRetryMessageId)
           if (rejectionDetail.includes('previous message') && conversationId !== null) {
             try { await refreshMessages(conversationId, requestId) } catch { /* Keep the existing retry state. */ }
@@ -438,7 +446,10 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
           <form className="chat-composer" onSubmit={sendMessage}>
             <label className="sr-only" htmlFor="chat-composer-input">{t.chatComposerLabel}</label>
             <textarea id="chat-composer-input" ref={composerRef} value={draft}
-              onChange={(event) => setDraft(event.target.value)}
+              onChange={(event) => {
+                draftRef.current = event.target.value
+                setDraft(event.target.value)
+              }}
               onKeyDown={handleComposerKeyDown}
               placeholder={t.chatPlaceholder} maxLength={12000} rows={3} disabled={sending} />
             <button className="button button-primary" type="submit" disabled={sending || !draft.trim()}>
