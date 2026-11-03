@@ -2,7 +2,7 @@ import json
 import unittest
 from unittest.mock import patch
 
-from app.ai import GeneratedReply, OllamaUnavailableError, generate_reply, generate_reply_stream, preload_model
+from app.ai import GeneratedReply, GeneratedTicketDraft, OllamaUnavailableError, generate_reply, generate_reply_stream, generate_ticket_draft, preload_model
 
 
 def ollama_response(content: str) -> object:
@@ -223,7 +223,61 @@ class OllamaResponseTests(unittest.TestCase):
             ("language", "Finnish"),
             ("content", "First "),
             ("content", "second."),
+            ("ticket_recommendation", False),
         ])
         payload = json.loads(urlopen.call_args_list[1].args[0].data)
         self.assertIs(payload["stream"], True)
         self.assertIn("MANDATORY RESPONSE LANGUAGE: Finnish.", payload["messages"][0]["content"])
+
+
+    def test_ticket_draft_is_structured_concise_and_uses_conversation_language(self) -> None:
+        draft_json = json.dumps({
+            "title": "Wi-Fi disconnects every few minutes",
+            "description": "Problem: The Wi-Fi connection disconnects every few minutes.\\nTried: Restarting the router did not help.",
+        })
+        messages = [
+            {"role": "user", "content": "My Wi-Fi keeps disconnecting."},
+            {"role": "assistant", "content": "Have you restarted the router?"},
+            {"role": "user", "content": "Yes, but it still disconnects."},
+        ]
+        with patch("app.ai.urlopen", return_value=ollama_response(draft_json)) as urlopen:
+            result = generate_ticket_draft(messages, "English")
+
+        self.assertEqual(result, GeneratedTicketDraft(
+            "Wi-Fi disconnects every few minutes",
+            "Problem: The Wi-Fi connection disconnects every few minutes.\\nTried: Restarting the router did not help.",
+        ))
+        payload = json.loads(urlopen.call_args.args[0].data)
+        self.assertIn("Do not invent causes", payload["messages"][0]["content"])
+        self.assertIn("English", payload["messages"][0]["content"])
+        self.assertEqual(payload["format"]["required"], ["title", "description"])
+
+    def test_ticket_draft_rejects_invalid_or_empty_fields(self) -> None:
+        with (
+            patch("app.ai.urlopen", return_value=ollama_response(json.dumps({"title": "", "description": ""}))),
+            self.assertRaises(OllamaUnavailableError),
+        ):
+            generate_ticket_draft([{"role": "user", "content": "Help"}])
+
+    def test_streaming_reply_hides_ticket_recommendation_marker(self) -> None:
+        marker = "[TICKET_RECOMMENDED]"
+        class StreamResponse:
+            def __enter__(self): return self
+            def __exit__(self, *_args): return False
+            def __iter__(self):
+                chunks = [
+                    {"message": {"content": "I could not solve this reliably. "}, "done": False},
+                    {"message": {"content": "Please create a support ticket.\\n[TICKET_"}, "done": False},
+                    {"message": {"content": "RECOMMENDED]"}, "done": False},
+                    {"message": {"content": ""}, "done": True},
+                ]
+                return iter((json.dumps(item) + "\\n").encode() for item in chunks)
+        with patch("app.ai.urlopen", side_effect=[
+            ollama_response(json.dumps({"input_language": "English", "requested_language": None})),
+            StreamResponse(),
+        ]):
+            events = list(generate_reply_stream([{"role": "user", "content": "Nothing works"}]))
+        content = "".join(value for kind, value in events if kind == "content")
+        self.assertEqual(content, "I could not solve this reliably. Please create a support ticket.\\n")
+        self.assertEqual(events[-1], ("ticket_recommendation", True))
+        self.assertNotIn(marker, content)
