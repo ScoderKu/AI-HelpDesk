@@ -217,3 +217,23 @@ class MessageResponse(BaseModel):
     role: MessageRole
     content: str
     created_at: datetime
+
+
+
+class ChatMessageRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    content: str = Field(min_length=1, max_length=12000)
+
+    @field_validator("content")
+    @classmethod
+    def validate_content_size(cls, value: str) -> str:
+        if len(value.encode("utf-8")) > 48_000:
+            raise ValueError("Message exceeds the maximum allowed size.")
+        return value
+
+
+class ChatMessageResponse(BaseModel):
+    conversation_id: int
+    user_message: MessageResponse
+    assistant_message: MessageResponse

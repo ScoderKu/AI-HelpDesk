@@ -22,12 +22,15 @@ from sqlalchemy import case, delete, func, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.ai import OllamaUnavailableError, generate_reply
 from app.database import SessionLocal, engine, get_db
 from app.models import AuthSession, Conversation, Message, Ticket, User
 from app.schemas import (
     ConversationCreateRequest,
     ConversationResponse,
     MessageResponse,
+    ChatMessageRequest,
+    ChatMessageResponse,
     TicketCreateRequest,
     TicketResponse,
     TicketStatus,
@@ -87,6 +90,11 @@ TRUSTED_PROXY_NETWORKS = tuple(
     for value in os.getenv("TRUSTED_PROXY_IPS", "").split(",")
     if value.strip()
 )
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "poro-helpdesk")
+OLLAMA_HEALTH_TIMEOUT_SECONDS = 3
+
+
 logger = logging.getLogger(__name__)
 redis_client: Redis = Redis.from_url(
     os.getenv("REDIS_URL", "redis://localhost:6379/0"),
@@ -854,3 +862,147 @@ def list_conversation_messages(
         Message.conversation_id == conversation_id
     ).order_by(Message.created_at.asc(), Message.id.asc())).all()
     return [MessageResponse.model_validate(item) for item in items]
+
+
+@app.post(
+    "/api/v1/conversations/{conversation_id}/messages",
+    response_model=ChatMessageResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Conversations"],
+)
+async def send_chat_message(
+    message_data: ChatMessageRequest,
+    conversation_id: int = Path(gt=0),
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> ChatMessageResponse:
+    conversation = db.scalar(
+        select(Conversation).where(
+            Conversation.id == conversation_id,
+            Conversation.user_id == user.id,
+        )
+    )
+    if conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    user_message = Message(
+        conversation_id=conversation.id,
+        role="USER",
+        content=message_data.content,
+        created_at=now,
+    )
+    db.add(user_message)
+    if not conversation.title:
+        conversation.title = message_data.content[:80]
+    conversation.updated_at = now
+    db.commit()
+    db.refresh(user_message)
+
+    history = db.scalars(
+        select(Message)
+        .where(Message.conversation_id == conversation.id)
+        .order_by(Message.created_at.desc(), Message.id.desc())
+        .limit(20)
+    ).all()
+    ollama_messages = [
+        {"role": "user" if item.role == "USER" else "assistant", "content": item.content}
+        for item in reversed(history)
+    ]
+
+    try:
+        answer = await asyncio.to_thread(generate_reply, ollama_messages)
+    except OllamaUnavailableError as error:
+        logger.warning("Ollama chat request failed: %s", str(error))
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI assistant is temporarily unavailable. Your message was saved; please try again.",
+        ) from None
+
+    assistant_message = Message(
+        conversation_id=conversation.id,
+        role="ASSISTANT",
+        content=answer,
+        created_at=datetime.now(timezone.utc).replace(tzinfo=None),
+    )
+    db.add(assistant_message)
+    conversation.updated_at = assistant_message.created_at
+    db.commit()
+    db.refresh(assistant_message)
+
+    return ChatMessageResponse(
+        conversation_id=conversation.id,
+        user_message=MessageResponse.model_validate(user_message),
+        assistant_message=MessageResponse.model_validate(assistant_message),
+    )
+
+
+@app.get("/api/v1/ai/health", tags=["AI"])
+async def ollama_health_check(
+    _user: User = Depends(get_authenticated_user),
+) -> dict[str, object]:
+    """Check Ollama availability and whether the configured model is installed."""
+    import json
+    from urllib.error import URLError
+    from urllib.request import urlopen
+
+    def fetch_ollama_status() -> tuple[str | None, list[str] | None]:
+        version: str | None = None
+        model_names: list[str] | None = None
+
+        with urlopen(
+            f"{OLLAMA_BASE_URL}/api/version",
+            timeout=OLLAMA_HEALTH_TIMEOUT_SECONDS,
+        ) as response:
+            version_payload = json.loads(response.read().decode("utf-8"))
+            version = version_payload.get("version")
+
+        with urlopen(
+            f"{OLLAMA_BASE_URL}/api/tags",
+            timeout=OLLAMA_HEALTH_TIMEOUT_SECONDS,
+        ) as response:
+            tags_payload = json.loads(response.read().decode("utf-8"))
+            model_names = [
+                item.get("name", "")
+                for item in tags_payload.get("models", [])
+                if isinstance(item, dict)
+            ]
+        return version, model_names
+
+    try:
+        version, model_names = await asyncio.to_thread(fetch_ollama_status)
+    except (OSError, URLError, TimeoutError, ValueError) as error:
+        logger.warning("Ollama health check failed: %s", type(error).__name__)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "status": "unavailable",
+                "provider": "ollama",
+                "connected": False,
+                "model": OLLAMA_MODEL,
+                "model_available": False,
+            },
+        ) from None
+
+    available_models = set(model_names or [])
+    model_available = any(
+        name == OLLAMA_MODEL or name.startswith(f"{OLLAMA_MODEL}:")
+        for name in available_models
+    )
+    result: dict[str, object] = {
+        "status": "ok" if model_available else "degraded",
+        "provider": "ollama",
+        "connected": True,
+        "version": version,
+        "model": OLLAMA_MODEL,
+        "model_available": model_available,
+    }
+    if not model_available:
+        result["available_models"] = sorted(available_models)
+
+    if not model_available:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=result,
+        )
+    return result
