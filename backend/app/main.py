@@ -1066,6 +1066,45 @@ def list_conversation_messages(
     return [MessageResponse.model_validate(item) for item in items]
 
 
+@app.post(
+    "/api/v1/conversations/{conversation_id}/tickets",
+    response_model=TicketResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Tickets"],
+)
+def create_ticket_from_conversation(
+    ticket_data: TicketCreateRequest,
+    conversation_id: int = Path(gt=0),
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> TicketResponse:
+    conversation = db.scalar(
+        select(Conversation).where(
+            Conversation.id == conversation_id,
+            Conversation.user_id == user.id,
+        )
+    )
+    if conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    ticket = Ticket(
+        user_id=user.id,
+        conversation_id=conversation.id,
+        title=ticket_data.title,
+        description=ticket_data.description,
+        status=TicketStatus.OPEN.value,
+        priority=ticket_data.priority.value,
+        created_at=now,
+        updated_at=now,
+        closed_at=None,
+    )
+    db.add(ticket)
+    db.commit()
+    db.refresh(ticket)
+    return TicketResponse.model_validate(ticket)
+
+
 async def generate_assistant_for_message(
     conversation_id: int,
     user_message_id: int,
