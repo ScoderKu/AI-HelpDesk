@@ -109,6 +109,7 @@ class TicketEndpointTests(unittest.TestCase):
         protected_paths = {
             ("GET", "/api/v1/tickets"),
             ("POST", "/api/v1/tickets"),
+            ("POST", "/api/v1/conversations/{conversation_id}/tickets"),
             ("GET", "/api/v1/tickets/summary"),
             ("GET", "/api/v1/tickets/{ticket_id}"),
             ("PATCH", "/api/v1/tickets/{ticket_id}"),
@@ -178,6 +179,45 @@ class TicketEndpointTests(unittest.TestCase):
         self.assertEqual(response.status, TicketStatus.OPEN)
         self.assertTrue(response.model_dump_json().endswith('Z"}'))
         db.commit.assert_called_once_with()
+
+    def test_create_ticket_from_owned_conversation_links_ticket_and_uses_server_owner(self) -> None:
+        from app.models import Conversation
+
+        conversation = Conversation(id=55, user_id=self.user.id)
+        db = MagicMock()
+        db.scalar.return_value = conversation
+        db.refresh.side_effect = lambda ticket: setattr(ticket, "id", 202)
+        request = TicketCreateRequest(
+            title="Network keeps disconnecting",
+            description="The Wi-Fi disconnects after a few minutes.",
+            priority="HIGH",
+        )
+
+        response = main.create_ticket_from_conversation(request, 55, self.user, db)
+
+        created = db.add.call_args.args[0]
+        self.assertEqual(created.user_id, self.user.id)
+        self.assertEqual(created.conversation_id, conversation.id)
+        self.assertEqual(created.status, TicketStatus.OPEN.value)
+        self.assertEqual(created.priority, TicketPriority.HIGH.value)
+        self.assertEqual(response.id, 202)
+        self.assertEqual(response.status, TicketStatus.OPEN)
+        statement = compile_mysql(db.scalar.call_args.args[0])
+        self.assertIn("conversations.id = 55", statement)
+        self.assertIn("conversations.user_id = 7", statement)
+        db.commit.assert_called_once_with()
+
+    def test_create_ticket_from_missing_or_foreign_conversation_returns_404(self) -> None:
+        db = MagicMock()
+        db.scalar.return_value = None
+        request = TicketCreateRequest(title="Network issue", description="Wi-Fi is unavailable.")
+
+        with self.assertRaises(HTTPException) as raised:
+            main.create_ticket_from_conversation(request, 999, self.user, db)
+
+        self.assertEqual(raised.exception.status_code, 404)
+        db.add.assert_not_called()
+        db.commit.assert_not_called()
 
     def test_get_ticket_filters_by_owner_and_hides_foreign_ticket(self) -> None:
         db = MagicMock()
