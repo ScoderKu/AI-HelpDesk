@@ -292,8 +292,6 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
 
       {(ticketRoute.mode === 'detail' || ticketRoute.mode === 'edit') && isLoading && <p className="ticket-empty-state" role="status">{text.ticketLoading}</p>}
 
-      {(ticketRoute.mode === 'detail' || ticketRoute.mode === 'edit') && isLoading && <p className="ticket-empty-state" role="status">{text.ticketLoading}</p>}
-
       {mode === 'detail' && selectedTicket && (
         <div className="ticket-detail-panel">
           <button className="text-link ticket-home-link" onClick={() => void returnToList()} type="button">
