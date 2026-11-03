@@ -105,7 +105,7 @@ Työ toteutetaan seuraavassa järjestyksessä. US-17 tehdään vasta, kun US-04,
 3. Testataan tyhjä lista, olemassa olevat pyynnöt, luvaton pääsy ja sulkemisen tilasiirtymä.
 
 **3. US-03 – Käyttäjäprofiilin hallinta**
-1. Toteutetaan profiilitietojen hakeminen sekä etunimen, sukunimen ja käyttäjänimen päivittäminen; sähköpostiosoite näytetään vain luettavana.
+1. Toteutetaan profiilitietojen hakeminen sekä käyttäjänimen päivittäminen; etunimi, sukunimi ja sähköpostiosoite näytetään vain luettavina.
 2. Toteutetaan salasanan vaihtaminen nykyisen salasanan vahvistuksella, uuden salasanan validoinnilla ja vahvistuskentän tarkistuksella.
 3. Varmistetaan, että backend hylkää sähköpostiosoitteen muuttamisen ja tallentaa uuden salasanan vain turvallisesti tiivistettynä.
 4. Testataan profiilin haku, kelvolliset ja virheelliset päivitykset sekä salasanan vaihdon onnistuminen ja epäonnistuminen.
@@ -121,7 +121,7 @@ Työ toteutetaan seuraavassa järjestyksessä. US-17 tehdään vasta, kun US-04,
 
 1. Käyttäjä voi luoda tukipyynnön, joka tallentuu hänen omistukseensa.
 2. Käyttäjä näkee vain omat tukipyyntönsä, voi tarkastella niiden tietoja ja sulkea oman avoimen pyyntönsä.
-3. Käyttäjä voi tarkastella profiilitietojaan, päivittää etunimen, sukunimen ja käyttäjänimen sekä vaihtaa salasanan nykyisen salasanan vahvistuksella. Sähköpostiosoite näkyy mutta sitä ei voi muuttaa.
+3. Käyttäjä voi tarkastella profiilitietojaan, päivittää käyttäjänimensä sekä vaihtaa salasanan nykyisen salasanan vahvistuksella. Etunimi, sukunimi ja sähköpostiosoite näkyvät vain luettavina.
 4. Sprintin viimeisenä toteutettava US-17 mahdollistaa ADMINin backend-resetin; väliaikainen salasana on vaihdettava ennen muiden suojattujen toimintojen käyttöä ja aiemmat istunnot mitätöidään.
 
 ## 4.5 Sprintin hyväksyminen
