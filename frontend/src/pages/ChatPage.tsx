@@ -191,10 +191,10 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     let requestId = conversationRequest.current
     let persistedUserMessageId: number | null = null
     let streamedAssistantMessageId: number | null = null
+    const previousRetryMessageId = retryMessageId
     setSending(true)
     setError('')
     setDraft('')
-    setRetryMessageId(null)
     setMessages((current) => [...current, optimisticMessage])
 
     try {
@@ -254,6 +254,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
         if (activeConversationId.current !== conversationId || conversationRequest.current !== requestId) return
         if (item.event === 'user_message' && item.message) {
           persistedUserMessageId = item.message.id
+          setRetryMessageId(null)
           setMessages((current) => current.map((message) =>
             message.id === optimisticId ? item.message! : message,
           ))
@@ -291,6 +292,8 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
             setMessages((current) => current.filter((message) =>
               message.id !== optimisticId && message.id !== assistantMessageId,
             ))
+            if (draft === '') setDraft(content)
+            setRetryMessageId(previousRetryMessageId)
             setError(item.detail?.includes('previous message') ? t.chatPreviousUnanswered : t.chatSendError)
           }
         }
@@ -323,6 +326,8 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
           setRetryMessageId(persistedUserMessageId)
           setError(t.chatAiUnavailable)
         } else {
+          if (draft === '') setDraft(content)
+          setRetryMessageId(previousRetryMessageId)
           setError(t.chatSendError)
         }
       }
