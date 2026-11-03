@@ -76,7 +76,7 @@ export function ChatPage({ text: t }: ChatPageProps) {
       setConversationListError(true)
       return []
     }
-  }, [fetchConversations, t.chatLoadError])
+  }, [fetchConversations])
 
   useEffect(() => {
     let active = true
@@ -94,7 +94,7 @@ export function ChatPage({ text: t }: ChatPageProps) {
         if (active) setLoading(false)
       })
     return () => { active = false }
-  }, [fetchConversations, t.chatLoadError])
+  }, [fetchConversations])
 
   useEffect(() => {
     const messagesElement = messagesRef.current
@@ -114,6 +114,7 @@ export function ChatPage({ text: t }: ChatPageProps) {
     setMessages(items)
     const lastMessage = items.at(-1)
     setRetryMessageId(lastMessage?.role === 'USER' ? lastMessage.id : null)
+    setMessageLoadError(false)
   }
 
   const openConversation = async (id: number) => {
@@ -280,7 +281,7 @@ export function ChatPage({ text: t }: ChatPageProps) {
         </aside>
         <div className="chat-panel">
           <div className="chat-messages" aria-live="polite" aria-relevant="additions text" ref={messagesRef}>
-            {messages.length === 0 && <p className="chat-empty">{t.chatEmpty}</p>}
+            {messages.length === 0 && !messageLoadError && <p className="chat-empty">{t.chatEmpty}</p>}
             {messages.map((message) => (
               <article key={message.id} className={`chat-message ${message.role.toLowerCase()}`}>
                 <span>{message.role === 'USER' ? t.chatUser : t.chatAssistant}</span>
@@ -289,7 +290,15 @@ export function ChatPage({ text: t }: ChatPageProps) {
             ))}
             {sending && <p className="chat-empty" role="status">{t.chatSending}</p>}
           </div>
-          {messageLoadError && <div className="chat-error" role="alert"><span>{t.chatLoadError}</span><button className="text-link" type="button" onClick={() => { const id = activeConversationId.current; if (id !== null) void openConversation(id) }}>{t.chatRetry}</button></div>}
+          {messageLoadError && (
+            <div className="chat-error" role="alert">
+              <span>{t.chatLoadError}</span>
+              <button className="text-link" type="button" onClick={() => {
+                const id = activeConversationId.current
+                if (id !== null) void openConversation(id)
+              }}>{t.chatRetry}</button>
+            </div>
+          )}
           {error && <p className="chat-error" role="alert">{error}</p>}
           {retryMessageId !== null && (
             <button className="button button-secondary" type="button" onClick={() => void retryAnswer()} disabled={sending}>
