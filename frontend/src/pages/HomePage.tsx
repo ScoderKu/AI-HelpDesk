@@ -40,6 +40,7 @@ export function HomePage({
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
   const [activeView, setActiveView] = useState<'home' | 'tickets' | 'profile' | 'chat'>('home')
   const [ticketSummary, setTicketSummary] = useState<TicketSummary>({ total: 0, open: 0, closed: 0 })
+  const [summaryLoading, setSummaryLoading] = useState(false)
   const [summaryError, setSummaryError] = useState('')
   const [summaryRefresh, setSummaryRefresh] = useState(0)
   const accountMenuRef = useRef<HTMLDivElement>(null)
@@ -49,7 +50,8 @@ export function HomePage({
 
   useEffect(() => {
     let active = true
-    if (!currentUser) return () => { active = false }
+    if (!currentUser) { setSummaryLoading(false); return () => { active = false } }
+    setSummaryLoading(true)
     void ticketsApi.summary()
       .then((summary) => {
         if (active) {
@@ -58,10 +60,11 @@ export function HomePage({
         }
       })
       .catch(() => {
-        if (active) setSummaryError(text.ticketLoadError)
+        if (active) setSummaryError(text.summaryUnavailable)
       })
+      .finally(() => { if (active) setSummaryLoading(false) })
     return () => { active = false }
-  }, [currentUser, summaryRefresh, text.ticketLoadError])
+  }, [currentUser, summaryRefresh, text.summaryUnavailable])
 
   useEffect(() => {
     if (!isAccountMenuOpen) return
@@ -189,7 +192,7 @@ export function HomePage({
         <header className="topbar">
           <div className="breadcrumb"><span>HelpDesk</span><span className="breadcrumb-divider">/</span>{text.home}</div>
           <div className="topbar-actions">
-            <div className="topbar-status"><span className="status-dot" />{text.preview}</div>
+            <div className="topbar-status"><span className="status-dot" />{currentUser ? text.workspace : text.preview}</div>
             {currentUser ? (
               <span className="signed-in-user" title={currentUser.email}>
                 {text.signedInAs} {currentUser.username}
@@ -207,7 +210,7 @@ export function HomePage({
 
         <div className="page-content">
           {activeView === 'chat' && currentUser ? (
-            <ChatPage language={language} />
+            <ChatPage text={text} />
           ) : activeView === 'profile' && currentUser ? (
             <ProfilePage
               currentUser={currentUser}
@@ -268,7 +271,7 @@ export function HomePage({
                 <h2 id="summary-title">{text.summary}</h2>
                 <p>{text.summaryDetails}</p>
               </div>
-              <button className="text-link" onClick={onShowPreviewNotice} type="button">
+              <button className="text-link" onClick={() => currentUser ? setActiveView("tickets") : onShowPreviewNotice()} type="button">
                 {text.viewTickets}<Icon name="arrow" />
               </button>
             </div>
@@ -279,7 +282,7 @@ export function HomePage({
                   <span className="stat-icon"><Icon name="layers" /></span>
                   <span className="stat-label">{text.total}</span>
                 </div>
-                <div className="stat-value">{currentUser ? ticketSummary.total : 0}</div>
+                <div className="stat-value">{currentUser ? summaryLoading ? '—' : ticketSummary.total : 0}</div>
                 <p>{text.totalHint}</p>
               </article>
               <article className="stat-card stat-open">
@@ -287,7 +290,7 @@ export function HomePage({
                   <span className="stat-icon"><Icon name="circle" /></span>
                   <span className="stat-label">{text.open}</span>
                 </div>
-                <div className="stat-value">{currentUser ? ticketSummary.open : 0}</div>
+                <div className="stat-value">{currentUser ? summaryLoading ? '—' : ticketSummary.open : 0}</div>
                 <p>{text.openHint}</p>
               </article>
               <article className="stat-card stat-closed">
@@ -295,13 +298,13 @@ export function HomePage({
                   <span className="stat-icon"><Icon name="check" /></span>
                   <span className="stat-label">{text.closed}</span>
                 </div>
-                <div className="stat-value">{currentUser ? ticketSummary.closed : 0}</div>
+                <div className="stat-value">{currentUser ? summaryLoading ? '—' : ticketSummary.closed : 0}</div>
                 <p>{text.closedHint}</p>
               </article>
             </div>
           </section>
 
-          {currentUser && summaryError && <div aria-live="polite" className="action-feedback" role="status"><span>{summaryError}</span></div>}
+          {currentUser && summaryError && <div aria-live="polite" className="action-feedback" role="status"><span>{summaryError}</span><button className="text-link" type="button" onClick={() => setSummaryRefresh(value => value + 1)}>{text.chatRetry}</button></div>}
           <div aria-live="polite" className="action-feedback" role="status">
             {notice && <span>{notice}</span>}
           </div>
