@@ -203,6 +203,7 @@ class ChatEndpointTests(unittest.TestCase):
         persistence_db = MagicMock()
         persistence_db.__enter__.return_value = persistence_db
         persistence_db.get.return_value = conversation
+        persistence_db.scalar.return_value = user_message
         persistence_db.refresh.side_effect = lambda item: setattr(item, "id", 42)
 
         with (
