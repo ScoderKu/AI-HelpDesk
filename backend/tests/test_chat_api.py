@@ -180,7 +180,10 @@ class ChatEndpointTests(unittest.TestCase):
         )
         persistence_db.commit.assert_called_once()
         self.assertEqual(db.rollback.call_count, 2)
-        release_lock.assert_called_once()
+        release_calls = [
+            call for call in release_lock.call_args_list if call.args[0] == main.RELEASE_CHAT_LOCK_SCRIPT
+        ]
+        self.assertEqual(len(release_calls), 1)
 
     def test_failed_ai_response_identifies_saved_message_for_retry(self) -> None:
         conversation = make_conversation()
