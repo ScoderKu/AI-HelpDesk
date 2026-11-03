@@ -1,7 +1,6 @@
 import type { Language } from '../types'
 
-export const copy = {
-  fi: {
+const fi = {
     home: 'Etusivu',
     chatTitle: 'AI-keskustelu',
     chatNew: 'Uusi keskustelu',
@@ -161,8 +160,9 @@ export const copy = {
     registrationValidationError: 'Tarkista antamasi tiedot ja yritä uudelleen.',
     registrationNetworkError: 'Palveluun ei saatu yhteyttä. Yritä myöhemmin uudelleen.',
     registrationError: 'Tilin luominen ei onnistunut. Yritä myöhemmin uudelleen.',
-  },
-  en: {
+}
+
+const en = {
     home: 'Home',
     chatTitle: 'AI chat',
     chatNew: 'New conversation',
@@ -322,7 +322,8 @@ export const copy = {
     registrationValidationError: 'Check the information you entered and try again.',
     registrationNetworkError: 'Could not connect to the service. Please try again later.',
     registrationError: 'The account could not be created. Please try again later.',
-  },
-} satisfies Record<Language, Record<string, string>>
+}
+
+export const copy = { fi, en } satisfies Record<Language, typeof fi>
 
 export type Copy = (typeof copy)[Language]
