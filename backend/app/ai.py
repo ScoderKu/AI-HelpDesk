@@ -12,6 +12,8 @@ OLLAMA_TIMEOUT_SECONDS = float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "90"))
 OLLAMA_PRELOAD_TIMEOUT_SECONDS = max(OLLAMA_TIMEOUT_SECONDS, 600)
 OLLAMA_KEEP_ALIVE = "24h"
 MAX_CONTEXT_MESSAGES = 20
+TICKET_RECOMMENDED_MARKER = "[TICKET_RECOMMENDED]"
+NO_TICKET_RECOMMENDATION_MARKER = "[NO_TICKET_RECOMMENDATION]"
 LANGUAGE_CLASSIFICATION_PROMPT = (
     "Classify two independent properties of the latest user message. Do NOT answer it. "
     "1. input_language: exact one of Finnish, English, other. Use Finnish only if the "
@@ -30,8 +32,12 @@ REPLY_SYSTEM_PROMPT = (
     "You are an AI HelpDesk technical support assistant. Give clear, safe, step-by-step "
     "troubleshooting guidance. Ask one relevant clarifying question only when essential. "
     "Never claim to have changed anything or created a support ticket. Never ask for "
-    "passwords, one-time codes, or other secrets. Return only a JSON object with a "
-    "non-empty `reply` string."
+    "passwords, one-time codes, or other secrets. If the problem remains unresolved "
+    "after reasonable troubleshooting, the model lacks the information or capability "
+    "to give a reliable next step, or the user explicitly needs human follow-up, clearly "
+    "tell the user that and recommend creating a support ticket. Do not recommend a "
+    "ticket merely because you need one ordinary clarifying answer or have not yet "
+    "tried reasonable steps. Return only a JSON object with a non-empty `reply` string."
 )
 
 
@@ -260,12 +266,19 @@ def generate_reply_stream(
     system_prompt = (
         f"MANDATORY RESPONSE LANGUAGE: {reply_language}. Write every sentence of the "
         "reply in this language, regardless of the user's language. Do not output in "
-        "another language.\n\n"
+        "another language.\\n\\n"
         "You are an AI HelpDesk technical support assistant. Give clear, safe, "
         "step-by-step troubleshooting guidance. Ask one relevant clarifying question "
         "only when essential. Never claim to have changed anything or created a support "
-        "ticket. Never ask for passwords, one-time codes, or other secrets. "
-        "Return the answer as plain text, not as JSON."
+        "ticket. Never ask for passwords, one-time codes, or other secrets. If the problem "
+        "remains unresolved after reasonable troubleshooting, you lack the information "
+        "or capability to give a reliable next step, or the user explicitly needs human "
+        "follow-up, clearly say so and recommend creating a support ticket. Do not "
+        "recommend a ticket merely because one ordinary clarification is still needed. "
+        "At the very end, append exactly one machine marker on its own final line: "
+        "`[TICKET_RECOMMENDED]` if you recommend creating a ticket, otherwise "
+        "`[NO_TICKET_RECOMMENDATION]`. Never explain, translate, or mention this marker. "
+        "The marker is not part of the user-facing answer."
     )
     yield ("language", saved_language)
 
@@ -285,6 +298,8 @@ def generate_reply_stream(
     )
     received_content = False
     completed = False
+    pending_content = ""
+    markers = (TICKET_RECOMMENDED_MARKER, NO_TICKET_RECOMMENDATION_MARKER)
     try:
         with urlopen(request, timeout=OLLAMA_TIMEOUT_SECONDS) as response:
             for raw_line in response:
@@ -301,7 +316,16 @@ def generate_reply_stream(
                     chunk = message.get("content")
                     if isinstance(chunk, str) and chunk:
                         received_content = True
-                        yield ("content", chunk)
+                        pending_content += chunk
+                        hold_length = 0
+                        for marker in markers:
+                            for length in range(1, min(len(marker), len(pending_content)) + 1):
+                                if pending_content.endswith(marker[:length]):
+                                    hold_length = max(hold_length, length)
+                        safe_length = len(pending_content) - hold_length
+                        if safe_length > 0:
+                            yield ("content", pending_content[:safe_length])
+                            pending_content = pending_content[safe_length:]
                 if result.get("done") is True:
                     completed = True
                     break
@@ -310,3 +334,13 @@ def generate_reply_stream(
 
     if not completed or not received_content:
         raise OllamaUnavailableError("Incomplete streaming response from Ollama")
+
+    ticket_recommended = False
+    for marker in markers:
+        if pending_content.endswith(marker):
+            ticket_recommended = marker == TICKET_RECOMMENDED_MARKER
+            pending_content = pending_content[:-len(marker)]
+            break
+    if pending_content:
+        yield ("content", pending_content)
+    yield ("ticket_recommendation", ticket_recommended)
