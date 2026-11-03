@@ -44,7 +44,14 @@ def generate_reply(messages: list[dict[str, str]]) -> str:
     except (HTTPError, URLError, TimeoutError, OSError, ValueError) as error:
         raise OllamaUnavailableError(type(error).__name__) from None
 
-    content = result.get("message", {}).get("content")
+    if not isinstance(result, dict):
+        raise OllamaUnavailableError("Invalid response from Ollama")
+
+    message = result.get("message")
+    if not isinstance(message, dict):
+        raise OllamaUnavailableError("Invalid response from Ollama")
+
+    content = message.get("content")
     if not isinstance(content, str) or not content.strip():
         raise OllamaUnavailableError("Invalid response from Ollama")
     return content.strip()
