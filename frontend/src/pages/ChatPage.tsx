@@ -33,14 +33,6 @@ function truncateUtf8(value: string, maxBytes: number): string {
   return result
 }
 
-function buildTicketDraft(messages: Message[], conversationTitle: string | null, userLabel: string, assistantLabel: string, fallbackTitle: string): TicketDraft {
-  const firstUserMessage = messages.find((message) => message.role === 'USER')
-  const suggestedTitle = conversationTitle?.trim() || firstUserMessage?.content.split('\n')[0]?.trim() || fallbackTitle
-  const transcript = messages.map((message) => `${message.role === 'USER' ? userLabel : assistantLabel}:\n${message.content}`).join('\n\n')
-  const description = truncateUtf8(transcript, 60000)
-  return { title: suggestedTitle.slice(0, 200), description, priority: 'MEDIUM' }
-}
-
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
@@ -80,6 +72,8 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
   const [conversationListError, setConversationListError] = useState(false)
   const [messageLoadError, setMessageLoadError] = useState(false)
   const [ticketDraft, setTicketDraft] = useState<TicketDraft | null>(null)
+  const [ticketDraftLoading, setTicketDraftLoading] = useState(false)
+  const [ticketRecommendation, setTicketRecommendation] = useState(false)
   const [creatingTicket, setCreatingTicket] = useState(false)
   const [ticketFeedback, setTicketFeedback] = useState('')
   const messagesRef = useRef<HTMLDivElement>(null)
@@ -134,6 +128,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
       setMessages([])
       setRetryMessageId(null)
       setTicketDraft(null)
+      setTicketRecommendation(false)
       setTicketFeedback('')
       setMessageLoadError(false)
       setError('')
@@ -171,6 +166,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     setMessages([])
     setRetryMessageId(null)
     setTicketDraft(null)
+    setTicketRecommendation(false)
     setTicketFeedback('')
     setMessageLoadError(false)
     try {
@@ -201,6 +197,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
       setMessages([])
       setRetryMessageId(null)
       setTicketDraft(null)
+      setTicketRecommendation(false)
       setTicketFeedback('')
     } catch {
       setError(t.chatLoadError)
@@ -285,6 +282,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
           content?: string
           detail?: string
           saved_message_id?: number
+          ticket_recommended?: boolean
         }
         if (activeConversationId.current !== conversationId || conversationRequest.current !== requestId) return
         if (item.event === 'user_message' && item.message) {
@@ -315,6 +313,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
           setMessages((current) => current.map((message) =>
             message.id === assistantMessageId ? item.assistant_message! : message,
           ))
+          setTicketRecommendation(item.ticket_recommended === true)
           streamFailed = false
         } else if (item.event === 'error') {
           streamFailed = true
@@ -384,13 +383,23 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     }
   }
 
-  const openTicketDraft = () => {
+  const openTicketDraft = async () => {
     const conversationId = activeConversationId.current
-    if (conversationId === null || messages.length === 0 || sending) return
-    const conversation = conversations.find((item) => item.id === conversationId)
-    setTicketDraft(buildTicketDraft(messages, conversation?.title ?? null, t.chatUser, t.chatAssistant, t.chatTicketDefaultTitle))
+    const requestId = conversationRequest.current
+    if (conversationId === null || messages.length === 0 || sending || ticketDraftLoading) return
+    setTicketDraftLoading(true)
     setTicketFeedback('')
     setError('')
+    try {
+      const generated = await api<{ title: string; description: string }>(`/api/v1/conversations/${conversationId}/ticket-draft`, { method: 'POST' })
+      if (activeConversationId.current !== conversationId || conversationRequest.current !== requestId) return
+      setTicketDraft({ ...generated, priority: 'MEDIUM' })
+      setTicketRecommendation(false)
+    } catch {
+      if (activeConversationId.current === conversationId && conversationRequest.current === requestId) setError(t.chatTicketDraftError)
+    } finally {
+      setTicketDraftLoading(false)
+    }
   }
 
   const createTicketFromConversation = async (event: FormEvent<HTMLFormElement>) => {
@@ -506,9 +515,12 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
           )}
           {error && <p className="chat-error" role="alert">{error}</p>}
           {ticketFeedback && <p className="chat-ticket-feedback" role="status">{ticketFeedback} <a href="#tickets">{t.viewTickets}</a></p>}
+          {ticketRecommendation && activeId !== null && ticketDraft === null && <p className="chat-ticket-feedback" role="status">{t.chatTicketRecommended}</p>}
           {activeId !== null && messages.length > 0 && !sending && ticketDraft === null && (
             <div className="chat-ticket-actions">
-              <button className="button button-secondary" type="button" onClick={openTicketDraft}>{t.chatCreateTicket}</button>
+              <button className="button button-secondary" type="button" disabled={ticketDraftLoading} onClick={() => void openTicketDraft()}>
+                {ticketDraftLoading ? t.chatTicketDraftLoading : ticketRecommendation ? t.chatCreateRecommendedTicket : t.chatCreateTicket}
+              </button>
             </div>
           )}
           {ticketDraft !== null && (
