@@ -53,6 +53,8 @@ export function ChatPage({ text: t }: ChatPageProps) {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
+  const [conversationListError, setConversationListError] = useState(false)
+  const [messageLoadError, setMessageLoadError] = useState(false)
   const messagesRef = useRef<HTMLDivElement>(null)
   const composerRef = useRef<HTMLTextAreaElement>(null)
   const focusComposerAfterResponse = useRef(false)
@@ -68,10 +70,10 @@ export function ChatPage({ text: t }: ChatPageProps) {
     try {
       const items = await fetchConversations()
       setConversations(items)
-      setError('')
+      setConversationListError(false)
       return items
     } catch {
-      setError(t.chatLoadError)
+      setConversationListError(true)
       return []
     }
   }, [fetchConversations, t.chatLoadError])
@@ -82,11 +84,11 @@ export function ChatPage({ text: t }: ChatPageProps) {
       .then((items) => {
         if (active) {
           setConversations(items)
-          setError('')
+          setConversationListError(false)
         }
       })
       .catch(() => {
-        if (active) setError(t.chatLoadError)
+        if (active) setConversationListError(true)
       })
       .finally(() => {
         if (active) setLoading(false)
@@ -120,16 +122,17 @@ export function ChatPage({ text: t }: ChatPageProps) {
     setActiveId(id)
     setMessages([])
     setRetryMessageId(null)
-    setError('')
+    setMessageLoadError(false)
     try {
       const items = await api<Message[]>(`/api/v1/conversations/${id}/messages`)
       if (activeConversationId.current !== id || conversationRequest.current !== requestId) return
       setMessages(items)
       const lastMessage = items.at(-1)
       setRetryMessageId(lastMessage?.role === 'USER' ? lastMessage.id : null)
+      setMessageLoadError(false)
     } catch {
       if (activeConversationId.current === id && conversationRequest.current === requestId) {
-        setError(t.chatLoadError)
+        setMessageLoadError(true)
       }
     }
   }
@@ -271,7 +274,7 @@ export function ChatPage({ text: t }: ChatPageProps) {
               </button>
             ))}
           </div>
-          {error === t.chatLoadError && (
+          {conversationListError && (
             <button className="text-link" type="button" onClick={() => void loadConversations()}>{t.chatRetry}</button>
           )}
         </aside>
@@ -286,7 +289,8 @@ export function ChatPage({ text: t }: ChatPageProps) {
             ))}
             {sending && <p className="chat-empty" role="status">{t.chatSending}</p>}
           </div>
-          {error && error !== t.chatLoadError && <p className="chat-error" role="alert">{error}</p>}
+          {messageLoadError && <div className="chat-error" role="alert"><span>{t.chatLoadError}</span><button className="text-link" type="button" onClick={() => { const id = activeConversationId.current; if (id !== null) void openConversation(id) }}>{t.chatRetry}</button></div>}
+          {error && <p className="chat-error" role="alert">{error}</p>}
           {retryMessageId !== null && (
             <button className="button button-secondary" type="button" onClick={() => void retryAnswer()} disabled={sending}>
               {t.chatRetry}
