@@ -1105,7 +1105,7 @@ def stream_chat_message(
     def event_stream():
         def event(name: str, payload: dict[str, object]) -> str:
             import json
-            return json.dumps({"event": name, **payload}, ensure_ascii=False) + "\\n"
+            return json.dumps({"event": name, **payload}, ensure_ascii=False) + "\n"
 
         try:
             with lock_conversation_chat(conversation_id):
