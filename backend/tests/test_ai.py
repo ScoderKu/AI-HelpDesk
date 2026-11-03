@@ -2,7 +2,7 @@ import json
 import unittest
 from unittest.mock import patch
 
-from app.ai import GeneratedReply, OllamaUnavailableError, generate_reply, preload_model
+from app.ai import GeneratedReply, OllamaUnavailableError, generate_reply, generate_reply_stream, preload_model
 
 
 def ollama_response(content: str) -> object:
@@ -187,3 +187,43 @@ class OllamaResponseTests(unittest.TestCase):
         with patch("app.ai.urlopen", return_value=FakeResponse()):
             with self.assertRaises(OllamaUnavailableError):
                 generate_reply([{"role": "user", "content": "Help"}])
+
+
+    def test_streaming_reply_yields_incremental_text_and_saved_language(self) -> None:
+        class StreamResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def __iter__(self):
+                chunks = [
+                    {"message": {"content": "First "}, "done": False},
+                    {"message": {"content": "second."}, "done": False},
+                    {"message": {"content": ""}, "done": True},
+                ]
+                return iter((json.dumps(item) + "\n").encode() for item in chunks)
+
+        with patch(
+            "app.ai.urlopen",
+            side_effect=[
+                ollama_response(
+                    json.dumps({"input_language": "English", "requested_language": None})
+                ),
+                StreamResponse(),
+            ],
+        ) as urlopen:
+            events = list(generate_reply_stream(
+                [{"role": "user", "content": "Explain DNS"}],
+                "Finnish",
+            ))
+
+        self.assertEqual(events, [
+            ("language", "Finnish"),
+            ("content", "First "),
+            ("content", "second."),
+        ])
+        payload = json.loads(urlopen.call_args_list[1].args[0].data)
+        self.assertIs(payload["stream"], True)
+        self.assertIn("MANDATORY RESPONSE LANGUAGE: Finnish.", payload["messages"][0]["content"])

@@ -11,12 +11,13 @@ import logging
 import os
 import secrets
 import time
+import threading
 
 from fastapi import Depends, FastAPI, HTTPException, Path, Request, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from redis import Redis
 from redis.exceptions import RedisError
 from sqlalchemy import case, delete, func, or_, select, text
@@ -27,6 +28,7 @@ from app.ai import (
     OLLAMA_TIMEOUT_SECONDS,
     OllamaUnavailableError,
     generate_reply,
+    generate_reply_stream,
     preload_model,
 )
 from app.database import SessionLocal, engine, get_db
@@ -108,6 +110,56 @@ if redis.call('GET', KEYS[1]) == ARGV[1] then
 end
 return 0
 """
+RENEW_CHAT_LOCK_SCRIPT = """
+if redis.call('GET', KEYS[1]) == ARGV[1] then
+    return redis.call('EXPIRE', KEYS[1], ARGV[2])
+end
+return 0
+"""
+
+
+class ChatLockLease:
+    def __init__(self, key: str, token: str) -> None:
+        self.key = key
+        self.token = token
+        self._stop = threading.Event()
+        self._lost = threading.Event()
+        self._thread = threading.Thread(target=self._renew_until_stopped, daemon=True)
+
+    def start(self) -> None:
+        self._thread.start()
+
+    def _renew_until_stopped(self) -> None:
+        interval = max(1, CHAT_LOCK_TTL_SECONDS // 3)
+        while not self._stop.wait(interval):
+            try:
+                renewed = redis_client.eval(
+                    RENEW_CHAT_LOCK_SCRIPT, 1, self.key, self.token, CHAT_LOCK_TTL_SECONDS
+                )
+            except RedisError:
+                logger.exception("Could not renew chat lock %s", self.key)
+                continue
+            if not renewed:
+                self._lost.set()
+                return
+
+    def assert_owned(self) -> None:
+        if self._lost.is_set():
+            raise HTTPException(status_code=409, detail="The chat generation lock was lost. Please retry.")
+        try:
+            renewed = redis_client.eval(
+                RENEW_CHAT_LOCK_SCRIPT, 1, self.key, self.token, CHAT_LOCK_TTL_SECONDS
+            )
+        except RedisError as error:
+            raise HTTPException(status_code=503, detail="AI chat lock could not be verified. Please retry.") from error
+        if not renewed:
+            self._lost.set()
+            raise HTTPException(status_code=409, detail="The chat generation lock was lost. Please retry.")
+
+    def stop(self) -> None:
+        self._stop.set()
+        if self._thread.is_alive():
+            self._thread.join(timeout=2)
 
 
 logger = logging.getLogger(__name__)
@@ -128,31 +180,22 @@ def require_trusted_origin(request: Request) -> None:
 
 
 @contextmanager
-def lock_conversation_chat(conversation_id: int) -> Iterator[None]:
+def lock_conversation_chat(conversation_id: int) -> Iterator[ChatLockLease]:
     key = f"chat:conversation:{conversation_id}"
     token = secrets.token_urlsafe(24)
     try:
-        acquired = redis_client.set(
-            key,
-            token,
-            nx=True,
-            ex=CHAT_LOCK_TTL_SECONDS,
-        )
+        acquired = redis_client.set(key, token, nx=True, ex=CHAT_LOCK_TTL_SECONDS)
     except RedisError as error:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="AI chat is temporarily unavailable.",
-        ) from error
-
+        raise HTTPException(status_code=503, detail="AI chat is temporarily unavailable.") from error
     if not acquired:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="A response is already being generated for this conversation.",
-        )
+        raise HTTPException(status_code=409, detail="A response is already being generated for this conversation.")
 
+    lease = ChatLockLease(key, token)
+    lease.start()
     try:
-        yield
+        yield lease
     finally:
+        lease.stop()
         try:
             redis_client.eval(RELEASE_CHAT_LOCK_SCRIPT, 1, key, token)
         except RedisError:
@@ -1027,6 +1070,7 @@ async def generate_assistant_for_message(
     conversation_id: int,
     user_message_id: int,
     db: Session,
+    chat_lock: ChatLockLease,
 ) -> MessageResponse:
     history = db.scalars(
         select(Message)
@@ -1056,6 +1100,7 @@ async def generate_assistant_for_message(
         response_language,
     )
 
+    chat_lock.assert_owned()
     assistant_message = Message(
         conversation_id=conversation_id,
         role="ASSISTANT",
@@ -1069,13 +1114,189 @@ async def generate_assistant_for_message(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Conversation not found.",
             )
+        latest_message = persistence_db.scalar(
+            select(Message)
+            .where(Message.conversation_id == conversation_id)
+            .order_by(Message.id.desc())
+            .limit(1)
+        )
+        if latest_message is None or latest_message.id != user_message_id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="The unanswered message has changed. Please reload the conversation.",
+            )
+        chat_lock.assert_owned()
         persistence_db.add(assistant_message)
         conversation.response_language = generated_reply.response_language
         conversation.updated_at = assistant_message.created_at
+        chat_lock.assert_owned()
         persistence_db.commit()
         persistence_db.refresh(assistant_message)
 
     return MessageResponse.model_validate(assistant_message)
+
+
+@app.post(
+    "/api/v1/conversations/{conversation_id}/messages/stream",
+    tags=["Conversations"],
+)
+def stream_chat_message(
+    message_data: ChatMessageRequest,
+    request: Request,
+    conversation_id: int = Path(gt=0),
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> StreamingResponse:
+    require_trusted_origin(request)
+    authenticated_user_id = user.id
+    owned_conversation = db.scalar(
+        select(Conversation.id).where(
+            Conversation.id == conversation_id,
+            Conversation.user_id == authenticated_user_id,
+        )
+    )
+    if owned_conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+    db.rollback()
+
+    def event_stream():
+        user_message_id: int | None = None
+
+        def event(name: str, payload: dict[str, object]) -> str:
+            import json
+            return json.dumps({"event": name, **payload}, ensure_ascii=False) + "\n"
+
+        try:
+            with lock_conversation_chat(conversation_id) as chat_lock:
+                with SessionLocal() as message_db:
+                    conversation = message_db.scalar(
+                        select(Conversation).where(
+                            Conversation.id == conversation_id,
+                            Conversation.user_id == authenticated_user_id,
+                        ).with_for_update()
+                    )
+                    if conversation is None:
+                        yield event("error", {"detail": "Conversation not found."})
+                        return
+                    latest_message = message_db.scalar(
+                        select(Message)
+                        .where(Message.conversation_id == conversation_id)
+                        .order_by(Message.id.desc())
+                        .limit(1)
+                    )
+                    if latest_message is not None and latest_message.role == "USER":
+                        yield event("error", {"detail": "Retry the previous message before sending another."})
+                        return
+                    now = datetime.now(timezone.utc).replace(tzinfo=None)
+                    user_message = Message(
+                        conversation_id=conversation_id,
+                        role="USER",
+                        content=message_data.content,
+                        created_at=now,
+                    )
+                    message_db.add(user_message)
+                    if not conversation.title:
+                        conversation.title = message_data.content[:80]
+                    conversation.updated_at = now
+                    message_db.commit()
+                    message_db.refresh(user_message)
+                    user_message_id = user_message.id
+                    user_message_payload = MessageResponse.model_validate(user_message).model_dump(mode="json")
+
+                    history = message_db.scalars(
+                        select(Message)
+                        .where(
+                            Message.conversation_id == conversation_id,
+                            Message.id <= user_message_id,
+                        )
+                        .order_by(Message.created_at.desc(), Message.id.desc())
+                        .limit(20)
+                    ).all()
+                    ollama_messages = [
+                        {"role": "user" if item.role == "USER" else "assistant", "content": item.content}
+                        for item in reversed(history)
+                    ]
+                    response_language = conversation.response_language
+                    message_db.rollback()
+
+                yield event("user_message", {"message": user_message_payload})
+                chunks: list[str] = []
+                saved_language = response_language
+                try:
+                    for kind, value in generate_reply_stream(ollama_messages, response_language):
+                        chat_lock.assert_owned()
+                        if kind == "language":
+                            saved_language = value
+                        elif kind == "content":
+                            chunks.append(value)
+                            yield event("token", {"content": value})
+                except OllamaUnavailableError:
+                    yield event("error", {
+                        "detail": "AI assistant is temporarily unavailable. Your message was saved.",
+                        "saved_message_id": user_message_id,
+                    })
+                    return
+
+                full_content = "".join(chunks).strip()
+                if not full_content:
+                    yield event("error", {
+                        "detail": "AI assistant returned an empty response. Your message was saved.",
+                        "saved_message_id": user_message_id,
+                    })
+                    return
+
+                chat_lock.assert_owned()
+                assistant_message = Message(
+                    conversation_id=conversation_id,
+                    role="ASSISTANT",
+                    content=full_content,
+                    created_at=datetime.now(timezone.utc).replace(tzinfo=None),
+                )
+                with SessionLocal() as persistence_db:
+                    conversation = persistence_db.get(Conversation, conversation_id)
+                    if conversation is None or conversation.user_id != authenticated_user_id:
+                        yield event("error", {"detail": "Conversation not found."})
+                        return
+                    latest_message = persistence_db.scalar(
+                        select(Message)
+                        .where(Message.conversation_id == conversation_id)
+                        .order_by(Message.id.desc())
+                        .limit(1)
+                    )
+                    if latest_message is None or latest_message.id != user_message_id:
+                        yield event("error", {
+                            "detail": "The unanswered message has changed. Please reload the conversation.",
+                            "saved_message_id": user_message_id,
+                        })
+                        return
+                    chat_lock.assert_owned()
+                    persistence_db.add(assistant_message)
+                    conversation.response_language = saved_language
+                    conversation.updated_at = assistant_message.created_at
+                    chat_lock.assert_owned()
+                    persistence_db.commit()
+                    persistence_db.refresh(assistant_message)
+                    assistant_payload = MessageResponse.model_validate(assistant_message).model_dump(mode="json")
+                yield event("done", {"assistant_message": assistant_payload})
+        except HTTPException as error:
+            payload: dict[str, object] = {"detail": error.detail}
+            if user_message_id is not None:
+                payload["saved_message_id"] = user_message_id
+            yield event("error", payload)
+        except Exception:
+            logger.exception("Unexpected error while streaming chat for conversation %s", conversation_id)
+            payload: dict[str, object] = {
+                "detail": "The AI response could not be completed. Your message may have been saved."
+            }
+            if user_message_id is not None:
+                payload["saved_message_id"] = user_message_id
+            yield event("error", payload)
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="application/x-ndjson",
+        headers={"Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.post(
@@ -1104,7 +1325,7 @@ async def send_chat_message(
         raise HTTPException(status_code=404, detail="Conversation not found.")
     db.rollback()
 
-    with lock_conversation_chat(conversation_id):
+    with lock_conversation_chat(conversation_id) as chat_lock:
         conversation = db.scalar(
             select(Conversation).where(
                 Conversation.id == conversation_id,
@@ -1147,6 +1368,7 @@ async def send_chat_message(
                 conversation_id,
                 user_message_id,
                 db,
+                chat_lock,
             )
         except OllamaUnavailableError as error:
             logger.warning("Ollama chat request failed: %s", str(error))
@@ -1192,7 +1414,7 @@ async def retry_chat_message(
         raise HTTPException(status_code=404, detail="Conversation not found.")
     db.rollback()
 
-    with lock_conversation_chat(conversation_id):
+    with lock_conversation_chat(conversation_id) as chat_lock:
         conversation = db.scalar(
             select(Conversation).where(
                 Conversation.id == conversation_id,
@@ -1227,6 +1449,7 @@ async def retry_chat_message(
                 conversation_id,
                 message_id,
                 db,
+                chat_lock,
             )
         except OllamaUnavailableError as error:
             logger.warning("Ollama chat retry failed: %s", str(error))

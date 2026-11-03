@@ -50,8 +50,10 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
   const [messages, setMessages] = useState<Message[]>([])
   const [retryMessageId, setRetryMessageId] = useState<number | null>(null)
   const [draft, setDraft] = useState('')
+  const draftRef = useRef('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const [streaming, setStreaming] = useState(false)
   const [error, setError] = useState('')
   const [conversationListError, setConversationListError] = useState(false)
   const [messageLoadError, setMessageLoadError] = useState(false)
@@ -179,10 +181,25 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     const content = draft.trim()
     if (!content || sending) return
 
+    const optimisticId = -Date.now()
+    const optimisticMessage: Message = {
+      id: optimisticId,
+      role: 'USER',
+      content,
+      created_at: new Date().toISOString(),
+    }
     let conversationId = activeConversationId.current
     let requestId = conversationRequest.current
+    let persistedUserMessageId: number | null = null
+    let streamedAssistantMessageId: number | null = null
+    let rejectionDetail = ''
+    const previousRetryMessageId = retryMessageId
     setSending(true)
     setError('')
+    setDraft('')
+    draftRef.current = ''
+    setMessages((current) => [...current, optimisticMessage])
+
     try {
       if (conversationId === null) {
         const created = await api<Conversation>('/api/v1/conversations', {
@@ -190,46 +207,148 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
         })
         conversationId = created.id
         const stillCurrent = conversationRequest.current === requestId && activeConversationId.current === null
-        if (stillCurrent) {
-          requestId = ++conversationRequest.current
-          activeConversationId.current = created.id
-          setActiveId(created.id)
-          onConversationChange(created.id)
+        if (!stillCurrent) {
+          setMessages((current) => current.filter((message) => message.id !== optimisticId))
+          return
         }
+        requestId = ++conversationRequest.current
+        activeConversationId.current = created.id
+        setActiveId(created.id)
+        onConversationChange(created.id)
         setConversations((current) => [created, ...current])
       }
-      const result = await api<{
-        conversation_id: number
-        user_message: Message
-        assistant_message: Message
-      }>(`/api/v1/conversations/${conversationId}/messages`, {
-        method: 'POST', body: JSON.stringify({ content }),
-      })
-      if (activeConversationId.current === conversationId && conversationRequest.current === requestId) {
-        focusComposerAfterResponse.current = true
-        setMessages((current) => [...current, result.user_message, result.assistant_message])
-        setRetryMessageId(null)
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/conversations/${conversationId}/messages/stream`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content }),
+        },
+      )
+      if (!response.ok || !response.body) {
+        let detail = ''
+        try {
+          const body = await response.json()
+          detail = typeof body.detail === 'string' ? body.detail : ''
+        } catch { /* The response may not contain JSON. */ }
+        rejectionDetail = detail
+        throw new Error(detail || `HTTP ${response.status}`)
       }
-      setDraft('')
-      await loadConversations()
-    } catch (requestError) {
-      if (activeConversationId.current !== conversationId || conversationRequest.current !== requestId) return
-      if (requestError instanceof ChatApiError && requestError.savedMessageId !== null) {
-        setDraft('')
-        setRetryMessageId(requestError.savedMessageId)
-        setError(t.chatAiUnavailable)
-        if (conversationId !== null) {
-          try { await refreshMessages(conversationId, requestId) } catch { /* Keep the retry ID from the response header. */ }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let assistantMessageId = -optimisticId
+      streamedAssistantMessageId = assistantMessageId
+      let streamFailed = false
+      let completed = false
+
+      const processEvent = (line: string) => {
+        if (!line.trim()) return
+        const item = JSON.parse(line) as {
+          event: 'user_message' | 'token' | 'done' | 'error'
+          message?: Message
+          assistant_message?: Message
+          content?: string
+          detail?: string
+          saved_message_id?: number
         }
-      } else {
-        setError(requestError instanceof ChatApiError && requestError.status === 409
-          ? t.chatPreviousUnanswered
-          : t.chatSendError)
-        if (requestError instanceof ChatApiError && requestError.status === 409 && conversationId !== null) {
-          try { await refreshMessages(conversationId, requestId) } catch { /* Preserve the original request error. */ }
+        if (activeConversationId.current !== conversationId || conversationRequest.current !== requestId) return
+        if (item.event === 'user_message' && item.message) {
+          persistedUserMessageId = item.message.id
+          setRetryMessageId(null)
+          setMessages((current) => current.map((message) =>
+            message.id === optimisticId ? item.message! : message,
+          ))
+        } else if (item.event === 'token' && typeof item.content === 'string') {
+          setStreaming(true)
+          setMessages((current) => {
+            const existing = current.some((message) => message.id === assistantMessageId)
+            if (!existing) {
+              return [...current, {
+                id: assistantMessageId,
+                role: 'ASSISTANT',
+                content: item.content!,
+                created_at: new Date().toISOString(),
+              }]
+            }
+            return current.map((message) => message.id === assistantMessageId
+              ? { ...message, content: message.content + item.content! }
+              : message)
+          })
+        } else if (item.event === 'done' && item.assistant_message) {
+          completed = true
+          setStreaming(false)
+          setMessages((current) => current.map((message) =>
+            message.id === assistantMessageId ? item.assistant_message! : message,
+          ))
+          streamFailed = false
+        } else if (item.event === 'error') {
+          streamFailed = true
+          setStreaming(false)
+          if (item.saved_message_id) {
+            setMessages((current) => current.filter((message) => message.id !== assistantMessageId))
+            setRetryMessageId(item.saved_message_id)
+            setError(t.chatAiUnavailable)
+          } else {
+            setMessages((current) => current.filter((message) =>
+              message.id !== optimisticId && message.id !== assistantMessageId,
+            ))
+            if (draftRef.current === '') {
+              draftRef.current = content
+              setDraft(content)
+            }
+            setRetryMessageId(previousRetryMessageId)
+            if (item.detail?.includes('previous message') && conversationId !== null) {
+              void refreshMessages(conversationId, requestId).catch(() => undefined)
+            }
+            setError(item.detail?.includes('previous message') ? t.chatPreviousUnanswered : t.chatSendError)
+          }
+        }
+      }
+
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+        for (const line of lines) processEvent(line)
+      }
+      buffer += decoder.decode()
+      if (buffer.trim()) processEvent(buffer)
+      if (!completed && !streamFailed) {
+        throw new Error('The AI response stream ended before completion.')
+      }
+      if (!streamFailed) {
+        focusComposerAfterResponse.current = true
+        setRetryMessageId(null)
+        await loadConversations()
+      }
+    } catch {
+      if (activeConversationId.current === conversationId && conversationRequest.current === requestId) {
+        setMessages((current) => current.filter((message) =>
+          message.id !== optimisticId && message.id !== streamedAssistantMessageId,
+        ))
+        if (persistedUserMessageId !== null) {
+          setRetryMessageId(persistedUserMessageId)
+          setError(t.chatAiUnavailable)
+        } else {
+          if (draftRef.current === '') {
+            draftRef.current = content
+            setDraft(content)
+          }
+          setRetryMessageId(previousRetryMessageId)
+          if (rejectionDetail.includes('previous message') && conversationId !== null) {
+            try { await refreshMessages(conversationId, requestId) } catch { /* Keep the existing retry state. */ }
+          }
+          setError(rejectionDetail.includes('previous message') ? t.chatPreviousUnanswered : t.chatSendError)
         }
       }
     } finally {
+      setStreaming(false)
       setSending(false)
     }
   }
@@ -300,14 +419,14 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
           )}
         </aside>
         <div className="chat-panel">
-          <div className="chat-messages" aria-live="polite" aria-relevant="additions text" ref={messagesRef}>
+          <div className="chat-messages" aria-live="polite" aria-relevant="additions" aria-busy={sending} ref={messagesRef}>
             {messages.length === 0 && !messageLoadError && <p className="chat-empty">{t.chatEmpty}</p>}
             {messages.map((message) => (
               <article key={message.id} className={`chat-message ${message.role.toLowerCase()}`}>
                 <p>{message.content}</p>
               </article>
             ))}
-            {sending && <p className="chat-empty" role="status">{t.chatSending}</p>}
+            {sending && !streaming && <p className="chat-empty" role="status">{t.chatSending}</p>}
           </div>
           {messageLoadError && (
             <div className="chat-error" role="alert">
@@ -327,7 +446,10 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
           <form className="chat-composer" onSubmit={sendMessage}>
             <label className="sr-only" htmlFor="chat-composer-input">{t.chatComposerLabel}</label>
             <textarea id="chat-composer-input" ref={composerRef} value={draft}
-              onChange={(event) => setDraft(event.target.value)}
+              onChange={(event) => {
+                draftRef.current = event.target.value
+                setDraft(event.target.value)
+              }}
               onKeyDown={handleComposerKeyDown}
               placeholder={t.chatPlaceholder} maxLength={12000} rows={3} disabled={sending} />
             <button className="button button-primary" type="submit" disabled={sending || !draft.trim()}>
