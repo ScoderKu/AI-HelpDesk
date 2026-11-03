@@ -138,7 +138,7 @@ Implement the key AI feature of the AI HelpDesk application. Users must be able 
 
 ## 5.3 Key Development Tasks
 
-1. Configure Ollama and the selected GGUF model running in the Docker Compose environment.
+1. Configure Ollama in Docker Compose and automatically create the `poro-helpdesk` model from the `Modelfile` and selected GGUF file.
 2. Implement the integration between the backend and the Ollama service over the Compose network.
 3. Implement the conversation view and message submission.
 4. Display AI responses in the user interface.
@@ -151,16 +151,17 @@ Implement the key AI feature of the AI HelpDesk application. Users must be able 
 
 ## 5.4 Expected Outcomes
 
-1. Users can send a message about a technical problem to the Ollama service running in Docker.
-2. The AI response is displayed in the conversation view.
-3. The conversation can continue based on previous context.
-4. AI can request additional information needed to investigate the problem.
-5. User and AI messages are saved in the database.
-6. Users can view their saved conversations.
+1. On the first Docker Compose startup, a missing `poro-helpdesk` model is created in the Ollama container from the `Modelfile` and local GGUF file; the model persists in the Ollama volume and the backend preloads it at startup.
+2. Users can send a message about a technical problem to the Ollama service running in Docker.
+3. The AI response is displayed in the conversation view.
+4. The conversation can continue based on previous context.
+5. AI can request additional information needed to investigate the problem.
+6. User and AI messages are saved in the database.
+7. Users can view their saved conversations.
 
 ## 5.5 Sprint Acceptance
 
-The Sprint can be accepted when sending conversations, displaying responses, and saving messages work according to the acceptance criteria. AI service errors must also be handled in a controlled manner.
+The Sprint can be accepted when starting Compose with an empty Ollama volume successfully creates the model and the backend preloads it at startup, sending conversations, displaying responses, and saving messages work according to the acceptance criteria, and AI service errors are handled in a controlled manner.
 
 ---
 

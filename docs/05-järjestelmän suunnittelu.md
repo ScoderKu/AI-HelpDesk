@@ -53,7 +53,7 @@ AI HelpDesk toteutetaan kerroksittaisena web-sovelluksena. Frontend vastaa käyt
 Arkkitehtuurikuva säilyy rakenteeltaan ennallaan. Valitut lisäominaisuudet näkyvät siinä ja toteutuksen rajauksessa seuraavasti:
 
 - **RAG:** Chat Service hyödyntää Knowledge Serviceä, joka hakee avainsanoilla rajatusta Markdown- ja TXT-dokumenttikokoelmasta. Löydetty sisältö ja todelliset lähdetiedot välitetään AI Servicelle ja näytetään vastauksen yhteydessä. Jos sopivaa sisältöä ei löydy, vastausta ei esitetä dokumentaation vahvistamana. Semanttinen haku ei kuulu MVP:hen, ja sitä harkitaan vain testinäytön perusteella.
-- **Monikielisyys:** Frontendin käyttöliittymätekstit ovat saatavilla suomeksi ja englanniksi. Kielivalinta säilytetään selaimessa; tekoälyn vastauskieli määräytyy keskustelun kielen ja agentin kieliohjeiden mukaan.
+- **Monikielisyys:** Frontendin käyttöliittymätekstit ovat saatavilla suomeksi ja englanniksi. Kielivalinta säilytetään selaimessa. Backend tunnistaa viestin kielen ja mahdollisen nimenomaisen vastauskielipyynnön ennen vastauksen generointia: tekoäly vastaa suomeksi tai englanniksi viestin kielen mukaan ja muilla kielillä oletusarvoisesti englanniksi. Käyttäjän nimenomainen vastauskielipyyntö tallennetaan keskusteluun ja säilyy, kunnes käyttäjä vaihtaa sitä.
 - **Docker Compose:** frontend, backend, MySQL ja Ollama käynnistetään README:ssä dokumentoidulla yhdellä komennolla. Ollama käyttää valittua GGUF-mallia Docker-ympäristössä, eikä AI-palvelun suorittaminen riipu host-koneelle asennetusta Ollamasta.
 - **Autentikointi:** rekisteröityminen sekä kirjautuminen ja uloskirjautuminen ovat käytössä. Kirjautumisistunnot tallennetaan MySQL:ään ja kirjautumisyritysten käyttörajat Redisissä.
 - **Proxy ja IP-käyttöraja:** kehityksen Compose-ympäristössä frontend käyttää vain erillistä proxy-verkkoa, jonka IP on `172.30.0.2`, ja välittää `/api`-pyynnöt backendille verkkoaliaksella `backend-proxy`. Backend lukee `X-Forwarded-For`-otsakkeen vain, kun suora yhteyden peer-osoite kuuluu `TRUSTED_PROXY_IPS`-asetuksella määritettyyn luotettuun IP-verkkoon. Ketjua käsitellään oikealta vasemmalle; luotetut proxy-hopit ohitetaan ja ensimmäistä luottamatonta osoitetta käytetään asiakkaan IP-osoitteena. Muiden peerien välittämää otsaketta ei käytetä.
@@ -132,9 +132,11 @@ AI Service välittää käyttäjän viestin Compose-ympäristössä toimivalle O
 - Käynnistää Ollama Compose-palveluna ja varmistaa terveystarkistuksella, että palvelu sekä valittu malli ovat käytettävissä.
 - Tuoda mallin GGUF-tiedosto Ollama-kontin saataville dokumentoidulla tavalla. Nykyinen Compose-ratkaisu liittää `ollama`-hakemiston konttiin vain luku -tilassa hakemistoon `/models`; `Modelfile` käyttää kontissa polkua `/models/Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`.
 - Luoda valitun mallin Ollamaan automaattisesti Compose-käynnistyksen yhteydessä `Modelfile`-tiedoston perusteella, jos mallia ei vielä ole Ollaman mallivarastossa.
+- Ladata malli backendin käynnistyessä Ollaman muistivapaalla preload-pyynnöllä ja pyytää Ollamaa pitämään se muistissa 24 tuntia käyttämättömänä; backendin käynnistys odottaa preloadin onnistumista.
 - Säilyttää Ollaman mallivaraston pysyvässä Docker-volyymissa, jotta palvelun uudelleenkäynnistys ei edellytä mallin uutta manuaalista tuontia.
 - Käsitellä aikakatkaisut, palveluvirheet ja käyttörajoitukset.
 - Rajoittaa tekoälylle lähetettävän keskustelukontekstin määrää.
+- Vastata suomeksi tai englanniksi käyttäjän viestin kielen perusteella, käyttää muilla kielillä oletusarvoisesti englantia sekä säilyttää käyttäjän nimenomaisesti pyytämän muun vastauskielen keskustelun tietokannassa.
 - Tallentaa keskusteluviestit sovelluksen määrittelemien tallennuskäytäntöjen mukaisesti.
 - Sarjoittaa saman keskustelun AI-vuorot Redis-lukolla, vapauttaa tietokantayhteyden Ollama-kutsun ajaksi ja tallentaa assistant-vastauksen lyhyessä erillisessä tietokantaistunnossa.
 - Mahdollistaa jo tallennetun käyttäjäviestin vastauksen uudelleenyrityksen ilman käyttäjäviestin kaksoistallennusta; virheellisesti muotoiltu Ollama-vastaus käsitellään palveluvirheenä.

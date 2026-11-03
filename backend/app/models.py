@@ -51,6 +51,7 @@ class Conversation(Base):
         nullable=False,
     )
     title: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    response_language: Mapped[str | None] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 

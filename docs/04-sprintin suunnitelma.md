@@ -147,7 +147,7 @@ Toteuttaa AI HelpDesk -sovelluksen keskeinen tekoälyominaisuus. Käyttäjän on
 
 ## 5.3 Keskeiset kehitystehtävät
 
-1. Konfiguroidaan Docker Compose -ympäristössä toimiva Ollama ja valittu GGUF-malli.
+1. Konfiguroidaan Docker Compose -ympäristössä toimiva Ollama sekä `Modelfile`-tiedostosta automaattisesti luotava `poro-helpdesk`-malli valitulla GGUF-mallitiedostolla.
 2. Toteutetaan backendin ja Ollama-palvelun välinen integraatio Compose-verkon kautta.
 3. Toteutetaan keskustelunäkymä ja viestin lähettäminen.
 4. Näytetään tekoälyn vastaukset käyttöliittymässä.
@@ -160,16 +160,17 @@ Toteuttaa AI HelpDesk -sovelluksen keskeinen tekoälyominaisuus. Käyttäjän on
 
 ## 5.4 Odotetut tulokset
 
-1. Käyttäjä voi lähettää teknistä ongelmaa koskevan viestin Dockerissa toimivalle Ollama-palvelulle.
-2. Tekoälyn vastaus näytetään keskustelunäkymässä.
-3. Keskustelua voidaan jatkaa aiemman kontekstin perusteella.
-4. Tekoäly voi pyytää ongelman selvittämiseksi tarvittavia lisätietoja.
-5. Käyttäjän ja tekoälyn viestit tallennetaan tietokantaan.
-6. Käyttäjä voi tarkastella tallennettuja keskustelujaan.
+1. Ensimmäisellä Docker Compose -käynnistyksellä puuttuva `poro-helpdesk`-malli luodaan Ollama-konttiin `Modelfile`-tiedostosta ja paikallisesta GGUF-tiedostosta; malli säilyy pysyvässä Ollama-volyymissa ja backend lataa sen käyttövalmiiksi käynnistyessään.
+2. Käyttäjä voi lähettää teknistä ongelmaa koskevan viestin Dockerissa toimivalle Ollama-palvelulle.
+3. Tekoälyn vastaus näytetään keskustelunäkymässä.
+4. Keskustelua voidaan jatkaa aiemman kontekstin perusteella.
+5. Tekoäly voi pyytää ongelman selvittämiseksi tarvittavia lisätietoja.
+6. Käyttäjän ja tekoälyn viestit tallennetaan tietokantaan.
+7. Käyttäjä voi tarkastella tallennettuja keskustelujaan.
 
 ## 5.5 Sprintin hyväksyminen
 
-Sprintti voidaan hyväksyä, kun keskustelun lähettäminen, vastausten näyttäminen ja viestien tallentaminen toimivat hyväksymiskriteerien mukaisesti. Myös tekoälypalvelun virhetilanteet on käsiteltävä hallitusti.
+Sprintti voidaan hyväksyä, kun puhtaan Ollama-volyymin Compose-käynnistys luo mallin ja lataa sen backendin käynnistyessä onnistuneesti, keskustelun lähettäminen, vastausten näyttäminen ja viestien tallentaminen toimivat hyväksymiskriteerien mukaisesti, ja tekoälypalvelun virhetilanteet käsitellään hallitusti.
 
 ---
 

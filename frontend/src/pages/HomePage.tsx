@@ -207,7 +207,7 @@ export function HomePage({
 
         <div className="page-content">
           {activeView === 'chat' && currentUser ? (
-            <ChatPage language={language} onBackHome={() => setActiveView('home')} />
+            <ChatPage language={language} />
           ) : activeView === 'profile' && currentUser ? (
             <ProfilePage
               currentUser={currentUser}
