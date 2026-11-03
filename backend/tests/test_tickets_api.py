@@ -109,6 +109,7 @@ class TicketEndpointTests(unittest.TestCase):
         protected_paths = {
             ("GET", "/api/v1/tickets"),
             ("POST", "/api/v1/tickets"),
+            ("POST", "/api/v1/conversations/{conversation_id}/ticket-draft"),
             ("POST", "/api/v1/conversations/{conversation_id}/tickets"),
             ("GET", "/api/v1/tickets/summary"),
             ("GET", "/api/v1/tickets/{ticket_id}"),
