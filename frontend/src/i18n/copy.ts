@@ -198,7 +198,7 @@ const en = {
     chatTicketCreating: 'Creating support ticket…',
     chatTicketCreated: 'A support ticket was created from this conversation.',
     chatTicketCreateError: 'Could not create the support ticket. Please try again.',
-    chatTicketFieldsRequired: 'Enter a title and description for the support ticket.'
+    chatTicketFieldsRequired: 'Enter a title and description for the support ticket.',
     summaryLoading: 'Loading summary…',
     summaryUnavailable: 'Could not load the summary. Please try again.',
     chat: 'AI chat',
