@@ -189,6 +189,8 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     }
     let conversationId = activeConversationId.current
     let requestId = conversationRequest.current
+    let persistedUserMessageId: number | null = null
+    let streamedAssistantMessageId: number | null = null
     setSending(true)
     setError('')
     setDraft('')
@@ -235,6 +237,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
       const decoder = new TextDecoder()
       let buffer = ''
       let assistantMessageId = -optimisticId
+      streamedAssistantMessageId = assistantMessageId
       let streamFailed = false
       let completed = false
 
@@ -250,6 +253,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
         }
         if (activeConversationId.current !== conversationId || conversationRequest.current !== requestId) return
         if (item.event === 'user_message' && item.message) {
+          persistedUserMessageId = item.message.id
           setMessages((current) => current.map((message) =>
             message.id === optimisticId ? item.message! : message,
           ))
@@ -280,6 +284,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
           streamFailed = true
           setStreaming(false)
           if (item.saved_message_id) {
+            setMessages((current) => current.filter((message) => message.id !== assistantMessageId))
             setRetryMessageId(item.saved_message_id)
             setError(t.chatAiUnavailable)
           } else {
@@ -311,8 +316,15 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
       }
     } catch {
       if (activeConversationId.current === conversationId && conversationRequest.current === requestId) {
-        setMessages((current) => current.filter((message) => message.id !== optimisticId))
-        setError(t.chatSendError)
+        setMessages((current) => current.filter((message) =>
+          message.id !== optimisticId && message.id !== streamedAssistantMessageId,
+        ))
+        if (persistedUserMessageId !== null) {
+          setRetryMessageId(persistedUserMessageId)
+          setError(t.chatAiUnavailable)
+        } else {
+          setError(t.chatSendError)
+        }
       }
     } finally {
       setStreaming(false)
