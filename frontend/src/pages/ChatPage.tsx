@@ -20,18 +20,24 @@ class ChatApiError extends Error {
   }
 }
 
+function truncateUtf8(value: string, maxBytes: number): string {
+  const encoder = new TextEncoder()
+  let result = ''
+  let byteLength = 0
+  for (const character of value) {
+    const size = encoder.encode(character).length
+    if (byteLength + size > maxBytes) break
+    result += character
+    byteLength += size
+  }
+  return result
+}
+
 function buildTicketDraft(messages: Message[], conversationTitle: string | null, userLabel: string, assistantLabel: string, fallbackTitle: string): TicketDraft {
   const firstUserMessage = messages.find((message) => message.role === 'USER')
   const suggestedTitle = conversationTitle?.trim() || firstUserMessage?.content.split('\n')[0]?.trim() || fallbackTitle
   const transcript = messages.map((message) => `${message.role === 'USER' ? userLabel : assistantLabel}:\n${message.content}`).join('\n\n')
-  const encoder = new TextEncoder()
-  let byteLength = 0
-  const description = Array.from(transcript).filter((character) => {
-    const size = encoder.encode(character).length
-    if (byteLength + size > 60000) return false
-    byteLength += size
-    return true
-  }).join('')
+  const description = truncateUtf8(transcript, 60000)
   return { title: suggestedTitle.slice(0, 200), description, priority: 'MEDIUM' }
 }
 
@@ -515,7 +521,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
               </label>
               <label className="chat-ticket-field">
                 <span>{t.ticketDescriptionLabel}</span>
-                <textarea maxLength={60000} required rows={6} value={ticketDraft.description} onChange={(event) => setTicketDraft({ ...ticketDraft, description: event.target.value })} />
+                <textarea maxLength={60000} required rows={6} value={ticketDraft.description} onChange={(event) => setTicketDraft({ ...ticketDraft, description: truncateUtf8(event.target.value, 60000) })} />
               </label>
               <label className="chat-ticket-field">
                 <span>{t.ticketPriorityLabel}</span>
