@@ -74,7 +74,7 @@ The application developer is responsible for the application's technical impleme
 ### US-03: Managing the User Profile
 
 - As a registered user
-- I want to view and edit my own profile information.
+- I want to view my profile information and update my username.
 - So that my information stays up to date.
 
 **Acceptance Criteria**
@@ -88,7 +88,7 @@ The application developer is responsible for the application's technical impleme
 **AC-03.2 – Updating the Profile**
 
 - Given that the user has opened their profile page.
-- When the user edits their first name, last name, or username and saves the changes.
+- When the user edits their username and saves the changes.
 - Then the system saves the changes to the database and displays the updated information.
 - In the MVP, the email address and password are not changed when updating the profile. Any possible changes to them require a separate, verified action.
 
