@@ -16,7 +16,7 @@ from fastapi import Depends, FastAPI, HTTPException, Path, Request, Response, st
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from redis import Redis
 from redis.exceptions import RedisError
 from sqlalchemy import case, delete, func, or_, select, text
@@ -27,6 +27,7 @@ from app.ai import (
     OLLAMA_TIMEOUT_SECONDS,
     OllamaUnavailableError,
     generate_reply,
+    generate_reply_stream,
     preload_model,
 )
 from app.database import SessionLocal, engine, get_db
@@ -1076,6 +1077,140 @@ async def generate_assistant_for_message(
         persistence_db.refresh(assistant_message)
 
     return MessageResponse.model_validate(assistant_message)
+
+
+@app.post(
+    "/api/v1/conversations/{conversation_id}/messages/stream",
+    tags=["Conversations"],
+)
+def stream_chat_message(
+    message_data: ChatMessageRequest,
+    request: Request,
+    conversation_id: int = Path(gt=0),
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> StreamingResponse:
+    require_trusted_origin(request)
+    authenticated_user_id = user.id
+    owned_conversation = db.scalar(
+        select(Conversation.id).where(
+            Conversation.id == conversation_id,
+            Conversation.user_id == authenticated_user_id,
+        )
+    )
+    if owned_conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+    db.rollback()
+
+    def event_stream():
+        def event(name: str, payload: dict[str, object]) -> str:
+            import json
+            return json.dumps({"event": name, **payload}, ensure_ascii=False) + "\\n"
+
+        try:
+            with lock_conversation_chat(conversation_id):
+                with SessionLocal() as message_db:
+                    conversation = message_db.scalar(
+                        select(Conversation).where(
+                            Conversation.id == conversation_id,
+                            Conversation.user_id == authenticated_user_id,
+                        ).with_for_update()
+                    )
+                    if conversation is None:
+                        yield event("error", {"detail": "Conversation not found."})
+                        return
+                    latest_message = message_db.scalar(
+                        select(Message)
+                        .where(Message.conversation_id == conversation_id)
+                        .order_by(Message.id.desc())
+                        .limit(1)
+                    )
+                    if latest_message is not None and latest_message.role == "USER":
+                        yield event("error", {"detail": "Retry the previous message before sending another."})
+                        return
+                    now = datetime.now(timezone.utc).replace(tzinfo=None)
+                    user_message = Message(
+                        conversation_id=conversation_id,
+                        role="USER",
+                        content=message_data.content,
+                        created_at=now,
+                    )
+                    message_db.add(user_message)
+                    if not conversation.title:
+                        conversation.title = message_data.content[:80]
+                    conversation.updated_at = now
+                    message_db.commit()
+                    message_db.refresh(user_message)
+                    user_message_id = user_message.id
+                    user_message_payload = MessageResponse.model_validate(user_message).model_dump(mode="json")
+
+                    history = message_db.scalars(
+                        select(Message)
+                        .where(
+                            Message.conversation_id == conversation_id,
+                            Message.id <= user_message_id,
+                        )
+                        .order_by(Message.created_at.desc(), Message.id.desc())
+                        .limit(20)
+                    ).all()
+                    ollama_messages = [
+                        {"role": "user" if item.role == "USER" else "assistant", "content": item.content}
+                        for item in reversed(history)
+                    ]
+                    response_language = conversation.response_language
+                    message_db.rollback()
+
+                yield event("user_message", {"message": user_message_payload})
+                chunks: list[str] = []
+                saved_language = response_language
+                try:
+                    for kind, value in generate_reply_stream(ollama_messages, response_language):
+                        if kind == "language":
+                            saved_language = value
+                        elif kind == "content":
+                            chunks.append(value)
+                            yield event("token", {"content": value})
+                except OllamaUnavailableError:
+                    yield event("error", {
+                        "detail": "AI assistant is temporarily unavailable. Your message was saved.",
+                        "saved_message_id": user_message_id,
+                    })
+                    return
+
+                full_content = "".join(chunks).strip()
+                if not full_content:
+                    yield event("error", {
+                        "detail": "AI assistant returned an empty response. Your message was saved.",
+                        "saved_message_id": user_message_id,
+                    })
+                    return
+
+                assistant_message = Message(
+                    conversation_id=conversation_id,
+                    role="ASSISTANT",
+                    content=full_content,
+                    created_at=datetime.now(timezone.utc).replace(tzinfo=None),
+                )
+                with SessionLocal() as persistence_db:
+                    conversation = persistence_db.get(Conversation, conversation_id)
+                    if conversation is None or conversation.user_id != authenticated_user_id:
+                        yield event("error", {"detail": "Conversation not found."})
+                        return
+                    persistence_db.add(assistant_message)
+                    conversation.response_language = saved_language
+                    conversation.updated_at = assistant_message.created_at
+                    persistence_db.commit()
+                    persistence_db.refresh(assistant_message)
+                    assistant_payload = MessageResponse.model_validate(assistant_message).model_dump(mode="json")
+                yield event("done", {"assistant_message": assistant_payload})
+        except HTTPException as error:
+            yield event("error", {"detail": error.detail})
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="application/x-ndjson",
+        headers={"Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.post(
