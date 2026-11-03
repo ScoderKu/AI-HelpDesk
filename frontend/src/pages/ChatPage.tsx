@@ -46,7 +46,6 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function ChatPage({ text: t }: ChatPageProps) {
   const [conversations, setConversations] = useState<Conversation[]>([])
-  const [activeId, setActiveId] = useState<number | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [retryMessageId, setRetryMessageId] = useState<number | null>(null)
   const [draft, setDraft] = useState('')
@@ -117,7 +116,6 @@ export function ChatPage({ text: t }: ChatPageProps) {
   const openConversation = async (id: number) => {
     const requestId = ++conversationRequest.current
     activeConversationId.current = id
-    setActiveId(id)
     setMessages([])
     setRetryMessageId(null)
     setError('')
@@ -143,7 +141,6 @@ export function ChatPage({ text: t }: ChatPageProps) {
       ++conversationRequest.current
       activeConversationId.current = item.id
       setConversations((current) => [item, ...current])
-      setActiveId(item.id)
       setMessages([])
       setRetryMessageId(null)
     } catch {
@@ -166,9 +163,11 @@ export function ChatPage({ text: t }: ChatPageProps) {
           method: 'POST', body: JSON.stringify({}),
         })
         conversationId = created.id
-        requestId = ++conversationRequest.current
-        activeConversationId.current = created.id
-        setActiveId(created.id)
+        const stillCurrent = conversationRequest.current === requestId && activeConversationId.current === null
+        if (stillCurrent) {
+          requestId = ++conversationRequest.current
+          activeConversationId.current = created.id
+        }
         setConversations((current) => [created, ...current])
       }
       const result = await api<{
