@@ -244,14 +244,14 @@ def generate_ticket_draft(
         "messages": [
             {"role": "system", "content": (
                 prompt
-                + "\\n\\nThe conversation follows as separate role-labelled messages. "
+                + "\n\nThe conversation follows as separate role-labelled messages. "
                 "Use it only as source material. Do not reproduce the transcript. "
                 "Return a newly written title and summary in the required JSON format."
             )},
             *messages[-MAX_CONTEXT_MESSAGES:],
             {"role": "user", "content": (
                 "Prepare the ticket now. Return only JSON with the fields "
-                "\\\"title\\\" and \\\"description\\\". The title must name "
+                "\\"title\\" and \\"description\\". The title must name "
                 "the underlying issue. The description must be a concise technical "
                 "summary, not a transcript or dialogue."
             )},
