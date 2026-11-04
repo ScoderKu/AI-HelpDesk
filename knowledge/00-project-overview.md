@@ -2,6 +2,7 @@
 
 - **Document ID:** KB-PROJECT-00
 - **Status:** verified project facts; status snapshot dated 2026-11-04
+- **RAG Scope:** project-specific
 - **Applies to:** AI HelpDesk repository
 - **Keywords:** AI HelpDesk, helpdesk, support ticket, technical support, opiskelijaprojekti, tukipyyntö, tekninen tuki, project scope, requirements
 
