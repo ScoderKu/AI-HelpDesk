@@ -2,6 +2,7 @@
 
 - **Document ID:** KB-OPS-08
 - **Status:** project setup verified from README and Modelfile; exact service names must be checked in current Compose configuration
+- **RAG Scope:** project-specific
 - **Applies to:** Windows 11 Docker development environment, Compose services, Ollama
 - **Keywords:** Docker, Docker Compose, container, image, volume, network, healthcheck, Ollama, GGUF, Modelfile, GPU, kontti, käyttöönotto, mallin lataus
 
