@@ -248,6 +248,7 @@ class KnowledgeSourceResponse(BaseModel):
     title: str
     source: str
     section: str
+    status: str
     excerpt: str
     score: int
 
