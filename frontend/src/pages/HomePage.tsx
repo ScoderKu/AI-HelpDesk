@@ -5,8 +5,9 @@ import { ticketsApi } from '../ticketsApi'
 import { TicketsPage } from './TicketsPage'
 import { ProfilePage } from './ProfilePage'
 import { ChatPage } from './ChatPage'
+import { AuthPage } from './AuthPage'
 import type { Copy } from '../i18n/copy'
-import type { AuthMode, AuthenticatedUser, Language, TicketSummary } from '../types'
+import type { AuthMode, AuthStatus, AuthenticatedUser, Language, TicketSummary } from '../types'
 
 type AppView = 'home' | 'tickets' | 'profile' | 'chat'
 type AppRoute = { view: AppView; conversationId: number | null }
@@ -28,6 +29,10 @@ type HomePageProps = {
   isSigningOut: boolean
   onLanguageChange: (language: Language) => void
   onOpenAuth: (mode: AuthMode) => void
+  authMode: AuthMode | null
+  onLoginSuccess: (status: AuthStatus) => Promise<void> | void
+  onAuthModeChange: (mode: AuthMode) => void
+  onBackToHome: () => void
   onSignOut: () => Promise<boolean>
   onPasswordChanged: () => void
   onShowPreviewNotice: () => void
@@ -43,13 +48,18 @@ export function HomePage({
   isSigningOut,
   onLanguageChange,
   onOpenAuth,
+  authMode,
+  onLoginSuccess,
+  onAuthModeChange,
+  onBackToHome,
   onSignOut,
   onPasswordChanged,
   onShowPreviewNotice,
 }: HomePageProps) {
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
   const [route, setRoute] = useState<AppRoute>(readRoute)
-  const activeView = route.view
+  const activeView =
+    !authLoading && !currentUser && route.view !== 'home' ? 'home' : route.view
 
   const navigateToView = (view: AppView, conversationId: number | null = null) => {
     const hash = view === 'chat' && conversationId !== null ? `#chat/${conversationId}` : `#${view}`
@@ -73,24 +83,25 @@ export function HomePage({
     }
   }, [])
   const [ticketSummary, setTicketSummary] = useState<TicketSummary>({ total: 0, open: 0, closed: 0 })
-  const [summaryLoading, setSummaryLoading] = useState(false)
   const [summaryError, setSummaryError] = useState('')
   const [summaryRefresh, setSummaryRefresh] = useState(0)
+  const [completedSummaryRequestKey, setCompletedSummaryRequestKey] = useState<string | null>(null)
   const accountMenuRef = useRef<HTMLDivElement>(null)
   const accountTriggerRef = useRef<HTMLButtonElement>(null)
   const signOutButtonRef = useRef<HTMLButtonElement>(null)
   const pageTitleRef = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
-    if (authLoading || currentUser || (activeView !== 'chat' && activeView !== 'tickets' && activeView !== 'profile')) return
+    if (authLoading || currentUser || route.view === 'home') return
     window.history.replaceState(null, '', '#home')
-    setRoute({ view: 'home', conversationId: null })
-  }, [authLoading, currentUser, activeView])
+  }, [authLoading, currentUser, route.view])
+
+  const summaryRequestKey = currentUser ? `${currentUser.id}:${summaryRefresh}` : null
+  const summaryLoading = summaryRequestKey !== null && summaryRequestKey !== completedSummaryRequestKey
 
   useEffect(() => {
     let active = true
-    if (!currentUser) { setSummaryLoading(false); return () => { active = false } }
-    setSummaryLoading(true)
+    if (!currentUser || summaryRequestKey === null) return () => { active = false }
     void ticketsApi.summary()
       .then((summary) => {
         if (active) {
@@ -101,9 +112,11 @@ export function HomePage({
       .catch(() => {
         if (active) setSummaryError(text.summaryUnavailable)
       })
-      .finally(() => { if (active) setSummaryLoading(false) })
+      .finally(() => {
+        if (active) setCompletedSummaryRequestKey(summaryRequestKey)
+      })
     return () => { active = false }
-  }, [currentUser, summaryRefresh, text.summaryUnavailable])
+  }, [currentUser, summaryRefresh, summaryRequestKey, text.summaryUnavailable])
 
   useEffect(() => {
     if (!isAccountMenuOpen) return
@@ -143,7 +156,16 @@ export function HomePage({
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <a className="brand" href="#home" aria-label="AI HelpDesk home">
+        <a
+          className="brand"
+          href="#home"
+          aria-label="AI HelpDesk home"
+          onClick={(event) => {
+            event.preventDefault()
+            onBackToHome()
+            navigateToView('home')
+          }}
+        >
           <span className="brand-mark"><Icon name="sparkle" /></span>
           <span className="brand-name">AI <strong>HelpDesk</strong></span>
         </a>
@@ -155,7 +177,11 @@ export function HomePage({
 
         <div className="sidebar-section-label">{text.workspace}</div>
         <nav className="main-nav" aria-label={text.workspace}>
-          <a className={`nav-link ${activeView === 'home' ? 'active' : ''}`} href="#home" aria-current={activeView === 'home' ? 'page' : undefined} onClick={() => navigateToView('home')}>
+          <a className={`nav-link ${activeView === 'home' ? 'active' : ''}`} href="#home" aria-current={activeView === 'home' ? 'page' : undefined} onClick={(event) => {
+            event.preventDefault()
+            onBackToHome()
+            navigateToView('home')
+          }}>
             <Icon name="home" />
             <span>{text.home}</span>
           </a>
@@ -227,10 +253,20 @@ export function HomePage({
             <div className="sidebar-auth-loading" role="status">{text.checkingSession}</div>
           ) : (
             <div className="sidebar-auth-actions" role="group" aria-label={text.account}>
-              <button className="sidebar-auth-link" onClick={() => onOpenAuth('login')} type="button">
+              <button
+                aria-pressed={authMode === 'login'}
+                className={`sidebar-auth-link${authMode === 'login' ? ' active' : ''}`}
+                onClick={() => onOpenAuth('login')}
+                type="button"
+              >
                 {text.signIn}
               </button>
-              <button className="sidebar-auth-link sidebar-auth-primary" onClick={() => onOpenAuth('register')} type="button">
+              <button
+                aria-pressed={authMode === 'register'}
+                className={`sidebar-auth-link sidebar-auth-primary${authMode === 'register' ? ' active' : ''}`}
+                onClick={() => onOpenAuth('register')}
+                type="button"
+              >
                 {text.createAccount}
               </button>
             </div>
@@ -240,7 +276,14 @@ export function HomePage({
       </aside>
 
       <main className="main-content" id="home">
-        <div className="page-content">
+        {authMode ? (
+          <AuthPage
+            mode={authMode}
+            text={text}
+            onLoginSuccess={onLoginSuccess}
+            onModeChange={onAuthModeChange}
+          />
+        ) : <div className="page-content">
           {activeView === 'chat' && currentUser ? (
             <ChatPage text={text} initialConversationId={route.conversationId} onConversationChange={updateChatConversation} />
           ) : activeView === 'profile' && currentUser ? (
@@ -335,7 +378,7 @@ export function HomePage({
 
           <footer className="page-footer">{text.footer}</footer>
           </>}
-        </div>
+        </div>}
       </main>
     </div>
   )
