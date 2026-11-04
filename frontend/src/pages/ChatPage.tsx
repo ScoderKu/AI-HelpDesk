@@ -9,6 +9,115 @@ type Message = { id: number; role: 'USER' | 'ASSISTANT'; content: string; create
 type TicketDraft = { title: string; description: string; priority: 'LOW' | 'MEDIUM' | 'HIGH' }
 type ChatPageProps = { text: Copy; initialConversationId: number | null; onConversationChange: (id: number | null) => void }
 
+type MarkdownBlock =
+  | { type: 'paragraph' | 'heading' ; text: string; level?: number }
+  | { type: 'list'; items: string[]; ordered: boolean }
+  | { type: 'code'; code: string; language: string }
+
+function parseMarkdownBlocks(content: string): MarkdownBlock[] {
+  const lines = content.replace(/\\r\\n?/g, '\\n').split('\\n')
+  const blocks: MarkdownBlock[] = []
+  let index = 0
+  while (index < lines.length) {
+    const line = lines[index]
+    if (!line.trim()) { index += 1; continue }
+    if (line.trimStart().startsWith('```')) {
+      const language = line.trim().slice(3).trim()
+      const codeLines: string[] = []
+      index += 1
+      while (index < lines.length && !lines[index].trimStart().startsWith('```')) {
+        codeLines.push(lines[index])
+        index += 1
+      }
+      if (index < lines.length) index += 1
+      blocks.push({ type: 'code', code: codeLines.join('\\n'), language })
+      continue
+    }
+    const heading = line.match(/^(#{1,6})\\s+(.+)$/)
+    if (heading) {
+      blocks.push({ type: 'heading', level: heading[1].length, text: heading[2] })
+      index += 1
+      continue
+    }
+    const unordered = line.match(/^\\s*[-*+]\\s+(.+)$/)
+    const ordered = line.match(/^\\s*\\d+[.)]\\s+(.+)$/)
+    if (unordered || ordered) {
+      const items: string[] = []
+      const isOrdered = Boolean(ordered)
+      while (index < lines.length) {
+        const match = lines[index].match(isOrdered ? /^\\s*\\d+[.)]\\s+(.+)$/ : /^\\s*[-*+]\\s+(.+)$/)
+        if (!match) break
+        items.push(match[1])
+        index += 1
+      }
+      blocks.push({ type: 'list', items, ordered: isOrdered })
+      continue
+    }
+    const paragraph = [line]
+    index += 1
+    while (index < lines.length && lines[index].trim()
+      && !lines[index].trimStart().startsWith('```')
+      && !/^#{1,6}\\s+/.test(lines[index])
+      && !/^\\s*[-*+]\\s+/.test(lines[index])
+      && !/^\\s*\\d+[.)]\\s+/.test(lines[index])) {
+      paragraph.push(lines[index])
+      index += 1
+    }
+    blocks.push({ type: 'paragraph', text: paragraph.join('\\n') })
+  }
+  return blocks
+}
+
+function renderInlineMarkdown(text: string, keyPrefix: string) {
+  const tokens = text.split(/(`[^`]+\`|\\*\\*[^*]+\\*\\*|\\*[^*]+\\*|~~[^~]+~~)/g)
+  return tokens.map((token, index) => {
+    if (token.startsWith('`') && token.endsWith('`')) return <code key={`${keyPrefix}-${index}`}>{token.slice(1, -1)}</code>
+    if (token.startsWith('**') && token.endsWith('**')) return <strong key={`${keyPrefix}-${index}`}>{token.slice(2, -2)}</strong>
+    if (token.startsWith('*') && token.endsWith('*')) return <em key={`${keyPrefix}-${index}`}>{token.slice(1, -1)}</em>
+    if (token.startsWith('~~') && token.endsWith('~~')) return <del key={`${keyPrefix}-${index}`}>{token.slice(2, -2)}</del>
+    return token
+  })
+}
+
+function MarkdownMessage({ content, copyLabel, copiedLabel }: { content: string; copyLabel: string; copiedLabel: string }) {
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
+  const blocks = parseMarkdownBlocks(content)
+  const copyCode = async (code: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopiedIndex(index)
+    } catch {
+      setCopiedIndex(null)
+    }
+  }
+  return (
+    <div className="markdown-content">
+      {blocks.map((block, index) => {
+        if (block.type === 'code') return (
+          <div className="markdown-code-block" key={index}>
+            <div className="markdown-code-toolbar">
+              <span>{block.language || 'code'}</span>
+              <button type="button" onClick={() => void copyCode(block.code, index)}>
+                {copiedIndex === index ? copiedLabel : copyLabel}
+              </button>
+            </div>
+            <pre><code>{block.code}</code></pre>
+          </div>
+        )
+        if (block.type === 'heading') {
+          const Heading = (`h${block.level ?? 3}`) as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+          return <Heading key={index}>{renderInlineMarkdown(block.text, `heading-${index}`)}</Heading>
+        }
+        if (block.type === 'list') {
+          const List = block.ordered ? 'ol' : 'ul'
+          return <List key={index}>{block.items.map((item, itemIndex) => <li key={itemIndex}>{renderInlineMarkdown(item, `list-${index}-${itemIndex}`)}</li>)}</List>
+        }
+        return <p key={index}>{renderInlineMarkdown(block.text, `paragraph-${index}`)}</p>
+      })}
+    </div>
+  )
+}
+
 class ChatApiError extends Error {
   readonly status: number
   readonly savedMessageId: number | null
@@ -500,7 +609,9 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
             {messages.length === 0 && !messageLoadError && <p className="chat-empty">{t.chatEmpty}</p>}
             {messages.map((message) => (
               <article key={message.id} className={`chat-message ${message.role.toLowerCase()}`}>
-                <p>{message.content}</p>
+                {message.role === 'ASSISTANT'
+                  ? <MarkdownMessage content={message.content} copyLabel={t.chatCopyCode} copiedLabel={t.chatCodeCopied} />
+                  : <p>{message.content}</p>}
               </article>
             ))}
             {sending && !streaming && <p className="chat-empty" role="status">{t.chatSending}</p>}
