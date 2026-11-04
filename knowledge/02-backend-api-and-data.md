@@ -2,6 +2,7 @@
 
 - **Document ID:** KB-PROJECT-02
 - **Status:** verified against FastAPI source, SQLAlchemy models, schemas and project design at review time
+- **RAG Scope:** project-specific
 - **Applies to:** `backend/app/main.py`, `models.py`, `schemas.py`, database migrations
 - **Keywords:** FastAPI, REST API, endpoint, SQLAlchemy, Alembic, database, schema, data model, rajapinta, tietomalli, tietokanta
 
