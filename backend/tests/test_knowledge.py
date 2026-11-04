@@ -25,7 +25,7 @@ class KnowledgeSearchTests(unittest.TestCase):
         self.assertEqual(results[0]["source"], "knowledge/docker-guide.md")
         self.assertIn(results[0]["section"], {"Docker troubleshooting", "Vianmääritys"})
         self.assertGreater(results[0]["score"], 0)
-        self.assertEqual(results[0]["status"], "general technical guidance")
+        self.assertEqual(results[0]["status"], "verified project fact")
 
     def test_search_returns_empty_for_unmatched_query(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -56,6 +56,26 @@ class KnowledgeSearchTests(unittest.TestCase):
             with patch("app.knowledge.KNOWLEDGE_ROOT", root):
                 results = search_knowledge("Redis cache TTL", limit=99)
         self.assertLessEqual(len(results), 5)
+
+
+    def test_search_excludes_general_reference_documents(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "general.md").write_text(
+                "# Python basics\n\n- **Status:** general technical guidance\n\n"
+                "Python virtual environments isolate dependencies.\n",
+                encoding="utf-8",
+            )
+            (root / "project.md").write_text(
+                "# AI HelpDesk backend\n\n- **Status:** verified project fact\n"
+                "- **RAG Scope:** project-specific\n\n"
+                "The AI HelpDesk backend uses FastAPI and SQLAlchemy.\n",
+                encoding="utf-8",
+            )
+            with patch("app.knowledge.KNOWLEDGE_ROOT", root):
+                results = search_knowledge("Python FastAPI SQLAlchemy")
+        self.assertTrue(results)
+        self.assertEqual({item["source"] for item in results}, {"knowledge/project.md"})
 
 
 if __name__ == "__main__":
