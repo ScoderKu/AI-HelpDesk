@@ -82,3 +82,8 @@ Do not force-push shared branches unless explicitly coordinated. Do not merge a 
 ## Root-cause discipline
 
 Distinguish symptom, cause, fix and verification. A command that exits zero is evidence only for that command; it does not prove the entire application works. Record exact error text, affected service, reproduction steps, change made and the test that confirms the fix.
+
+
+## Tiivistelmä suomeksi
+
+HTTP on pyyntö–vastaus-protokolla. GET hakee, POST lähettää tai luo, PATCH muuttaa osittain ja DELETE pyytää poistamista. Statuskoodi kertoo pyynnön tuloksen. REST-rajapinnat käyttävät resursseja ja HTTP-menetelmiä johdonmukaisesti. Gitissä työ tehdään yleensä omassa branchissa, muutokset tallennetaan committeihin ja tarkistetaan Pull Requestissa. Vianmäärityksessä rajaa ensin kerros ja toista virhe pienimmällä mahdollisella testillä.
