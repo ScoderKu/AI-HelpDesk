@@ -1,18 +1,21 @@
+import asyncio
 from datetime import datetime, timezone
 import os
 import unittest
-from unittest.mock import MagicMock
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 os.environ.setdefault("MYSQL_USER", "test")
 os.environ.setdefault("MYSQL_PASSWORD", "test")
 os.environ.setdefault("MYSQL_DATABASE", "test")
 
 from fastapi import HTTPException
+from starlette.requests import Request
 from pydantic import ValidationError
 from sqlalchemy.dialects import mysql
 
 from app import main
-from app.models import Ticket, User
+from app.models import Conversation, Message, Ticket, User
 from app.schemas import (
     TicketCreateRequest,
     TicketPriority,
@@ -109,6 +112,8 @@ class TicketEndpointTests(unittest.TestCase):
         protected_paths = {
             ("GET", "/api/v1/tickets"),
             ("POST", "/api/v1/tickets"),
+            ("POST", "/api/v1/conversations/{conversation_id}/ticket-draft"),
+            ("POST", "/api/v1/conversations/{conversation_id}/tickets"),
             ("GET", "/api/v1/tickets/summary"),
             ("GET", "/api/v1/tickets/{ticket_id}"),
             ("PATCH", "/api/v1/tickets/{ticket_id}"),
@@ -178,6 +183,78 @@ class TicketEndpointTests(unittest.TestCase):
         self.assertEqual(response.status, TicketStatus.OPEN)
         self.assertTrue(response.model_dump_json().endswith('Z"}'))
         db.commit.assert_called_once_with()
+
+
+    def test_ticket_draft_endpoint_returns_model_generated_fields(self) -> None:
+        conversation = Conversation(id=55, user_id=self.user.id, response_language="English")
+        messages = [
+            Message(id=1, conversation_id=55, role="USER", content="My Wi-Fi disconnects every few minutes."),
+            Message(id=2, conversation_id=55, role="ASSISTANT", content="Have you restarted the router?"),
+            Message(id=3, conversation_id=55, role="USER", content="Yes, and it still disconnects."),
+        ]
+        db = MagicMock()
+        db.scalar.return_value = conversation
+        db.scalars.return_value.all.return_value = messages
+        request = Request({
+            "type": "http", "method": "POST", "path": "/",
+            "headers": [(b"origin", b"http://localhost:5173")],
+            "query_string": b"", "server": ("localhost", 80),
+            "client": ("test", 1234), "scheme": "http",
+        })
+        generated = SimpleNamespace(
+            title="Wi-Fi connection drops repeatedly",
+            description="The user's Wi-Fi disconnects every few minutes despite restarting the router.",
+        )
+        with patch("app.main.generate_ticket_draft", return_value=generated) as generate:
+            response = asyncio.run(main.create_conversation_ticket_draft(request, 55, self.user, db))
+
+        self.assertEqual(response.title, generated.title)
+        self.assertEqual(response.description, generated.description)
+        self.assertEqual(generate.call_args.args[0], [
+            {"role": "user", "content": messages[0].content},
+            {"role": "assistant", "content": messages[1].content},
+            {"role": "user", "content": messages[2].content},
+        ])
+        self.assertEqual(generate.call_args.args[1], "English")
+
+    def test_create_ticket_from_owned_conversation_links_ticket_and_uses_server_owner(self) -> None:
+        from app.models import Conversation
+
+        conversation = Conversation(id=55, user_id=self.user.id)
+        db = MagicMock()
+        db.scalar.return_value = conversation
+        db.refresh.side_effect = lambda ticket: setattr(ticket, "id", 202)
+        request = TicketCreateRequest(
+            title="Network keeps disconnecting",
+            description="The Wi-Fi disconnects after a few minutes.",
+            priority="HIGH",
+        )
+
+        response = main.create_ticket_from_conversation(request, 55, self.user, db)
+
+        created = db.add.call_args.args[0]
+        self.assertEqual(created.user_id, self.user.id)
+        self.assertEqual(created.conversation_id, conversation.id)
+        self.assertEqual(created.status, TicketStatus.OPEN.value)
+        self.assertEqual(created.priority, TicketPriority.HIGH.value)
+        self.assertEqual(response.id, 202)
+        self.assertEqual(response.status, TicketStatus.OPEN)
+        statement = compile_mysql(db.scalar.call_args.args[0])
+        self.assertIn("conversations.id = 55", statement)
+        self.assertIn("conversations.user_id = 7", statement)
+        db.commit.assert_called_once_with()
+
+    def test_create_ticket_from_missing_or_foreign_conversation_returns_404(self) -> None:
+        db = MagicMock()
+        db.scalar.return_value = None
+        request = TicketCreateRequest(title="Network issue", description="Wi-Fi is unavailable.")
+
+        with self.assertRaises(HTTPException) as raised:
+            main.create_ticket_from_conversation(request, 999, self.user, db)
+
+        self.assertEqual(raised.exception.status_code, 404)
+        db.add.assert_not_called()
+        db.commit.assert_not_called()
 
     def test_get_ticket_filters_by_owner_and_hides_foreign_ticket(self) -> None:
         db = MagicMock()

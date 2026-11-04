@@ -29,6 +29,7 @@ from app.ai import (
     OllamaUnavailableError,
     generate_reply,
     generate_reply_stream,
+    generate_ticket_draft,
     preload_model,
 )
 from app.database import SessionLocal, engine, get_db
@@ -40,6 +41,7 @@ from app.schemas import (
     ChatMessageRequest,
     ChatMessageResponse,
     TicketCreateRequest,
+    TicketDraftResponse,
     TicketResponse,
     TicketStatus,
     TicketSummaryResponse,
@@ -1066,6 +1068,95 @@ def list_conversation_messages(
     return [MessageResponse.model_validate(item) for item in items]
 
 
+@app.post(
+    "/api/v1/conversations/{conversation_id}/ticket-draft",
+    response_model=TicketDraftResponse,
+    tags=["Tickets"],
+)
+async def create_conversation_ticket_draft(
+    request: Request,
+    conversation_id: int = Path(gt=0),
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> TicketDraftResponse:
+    require_trusted_origin(request)
+    conversation = db.scalar(
+        select(Conversation).where(
+            Conversation.id == conversation_id,
+            Conversation.user_id == user.id,
+        )
+    )
+    if conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+    messages = db.scalars(
+        select(Message)
+        .where(Message.conversation_id == conversation_id)
+        .order_by(Message.created_at.desc(), Message.id.desc())
+        .limit(20)
+    ).all()
+    messages.reverse()
+    if not any(message.role == "USER" for message in messages):
+        raise HTTPException(status_code=400, detail="The conversation has no user messages.")
+    ollama_messages = [
+        {"role": "user" if message.role == "USER" else "assistant", "content": message.content}
+        for message in messages
+    ]
+    response_language = conversation.response_language
+    db.rollback()
+    try:
+        generated = await asyncio.to_thread(
+            generate_ticket_draft,
+            ollama_messages,
+            response_language,
+        )
+    except OllamaUnavailableError as error:
+        logger.warning("AI ticket draft generation failed: %s", str(error))
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI could not prepare the support ticket. Please try again.",
+        ) from None
+    return TicketDraftResponse(title=generated.title, description=generated.description)
+
+
+@app.post(
+    "/api/v1/conversations/{conversation_id}/tickets",
+    response_model=TicketResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Tickets"],
+)
+def create_ticket_from_conversation(
+    ticket_data: TicketCreateRequest,
+    conversation_id: int = Path(gt=0),
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> TicketResponse:
+    conversation = db.scalar(
+        select(Conversation).where(
+            Conversation.id == conversation_id,
+            Conversation.user_id == user.id,
+        )
+    )
+    if conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    ticket = Ticket(
+        user_id=user.id,
+        conversation_id=conversation.id,
+        title=ticket_data.title,
+        description=ticket_data.description,
+        status=TicketStatus.OPEN.value,
+        priority=ticket_data.priority.value,
+        created_at=now,
+        updated_at=now,
+        closed_at=None,
+    )
+    db.add(ticket)
+    db.commit()
+    db.refresh(ticket)
+    return TicketResponse.model_validate(ticket)
+
+
 async def generate_assistant_for_message(
     conversation_id: int,
     user_message_id: int,
@@ -1222,11 +1313,14 @@ def stream_chat_message(
                 yield event("user_message", {"message": user_message_payload})
                 chunks: list[str] = []
                 saved_language = response_language
+                ticket_recommended = False
                 try:
                     for kind, value in generate_reply_stream(ollama_messages, response_language):
                         chat_lock.assert_owned()
                         if kind == "language":
                             saved_language = value
+                        elif kind == "ticket_recommendation":
+                            ticket_recommended = value is True
                         elif kind == "content":
                             chunks.append(value)
                             yield event("token", {"content": value})
@@ -1277,7 +1371,10 @@ def stream_chat_message(
                     persistence_db.commit()
                     persistence_db.refresh(assistant_message)
                     assistant_payload = MessageResponse.model_validate(assistant_message).model_dump(mode="json")
-                yield event("done", {"assistant_message": assistant_payload})
+                yield event("done", {
+                    "assistant_message": assistant_payload,
+                    "ticket_recommended": ticket_recommended,
+                })
         except HTTPException as error:
             payload: dict[str, object] = {"detail": error.detail}
             if user_message_id is not None:
