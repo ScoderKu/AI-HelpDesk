@@ -114,3 +114,8 @@ Publishing output is not the same as installing the .NET runtime on every target
 ## 9. Security and maintainability
 
 Validate external input, use parameterized database queries, protect secrets with environment-specific secret storage, keep dependencies updated, and avoid logging credentials or personal data. Prefer composition and small testable classes over unnecessary inheritance.
+
+
+## Tiivistelmä suomeksi
+
+C# on vahvasti tyypitetty oliokieli ja .NET tarjoaa ajonaikaisen ympäristön, kirjastot ja kehitystyökalut. SDK:lla luodaan, käännetään, testataan ja julkaistaan sovelluksia; runtime suorittaa niitä. NuGet hallitsee riippuvuuksia. Opettele muuttujat, tyypit, luokat, rajapinnat, poikkeukset, LINQ ja async/await. Tarkista SDK- ja runtime-versiot ennen kuin selvität build-virhettä.
