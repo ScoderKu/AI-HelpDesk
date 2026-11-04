@@ -7,6 +7,13 @@ import { copy } from './i18n/copy'
 import { ForcedPasswordChange } from './pages/ForcedPasswordChange'
 import type { AuthMode, AuthenticatedUser, AuthStatus, Language } from './types'
 
+function getAuthModeFromPath(): AuthMode | null {
+  const path = window.location.pathname.replace(/\/+$/, '') || '/'
+  if (path === '/login') return 'login'
+  if (path === '/register') return 'register'
+  return null
+}
+
 function getInitialLanguage(): Language {
   try {
     return localStorage.getItem('ai-helpdesk-language') === 'en' ? 'en' : 'fi'
@@ -18,12 +25,26 @@ function getInitialLanguage(): Language {
 function App() {
   const [language, setLanguage] = useState<Language>(getInitialLanguage)
   const [notice, setNotice] = useState('')
-  const [authMode, setAuthMode] = useState<AuthMode | null>(null)
+  const [authMode, setAuthMode] = useState<AuthMode | null>(getAuthModeFromPath)
   const [user, setUser] = useState<AuthenticatedUser | null>(null)
   const [mustChangePassword, setMustChangePassword] = useState(false)
   const [authLoading, setAuthLoading] = useState(true)
   const [isSigningOut, setIsSigningOut] = useState(false)
   const text = copy[language]
+
+  const navigateAuth = (mode: AuthMode | null, replace = false) => {
+    const path = mode === 'login' ? '/login' : mode === 'register' ? '/register' : '/'
+    if (window.location.pathname !== path || window.location.hash) {
+      window.history[replace ? 'replaceState' : 'pushState'](null, '', path)
+    }
+    setAuthMode(mode)
+  }
+
+  useEffect(() => {
+    const syncAuthMode = () => setAuthMode(getAuthModeFromPath())
+    window.addEventListener('popstate', syncAuthMode)
+    return () => window.removeEventListener('popstate', syncAuthMode)
+  }, [])
 
   useEffect(() => {
     document.documentElement.lang = language
@@ -96,14 +117,14 @@ function App() {
         return
       }
     }
-    setAuthMode(null)
+    navigateAuth(null, true)
     setNotice('')
   }
 
   const handlePasswordChanged = () => {
     setUser(null)
     setMustChangePassword(false)
-    setAuthMode('login')
+    navigateAuth('login')
     setNotice(text.passwordChanged)
   }
 
@@ -130,7 +151,7 @@ function App() {
     const signedOut = await handleSignOut()
     if (signedOut) {
       setMustChangePassword(false)
-      setAuthMode(null)
+      navigateAuth(null, true)
     }
     return signedOut
   }
@@ -154,9 +175,9 @@ function App() {
         language={language}
         mode={authMode}
         onLoginSuccess={handleLoginSuccess}
-        onBack={() => setAuthMode(null)}
+        onBack={() => navigateAuth(null)}
         onLanguageChange={changeLanguage}
-        onModeChange={setAuthMode}
+        onModeChange={navigateAuth}
         text={text}
       />
     )
@@ -171,7 +192,7 @@ function App() {
       onUserUpdated={setUser}
       isSigningOut={isSigningOut}
       onLanguageChange={changeLanguage}
-      onOpenAuth={setAuthMode}
+      onOpenAuth={navigateAuth}
       onSignOut={handleSignOut}
       onPasswordChanged={handlePasswordChanged}
       onShowPreviewNotice={showPreviewNotice}
