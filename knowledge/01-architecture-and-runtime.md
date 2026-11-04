@@ -84,3 +84,8 @@ The backend lifespan currently pings Redis and repeatedly attempts Ollama model 
 6. Check persistent volume state before considering destructive reset commands.
 
 Never recommend `docker compose down -v` as a routine restart: `-v` removes named volumes and can delete MySQL or Ollama data.
+
+
+## Tiivistelmä suomeksi
+
+Selain näyttää React-käyttöliittymän ja lähettää API-pyynnöt FastAPI-backendille. Backend on luotettu rajapinta, joka tarkistaa istunnon, käyttöoikeudet ja syötteet sekä käsittelee tietokanta-, Redis- ja Ollama-yhteydet. MySQL tallentaa pysyvät tiedot, Redis lyhytikäisen koordinointi- ja rajoitustilan ja Ollama suorittaa paikallisen kielimallin. Konttien nimet, verkot, portit ja terveystarkistukset on aina tarkistettava nykyisestä Compose-tiedostosta.
