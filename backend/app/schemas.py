@@ -235,3 +235,23 @@ class ChatMessageResponse(BaseModel):
     conversation_id: int
     user_message: MessageResponse
     assistant_message: MessageResponse
+
+
+class KnowledgeSearchRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    query: str = Field(min_length=1, max_length=2000)
+    limit: int = Field(default=3, ge=1, le=5)
+
+
+class KnowledgeSourceResponse(BaseModel):
+    title: str
+    source: str
+    section: str
+    excerpt: str
+    score: int
+
+
+class KnowledgeSearchResponse(BaseModel):
+    query: str
+    results: list[KnowledgeSourceResponse]
