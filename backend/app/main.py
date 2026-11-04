@@ -33,7 +33,7 @@ from app.ai import (
     preload_model,
 )
 from app.database import SessionLocal, engine, get_db
-from app.knowledge import search_knowledge
+from app.knowledge import KnowledgeResult, search_knowledge
 from app.models import AuthSession, Conversation, Message, Ticket, User
 from app.schemas import (
     ConversationCreateRequest,
@@ -1161,7 +1161,7 @@ def create_ticket_from_conversation(
     return TicketResponse.model_validate(ticket)
 
 
-def build_knowledge_context(query: str) -> tuple[list[dict[str, object]], str, list[str]]:
+def build_knowledge_context(query: str) -> tuple[list[KnowledgeResult], str, list[str]]:
     """Retrieve bounded excerpts and assign request-local IDs for validated citations."""
     results = search_knowledge(query, limit=3)
     source_ids = [f"kb-{index}" for index in range(1, len(results) + 1)]
@@ -1183,7 +1183,7 @@ def build_knowledge_context(query: str) -> tuple[list[dict[str, object]], str, l
 
 
 def format_knowledge_sources(
-    results: list[dict[str, object]],
+    results: list[KnowledgeResult],
     source_ids: tuple[str, ...] | list[str],
 ) -> str:
     """Render only retrieved sources explicitly selected by the model."""
