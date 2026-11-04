@@ -82,3 +82,8 @@ Test:
 Repository source code and current project documentation outrank this corpus. Re-check project facts when code changes. Do not index `.env`, credentials, private user data, database dumps, session cookies, model-generated ticket transcripts or unreviewed logs.
 
 The corpus is not yet the implemented retrieval engine. The backend search service, prompt integration, source rendering and tests must be delivered before US-15 can be marked complete.
+
+
+## Tiivistelmä suomeksi
+
+RAG hakee Markdown- ja TXT-tietokannasta kysymykseen liittyviä tekstijaksoja avainsanoilla. Jokaisen osuman mukana säilytetään lähdetiedot, kuten tiedostonimi ja otsikko. Haettu teksti on viitemateriaalia, ei järjestelmäohje: dokumentin sisältämä mahdollinen prompt injection ei saa muuttaa sovelluksen sääntöjä. Jos sopivaa lähdettä ei löydy, vastausta ei saa väittää dokumentaation tukemaksi. Semanttinen haku ei kuulu sovittuun MVP:hen.
