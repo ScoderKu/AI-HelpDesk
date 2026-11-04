@@ -30,6 +30,7 @@ class KnowledgeResult(TypedDict):
     title: str
     source: str
     section: str
+    status: str
     excerpt: str
     score: int
     content: str
@@ -44,7 +45,7 @@ def _tokens(value: str) -> list[str]:
     ]
 
 
-def _read_sections(path: Path) -> list[tuple[str, str, str]]:
+def _read_sections(path: Path) -> list[tuple[str, str, str, str]]:
     try:
         if path.stat().st_size > MAX_DOCUMENT_BYTES:
             return []
@@ -53,29 +54,38 @@ def _read_sections(path: Path) -> list[tuple[str, str, str]]:
         return []
 
     title = path.stem.replace("-", " ").replace("_", " ").strip()
+    status_match = re.search(r"(?im)^-\s*\*\*Status:\*\*\s*(.+)$", text)
+    document_status = (
+        status_match.group(1).strip()
+        if status_match
+        else "general technical guidance"
+    )
     sections: list[tuple[str, list[str]]] = []
     current_heading = title
     current_lines: list[str] = []
+    seen_heading = False
     for line in text.splitlines():
         if line.startswith("#"):
-            if current_lines:
+            if seen_heading and current_lines:
                 sections.append((current_heading, current_lines))
             heading_text = line.lstrip("#").strip() or title
             if line.startswith("# ") and title == path.stem.replace("-", " ").replace("_", " ").strip():
                 title = heading_text
             current_heading = heading_text
             current_lines = []
-        else:
+            seen_heading = True
+        elif seen_heading:
             current_lines.append(line)
-    if current_lines:
+    if seen_heading and current_lines:
         sections.append((current_heading, current_lines))
+    elif not seen_heading:
+        sections.append((title, text.splitlines()))
 
-    output: list[tuple[str, str, str]] = []
+    output: list[tuple[str, str, str, str]] = []
     for heading, lines in sections:
         body = "\n".join(lines).strip()
         if not body:
             continue
-        # Split oversized sections at paragraph boundaries to keep prompt context bounded.
         paragraphs = re.split(r"\n\s*\n", body)
         chunk = ""
         for paragraph in paragraphs:
@@ -83,13 +93,12 @@ def _read_sections(path: Path) -> list[tuple[str, str, str]]:
             if not paragraph:
                 continue
             if len(chunk) + len(paragraph) + 2 > MAX_CHUNK_CHARS and chunk:
-                output.append((title, heading, chunk))
+                output.append((title, heading, document_status, chunk))
                 chunk = ""
             chunk = f"{chunk}\n\n{paragraph}".strip()
         if chunk:
-            output.append((title, heading, chunk))
+            output.append((title, heading, document_status, chunk))
     return output
-
 
 def search_knowledge(query: str, limit: int = DEFAULT_LIMIT) -> list[KnowledgeResult]:
     """Search local Markdown/TXT sections. Returns only grounded matches."""
@@ -112,7 +121,7 @@ def search_knowledge(query: str, limit: int = DEFAULT_LIMIT) -> list[KnowledgeRe
         if any(part.startswith(".") for part in path.relative_to(KNOWLEDGE_ROOT).parts):
             continue
         relative_source = path.relative_to(KNOWLEDGE_ROOT.parent).as_posix()
-        for title, heading, content in _read_sections(path):
+        for title, heading, document_status, content in _read_sections(path):
             body_tokens = _tokens(content)
             token_set = set(body_tokens)
             matched = {
@@ -135,6 +144,7 @@ def search_knowledge(query: str, limit: int = DEFAULT_LIMIT) -> list[KnowledgeRe
                 "title": title,
                 "source": relative_source,
                 "section": heading,
+                "status": document_status,
                 "excerpt": excerpt,
                 "score": score,
                 "content": content[:MAX_CHUNK_CHARS],
