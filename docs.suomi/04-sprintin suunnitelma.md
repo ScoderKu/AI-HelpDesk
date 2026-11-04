@@ -210,6 +210,18 @@ Laajentaa sovelluksen toiminnallisuuksia ja parantaa käyttökokemusta. Käyttä
 
 Sprintti voidaan hyväksyä, kun lisäominaisuudet täyttävät niille määritellyt hyväksymiskriteerit ja toimivat yhdessä aiemmin toteutettujen toimintojen kanssa.
 
+### Sprint 4:n nykytila (04.11.2026)
+
+Sprint 4:n tekninen toteutus on kooditasolla pääosin valmis: AI-keskustelusta voidaan generoida tukipyyntö, käyttöliittymä tukee FI/EN -kieltä ja etusivulla näytetään käyttäjän omien tukipyyntöjen yhteenveto.
+
+Hyväksymistestauksen osalta jäävät vielä jäljellä:
+- clean Compose -käynnistys tyhjästä MySQL- ja Ollama-volyymista
+- real LAN forwarding useammalla laitteella
+- manuaalinen UI-acceptance test koko sovelluksen läpi
+- regressiotestaus demo-ympäristössä ennen virallista esittelyä
+
+Tämän perusteella Sprint 4 voidaan pitää teknisesti toteutettuna, mutta sen virallinen hyväksyntä on edelleen sidottu demo- ja ympäristötason validointiin.
+
 ---
 
 # 7. Sprint 5 – Tietopohjainen tekoälyneuvonta (RAG)

@@ -201,6 +201,18 @@ Extend the application's functionality and improve the user experience. Users ca
 
 The Sprint can be accepted when the additional features meet their defined acceptance criteria and work together with the previously implemented functions.
 
+### Sprint 4 status (04.11.2026)
+
+The Sprint 4 implementation is complete at code level: users can create a support-ticket draft from an AI conversation, switch the interface between Finnish and English, and view their own ticket summary.
+
+Final acceptance still requires:
+- a clean Compose startup with empty MySQL and Ollama volumes
+- real LAN forwarding tests across devices
+- manual acceptance testing across the complete application
+- a regression pass in the demo environment
+
+Sprint 4 is therefore implemented, while formal demo/environment acceptance remains pending.
+
 ---
 
 # 7. Sprint 5 – Knowledge-Based AI Advice (RAG)

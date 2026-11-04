@@ -58,3 +58,70 @@ Các mục dưới đây nên được vào checklist trước khi chạy demo c
 - Compose cold start trên môi trường sạch
 - Regression test các chức năng AI/chat/ticket/profile
 - Đảm bảo README và hướng dẫn run demo khớp với thực tế môi trường test
+
+## Checklist chạy nhanh trước khi present (10–15 phút)
+
+- [ ] `docker compose up --build` chạy ổn; mở được `http://localhost:8088`.
+- [ ] Đăng nhập bằng demo account; logout rồi đăng nhập lại thành công.
+- [ ] Mở AI chat, gửi câu hỏi, nhận phản hồi; refresh/mở lại conversation vẫn thấy lịch sử.
+- [ ] Tạo ticket từ conversation: kiểm tra/chỉnh draft, xác nhận và thấy ticket được lưu.
+- [ ] Homepage hiển thị đúng total/open/closed của demo user.
+- [ ] Đổi FI ↔ EN, refresh trang và xác nhận lựa chọn vẫn được giữ.
+- [ ] Mở ticket, đổi priority/nội dung, đóng ticket và kiểm tra trạng thái.
+- [ ] Kiểm tra lần cuối ở desktop và mobile; không có lỗi hiển thị chặn demo.
+
+Nếu bất kỳ bước P0 nào thất bại, ghi lại lỗi và không trình bày chức năng đó như đã được acceptance-verified.
+
+## Manual Acceptance Test theo màn hình
+
+### Đăng ký, đăng nhập và logout
+- [ ] Đăng ký bằng email mới; xác nhận tài khoản được tạo và đăng nhập được.
+- [ ] Thử đăng ký lại cùng email; hệ thống báo lỗi rõ ràng, không tạo tài khoản trùng.
+- [ ] Đăng xuất rồi thử mở route cần đăng nhập; hệ thống yêu cầu đăng nhập.
+- [ ] Đăng nhập lại; session hoạt động và tên người dùng đúng.
+- [ ] Nếu kiểm tra temporary password: đăng nhập buộc đổi mật khẩu trước khi vào chức năng khác; sau đổi mật khẩu, đăng nhập lại bằng mật khẩu mới.
+
+### Homepage
+- [ ] Tạo hoặc chuẩn bị ticket ở trạng thái OPEN và CLOSED; đối chiếu total/open/closed với danh sách ticket của user.
+- [ ] Kiểm tra tài khoản không có ticket: các số liệu đều bằng 0.
+- [ ] Dùng user thứ hai: summary không bao gồm ticket của user thứ nhất.
+
+### AI chat
+- [ ] Tạo conversation mới, gửi tin nhắn và nhận phản hồi; gửi follow-up để kiểm tra ngữ cảnh.
+- [ ] Mở lại conversation đã lưu hoặc refresh trang; user/assistant messages vẫn hiện.
+- [ ] Khi có lỗi AI, dùng Retry trên tin nhắn đã lưu; không xuất hiện bản sao của user message.
+- [ ] Tạo ticket draft từ conversation; kiểm tra title/description, sửa draft rồi xác nhận; ticket mới liên kết đúng conversation.
+- [ ] Hủy hoặc từ chối draft; xác nhận không tạo ticket.
+- [ ] Khi AI lỗi/không phản hồi, UI hiển thị lỗi có thể hiểu được và vẫn cho phép thử lại.
+
+### Support tickets
+- [ ] Tạo ticket trực tiếp với title, description và từng priority hợp lệ; ticket xuất hiện trong danh sách.
+- [ ] Sửa ticket OPEN và xác nhận dữ liệu mới được lưu.
+- [ ] Đóng ticket; xác nhận trạng thái CLOSED và không sửa được sau khi đóng.
+- [ ] Đăng nhập user khác và thử truy cập ticket bằng UI/API; không đọc hoặc sửa được ticket của user đầu tiên.
+
+### Profile, ngôn ngữ và responsive
+- [ ] Xem profile; đổi username thành công, các trường first name/last name/email vẫn chỉ đọc.
+- [ ] Đổi FI ↔ EN ở các màn hình chính; refresh và xác nhận lựa chọn được giữ trong cùng browser.
+- [ ] Kiểm tra desktop và mobile ở login, homepage, chat, tickets và profile; không có nội dung/nút bị che hoặc tràn.
+
+### P1 – Nên kiểm tra nếu còn thời gian
+- [ ] Kiểm tra cold start Compose trên volume MySQL và Ollama rỗng
+- [ ] Kiểm tra ticket draft generation từ hội thoại có title/description hợp lý
+- [ ] Kiểm tra handling của session hết hạn và password temporary
+- [ ] Kiểm tra layout trên màn hình mobile và desktop
+- [ ] Kiểm tra summary khi không có ticket nào
+
+### P2 – Kiểm tra sau demo hoặc trong lần validation sau
+- [ ] Real LAN forwarding qua 2 thiết bị thật
+- [ ] Proxy/IP forwarding với `X-Forwarded-For` và `TRUSTED_PROXY_IPS`
+- [ ] Concurrent sign-in / multiple session check trên MySQL
+- [ ] Retention policy thực tế cho ticket và conversation
+- [ ] Production deployment ngoài Vite dev server
+
+## Tình trạng dự án cập nhật 04.11.2026
+
+- Sprint 3: chức năng cốt lõi của AI chat, lưu lịch sử, retry và backend validation đã đạt; backend test và frontend build/lint pass.
+- Sprint 4: US-09, US-13, US-14 đã được triển khai trong branch hiện tại với các thay đổi chủ yếu ở frontend và API summary/ticket draft.
+- Các kiểm tra còn lại chủ yếu là acceptance demo và môi trường thật: LAN forwarding, clean Compose startup, manual end-to-end test trên browser.
+- Tài liệu README, project management và checklist hiện đã được đồng bộ với trạng thái thực tế này để phục vụ demo.
