@@ -2,8 +2,6 @@
 
 **Purpose:** verified, project-specific technical knowledge for the AI HelpDesk local RAG feature.
 
-**Scope decision (2026-11-04):** this directory is not a general programming or computer encyclopedia. The model answers common questions about Python, JavaScript, React, Windows, hardware and other general topics from its own learned knowledge. RAG is reserved for facts it cannot know reliably without this repository: this project's architecture, source code, API, database, configuration, AI integration, workflows and verified incident history.
-
 ## Included in RAG
 
 Only Markdown/TXT documents explicitly marked with this front matter field are indexed:
@@ -20,10 +18,10 @@ A document without this exact approval marker is not retrieved. This is enforced
 | 03-authentication-and-security.md | Project session model, cookie, Origin, proxy trust and Redis controls |
 | 04-ai-chat-streaming-and-tickets.md | Ollama integration, chat lifecycle, NDJSON, retry and US-09 |
 | 05-frontend-react-typescript.md | Actual React application structure, state, API integration and chat UI |
-| 08-docker-compose-and-ollama.md | Project Compose services, model initialization, volumes and operations |
-| 12-rag-source-policy-and-operation.md | US-15 scope, retrieval design, prompt safety and validation |
-| 13-known-project-incidents.md | Historical project incidents, verified fixes and unresolved investigations |
-| 21-source-code-api-data-compose-audit.md | Source-inspected API routes, ORM entities and Compose configuration |
+| 06-docker-compose-and-ollama.md | Project Compose services, model initialization, volumes and operations |
+| 07-rag-source-policy-and-operation.md | US-15 scope, retrieval design, prompt safety and validation |
+| 08-known-project-incidents.md | Historical project incidents, verified fixes and unresolved investigations |
+| 09-source-code-api-data-compose-audit.md | Source-inspected API routes, ORM entities and Compose configuration |
 
 The exact list is controlled by each document's `RAG Scope` metadata. Do not add general material just because it uses the same technology as the project.
 

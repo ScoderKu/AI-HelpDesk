@@ -4,7 +4,7 @@
 
 AI HelpDesk on kehitteillä oleva verkkopohjainen tukipalvelusovellus. Käyttäjä voi keskustella tekoälyn kanssa tietotekniikkaan ja ohjelmistokehitykseen liittyvistä ongelmista sekä hallita omia tukipyyntöjään.
 
-> **Projektin tila 03.11.2026:** kirjautuminen, tukipyynnöt, AI-chat ja keskusteluhistoria toimivat backendin kautta. Projektin tämänhetkisessä työkopiossa backendin 57 testiä sekä frontendin lint- ja tuotantobuild-tarkistukset läpäisevät. Sprinttien 4–5 ominaisuuksia ja koko sovelluksen hyväksymistestausta on vielä kesken; tarkempi tilanne on [projektinhallintadokumentissa](docs/00-projektinhallinta.md).
+> **Projektin tila 03.11.2026:** kirjautuminen, tukipyynnöt, AI-chat ja keskusteluhistoria toimivat backendin kautta. Projektin tämänhetkisessä työkopiossa backendin 57 testiä sekä frontendin lint- ja tuotantobuild-tarkistukset läpäisevät. Sprinttien 4–5 ominaisuuksia ja koko sovelluksen hyväksymistestausta on vielä kesken; tarkempi tilanne on [projektinhallintadokumentissa](docs.suomi/docs/00-projektinhallinta.md).
 
 ### Keskeiset ominaisuudet
 
@@ -49,13 +49,13 @@ flowchart LR
 
 ### Projektidokumentaatio
 
-- [Projektinhallinta](docs/00-projektinhallinta.md)
-- [Vaatimusmäärittely](docs/01-vaatimusmaarittely.md)
-- [Käyttäjätarinat ja hyväksymiskriteerit](<docs/02-k%C3%A4ytt%C3%A4j%C3%A4tarinat%20ja%20hyv%C3%A4ksymiskriteerit.md>)
-- [Product Backlog](<docs/03-product%20backlog.md>)
-- [Sprint-suunnitelma](<docs/04-sprintin%20suunnitelma.md>)
-- [Järjestelmän suunnittelu](<docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>)
-- [UX/UI-suunnittelu](docs/06-ux-ui-suunnittelu.md)
+- [Projektinhallinta](docs.suomi/docs/00-projektinhallinta.md)
+- [Vaatimusmäärittely](docs.suomi/docs/01-vaatimusmaarittely.md)
+- [Käyttäjätarinat ja hyväksymiskriteerit](<docs.suomi/docs/02-k%C3%A4ytt%C3%A4j%C3%A4tarinat%20ja%20hyv%C3%A4ksymiskriteerit.md>)
+- [Product Backlog](<docs.suomi/docs/03-product%20backlog.md>)
+- [Sprint-suunnitelma](<docs.suomi/docs/04-sprintin%20suunnitelma.md>)
+- [Järjestelmän suunnittelu](<docs.suomi/docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>)
+- [UX/UI-suunnittelu](docs.suomi/docs/06-ux-ui-suunnittelu.md)
 - [Ollama-mallin Modelfile](ollama/Modelfile)
 
 ### Edellytykset

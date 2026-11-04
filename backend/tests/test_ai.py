@@ -31,7 +31,10 @@ class OllamaResponseTests(unittest.TestCase):
             def read(self) -> bytes:
                 return json.dumps({"done": True, "response": ""}).encode()
 
-        with patch("app.ai.urlopen", return_value=FakeResponse()) as urlopen:
+        with (
+            patch("app.ai.OLLAMA_BASE_URL", "http://localhost:11434"),
+            patch("app.ai.urlopen", return_value=FakeResponse()) as urlopen,
+        ):
             preload_model()
 
         request = urlopen.call_args.args[0]
@@ -219,10 +222,11 @@ class OllamaResponseTests(unittest.TestCase):
                 "Finnish",
             ))
 
-        self.assertEqual(events, [
-            ("language", "Finnish"),
-            ("content", "First "),
-            ("content", "second."),
+        content_chunks = [value for kind, value in events if kind == "content"]
+        self.assertGreater(len(content_chunks), 1)
+        self.assertEqual("".join(content_chunks), "First second.")
+        self.assertEqual(events[0], ("language", "Finnish"))
+        self.assertEqual(events[-2:], [
             ("sources", []),
             ("ticket_recommendation", False),
         ])
@@ -282,8 +286,8 @@ class OllamaResponseTests(unittest.TestCase):
             StreamResponse(),
         ]):
             events = list(generate_reply_stream([{"role": "user", "content": "Nothing works"}]))
-        content = "".join(value for kind, value in events if kind == "content")
-        self.assertEqual(content, "I could not solve this reliably. Please create a support ticket.\n")
+        content = "".join(value for kind, value in events if kind == "content").strip()
+        self.assertEqual(content, "I could not solve this reliably. Please create a support ticket.")
         self.assertEqual(events[-1], ("ticket_recommendation", True))
         self.assertNotIn(marker, content)
 

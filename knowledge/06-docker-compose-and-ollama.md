@@ -1,6 +1,6 @@
 # Docker Compose and Ollama — AI HelpDesk Operations
 
-- **Document ID:** KB-OPS-08
+- **Document ID:** KB-OPS-06
 - **Status:** project setup verified from README and Modelfile; exact service names must be checked in current Compose configuration
 - **RAG Scope:** project-specific
 - **Applies to:** Windows 11 Docker development environment, Compose services, Ollama

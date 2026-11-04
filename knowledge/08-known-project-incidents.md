@@ -1,6 +1,6 @@
 # AI HelpDesk — Known Troubleshooting Cases and Investigation History
 
-- **Document ID:** KB-PROJECT-13
+- **Document ID:** KB-PROJECT-08
 - **Status:** historical cases from implementation sessions; current state must be rechecked before applying a fix
 - **RAG Scope:** project-specific
 - **Applies to:** Docker, MySQL, FastAPI, Ollama, frontend build and local inference
