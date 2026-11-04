@@ -42,7 +42,7 @@ The project aims to use free-of-charge tools and libraries. A free-to-use price 
 
 ## Agreed scope and exclusions
 
-RAG (US-15) is planned for a curated Markdown/TXT corpus with keyword search first. Semantic search is not part of the MVP unless tests show keyword search is insufficient. The corpus is intended to include general technical help and project-specific AI HelpDesk knowledge.
+RAG (US-15) is planned for a curated Markdown/TXT corpus with keyword search first. Semantic search is not part of the MVP unless tests show keyword search is insufficient. The live RAG corpus is restricted to project-specific AI HelpDesk knowledge. General programming and computer knowledge is handled by the model directly and is kept outside the searchable corpus.
 
 The project does not promise:
 - voice input or spoken responses;
