@@ -1,12 +1,13 @@
 """Lightweight bilingual Markdown/TXT keyword retrieval for the US-15 RAG MVP."""
 from __future__ import annotations
 
+import os
 import re
 from pathlib import Path
 from typing import TypedDict
 
 
-KNOWLEDGE_ROOT = Path(__file__).resolve().parents[2] / "knowledge"
+KNOWLEDGE_ROOT = Path(\n    os.getenv("KNOWLEDGE_BASE_DIR", str(Path(__file__).resolve().parents[2] / "knowledge"))\n).resolve()
 TOKEN_RE = re.compile(r"[\w+#.-]{2,}", re.UNICODE)
 MAX_DOCUMENT_BYTES = 512_000
 MAX_CHUNK_CHARS = 8_000
