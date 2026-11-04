@@ -2,6 +2,7 @@
 
 - **Document ID:** KB-TECH-05
 - **Status:** project-specific facts verified from current frontend source; general React guidance
+- **RAG Scope:** project-specific
 - **Applies to:** `frontend/src`
 - **Keywords:** React, TypeScript, TSX, JSX, hooks, useState, useEffect, fetch, Vite, component, frontend, käyttöliittymä, komponentti, tila
 
