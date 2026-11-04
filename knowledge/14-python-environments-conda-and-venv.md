@@ -122,3 +122,8 @@ Check Python version, CPU architecture, CUDA/runtime compatibility, driver versi
 ## 8. AI HelpDesk relevance
 
 The backend is a Python/FastAPI service, but it normally runs in Docker in the project workflow. A local venv is useful for editor support, linting and isolated tests; it does not replace the Compose runtime. Verify the current Dockerfile and dependency files before choosing a Python version or installing packages locally.
+
+
+## Tiivistelmä suomeksi
+
+Pythonin virtuaaliympäristö eristää projektin Python-tulkin ja paketit muista projekteista. venv kuuluu Pythonin standardikirjastoon ja sopii hyvin pip-pohjaisiin projekteihin. Conda hallitsee ympäristöjen lisäksi myös muita kuin Python-paketteja ja on hyödyllinen esimerkiksi data- ja GPU-työnkuluissa. Aktivoi oikea ympäristö ennen asennusta ja varmista tulkin polku komennolla python -c "import sys; print(sys.executable)". Älä sekoita ympäristöjen paketteja huomaamatta.
