@@ -1,7 +1,7 @@
 # RAG Knowledge Sources — Policy and Operational Design
 
 - **Document ID:** KB-RAG-12
-- **Status:** planned design aligned with agreed US-15 MVP; not a description of completed code
+- **Status:** US-15 MVP design plus initial implementation on `feature/us15-rag-knowledge-service`; not merged into `main` as of 2026-11-04
 - **Applies to:** future Knowledge Service and Markdown/TXT corpus
 - **Keywords:** RAG, retrieval augmented generation, keyword search, Markdown, TXT, corpus, document chunk, source metadata, prompt injection, tietopohjainen tekoäly, avainsanahaku, lähdedokumentti
 
@@ -82,6 +82,31 @@ Test:
 Repository source code and current project documentation outrank this corpus. Re-check project facts when code changes. Do not index `.env`, credentials, private user data, database dumps, session cookies, model-generated ticket transcripts or unreviewed logs.
 
 The corpus is not yet the implemented retrieval engine. The backend search service, prompt integration, source rendering and tests must be delivered before US-15 can be marked complete.
+
+
+## Initial implementation on feature branch
+
+The first code slice now exists on `feature/us15-rag-knowledge-service`:
+
+- `backend/app/knowledge.py` loads local Markdown/TXT files, splits them by headings and paragraphs, and ranks sections using a lightweight bilingual keyword/prefix match.
+- `POST /api/v1/knowledge/search` requires an authenticated user and a trusted Origin; request size and result count are bounded by Pydantic validation.
+- The streaming chat route retrieves up to three relevant sections before Ollama generation and passes a bounded excerpt context to the model.
+- Retrieved text is explicitly marked as untrusted reference material in the system prompt. Instructions embedded in documents must not be followed.
+- When matches are used, the assistant response ends with a plain-text `Sources / Lähteet` list containing document title, repository-relative path and section.
+- No match produces no fabricated source list. The model is instructed to distinguish general guidance from claims supported by the local corpus.
+- No embeddings, vector store, paid API, new database table or external retrieval service is introduced.
+
+This is an initial keyword implementation, not a mature Finnish morphological search engine. Finnish inflections are handled only by simple token-prefix matching. A bilingual evaluation set is needed to measure retrieval quality before tuning or expanding the algorithm.
+
+## Initial automated tests added
+
+- Bilingual section retrieval and source metadata.
+- No-result behavior.
+- Ignoring README and non-Markdown/TXT files.
+- Result-limit cap.
+- Prompt injection boundary: retrieved content is marked as untrusted context.
+
+Tests have been added to the repository but have **not yet been executed** in this work session. The feature is not ready to be marked complete until tests, Docker integration and manual chat verification pass.
 
 
 ## Tiivistelmä suomeksi
