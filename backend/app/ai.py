@@ -251,7 +251,7 @@ def generate_ticket_draft(
             *messages[-MAX_CONTEXT_MESSAGES:],
             {"role": "user", "content": (
                 "Prepare the ticket now. Return only JSON with the fields "
-                "\\"title\\" and \\"description\\". The title must name "
+                "\"title\" and \"description\". The title must name "
                 "the underlying issue. The description must be a concise technical "
                 "summary, not a transcript or dialogue."
             )},
