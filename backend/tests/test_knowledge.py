@@ -13,6 +13,8 @@ class KnowledgeSearchTests(unittest.TestCase):
             root.mkdir()
             (root / "docker-guide.md").write_text(
                 "# Docker troubleshooting\n\n"
+                "- **Status:** verified project fact\n"
+                "- **RAG Scope:** project-specific\n\n"
                 "Docker Compose service DNS lets containers reach each other by service name.\n\n"
                 "## Vianmääritys\n\n"
                 "Kontin localhost tarkoittaa kyseistä konttia. Käytä palvelun nimeä verkossa.\n",
@@ -31,7 +33,10 @@ class KnowledgeSearchTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             (root / "guide.md").write_text(
-                "# Python\n\nVirtual environments isolate dependencies.\n",
+                "# AI HelpDesk backend\n\n"
+                "- **Status:** verified project fact\n"
+                "- **RAG Scope:** project-specific\n\n"
+                "The backend uses FastAPI and SQLAlchemy.\n",
                 encoding="utf-8",
             )
             with patch("app.knowledge.KNOWLEDGE_ROOT", root):
@@ -40,7 +45,10 @@ class KnowledgeSearchTests(unittest.TestCase):
     def test_search_ignores_readme_and_non_markdown_files(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            (root / "README.md").write_text("# Redis\nRedis cache\n", encoding="utf-8")
+            (root / "README.md").write_text(
+                "# Redis\n- **RAG Scope:** project-specific\nRedis cache\n",
+                encoding="utf-8",
+            )
             (root / "notes.csv").write_text("Redis cache", encoding="utf-8")
             with patch("app.knowledge.KNOWLEDGE_ROOT", root):
                 self.assertEqual(search_knowledge("Redis cache"), [])
@@ -50,24 +58,28 @@ class KnowledgeSearchTests(unittest.TestCase):
             root = Path(temporary)
             for number in range(8):
                 (root / f"doc-{number}.md").write_text(
-                    f"# Redis cache {number}\n\nRedis cache TTL and key expiry.\n",
+                    f"# Project Redis cache {number}\n\n"
+                    "- **Status:** verified project fact\n"
+                    "- **RAG Scope:** project-specific\n\n"
+                    "AI HelpDesk Redis cache TTL and key expiry.\n",
                     encoding="utf-8",
                 )
             with patch("app.knowledge.KNOWLEDGE_ROOT", root):
                 results = search_knowledge("Redis cache TTL", limit=99)
         self.assertLessEqual(len(results), 5)
 
-
     def test_search_excludes_general_reference_documents(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             (root / "general.md").write_text(
-                "# Python basics\n\n- **Status:** general technical guidance\n\n"
+                "# Python basics\n\n"
+                "- **Status:** general technical guidance\n\n"
                 "Python virtual environments isolate dependencies.\n",
                 encoding="utf-8",
             )
             (root / "project.md").write_text(
-                "# AI HelpDesk backend\n\n- **Status:** verified project fact\n"
+                "# AI HelpDesk backend\n\n"
+                "- **Status:** verified project fact\n"
                 "- **RAG Scope:** project-specific\n\n"
                 "The AI HelpDesk backend uses FastAPI and SQLAlchemy.\n",
                 encoding="utf-8",
