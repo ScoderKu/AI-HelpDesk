@@ -88,7 +88,8 @@ The corpus is not yet the implemented retrieval engine. The backend search servi
 
 The first code slice now exists on `feature/us15-rag-knowledge-service`:
 
-- `backend/app/knowledge.py` loads local Markdown/TXT files, splits them by headings and paragraphs, and ranks sections using a lightweight bilingual keyword/prefix match.
+- `backend/app/knowledge.py` loads local Markdown/TXT files, splits them by headings and paragraphs, preserves each document's status label, and ranks sections using a lightweight bilingual keyword/prefix match.
+- `compose.yaml` mounts `./knowledge` read-only at `/knowledge` in the backend container and sets `KNOWLEDGE_BASE_DIR=/knowledge`; local non-container execution defaults to the repository's root `knowledge/` directory.
 - `POST /api/v1/knowledge/search` requires an authenticated user and a trusted Origin; request size and result count are bounded by Pydantic validation.
 - The streaming chat route retrieves up to three relevant sections before Ollama generation and passes a bounded excerpt context to the model.
 - Retrieved text is explicitly marked as untrusted reference material in the system prompt. Instructions embedded in documents must not be followed.
