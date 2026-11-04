@@ -2,6 +2,7 @@
 
 - **Document ID:** KB-PROJECT-21
 - **Status:** verified by reading `backend/app/main.py`, `backend/app/models.py` and `compose.yaml` on 2026-11-04
+- **RAG Scope:** project-specific
 - **Applies to:** current repository default-branch source inspected on the date above
 - **Keywords:** API routes, endpoint, SQLAlchemy model, MySQL schema, Compose service, Docker network, rajapinta, tietokantamalli, palvelut
 
