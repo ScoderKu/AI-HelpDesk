@@ -33,6 +33,7 @@ from app.ai import (
     preload_model,
 )
 from app.database import SessionLocal, engine, get_db
+from app.knowledge import search_knowledge
 from app.models import AuthSession, Conversation, Message, Ticket, User
 from app.schemas import (
     ConversationCreateRequest,
@@ -53,6 +54,9 @@ from app.schemas import (
     UserRegistrationRequest,
     UserRegistrationResponse,
     UserResponse,
+    KnowledgeSearchRequest,
+    KnowledgeSearchResponse,
+    KnowledgeSourceResponse,
 )
 from app.security import hash_password, verify_password
 
@@ -1315,7 +1319,15 @@ def stream_chat_message(
                 saved_language = response_language
                 ticket_recommended = False
                 try:
-                    for kind, value in generate_reply_stream(ollama_messages, response_language):
+                    retrieved_knowledge = search_knowledge(message_data.content, limit=3)
+                knowledge_context = "\n\n".join(
+                    f"Source: {item['title']} | {item['source']} | Section: {item['section']}\n"
+                    f"{item['content'][:2200]}"
+                    for item in retrieved_knowledge
+                )[:7000]
+                for kind, value in generate_reply_stream(
+                    ollama_messages, response_language, knowledge_context or None
+                ):
                         chat_lock.assert_owned()
                         if kind == "language":
                             saved_language = value
@@ -1332,6 +1344,12 @@ def stream_chat_message(
                     return
 
                 full_content = "".join(chunks).strip()
+                if retrieved_knowledge:
+                    source_lines = [
+                        f"- {item['title']} — {item['source']} (section: {item['section']})"
+                        for item in retrieved_knowledge
+                    ]
+                    full_content += "\n\nSources / Lähteet:\n" + "\n".join(source_lines)
                 if not full_content:
                     yield event("error", {
                         "detail": "AI assistant returned an empty response. Your message was saved.",
@@ -1564,6 +1582,33 @@ async def retry_chat_message(
             user_message=user_message_response,
             assistant_message=assistant_message_response,
         )
+
+
+@app.post(
+    "/api/v1/knowledge/search",
+    response_model=KnowledgeSearchResponse,
+    tags=["Knowledge"],
+)
+def search_knowledge_endpoint(
+    search_data: KnowledgeSearchRequest,
+    request: Request,
+    _user: User = Depends(get_authenticated_user),
+) -> KnowledgeSearchResponse:
+    require_trusted_origin(request)
+    results = search_knowledge(search_data.query, search_data.limit)
+    return KnowledgeSearchResponse(
+        query=search_data.query,
+        results=[
+            KnowledgeSourceResponse(
+                title=item["title"],
+                source=item["source"],
+                section=item["section"],
+                excerpt=item["excerpt"],
+                score=item["score"],
+            )
+            for item in results
+        ],
+    )
 
 
 @app.get("/api/v1/ai/health", tags=["AI"])
