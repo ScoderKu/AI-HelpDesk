@@ -1320,14 +1320,14 @@ def stream_chat_message(
                 ticket_recommended = False
                 try:
                     retrieved_knowledge = search_knowledge(message_data.content, limit=3)
-                knowledge_context = "\n\n".join(
-                    f"Source: {item['title']} | {item['source']} | Section: {item['section']}\n"
-                    f"{item['content'][:2200]}"
-                    for item in retrieved_knowledge
-                )[:7000]
-                for kind, value in generate_reply_stream(
-                    ollama_messages, response_language, knowledge_context or None
-                ):
+                    knowledge_context = "\n\n".join(
+                        f"Source: {item['title']} | {item['source']} | Section: {item['section']}\n"
+                        f"{item['content'][:2200]}"
+                        for item in retrieved_knowledge
+                    )[:7000]
+                    for kind, value in generate_reply_stream(
+                        ollama_messages, response_language, knowledge_context or None
+                    ):
                         chat_lock.assert_owned()
                         if kind == "language":
                             saved_language = value
