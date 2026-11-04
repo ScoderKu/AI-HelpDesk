@@ -3,7 +3,6 @@
   flex-direction: column;
   gap: .75rem;
   height: calc(99dvh - 100px);
-  margin-inline: -80px;
   min-height: 0;
   box-sizing: border-box;
 }
@@ -167,7 +166,7 @@
 
   .chat-layout {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) minmax(0, 3fr);
+    grid-template-rows: minmax(140px, 1fr) minmax(0, 3fr);
     gap: .75rem;
   }
 

@@ -1,28 +1,21 @@
 import { useState, type FormEvent } from 'react'
 import { Icon } from '../components/Icon'
-import { LanguageSwitch } from '../components/LanguageSwitch'
 import { API_BASE_URL } from '../api'
 import type { Copy } from '../i18n/copy'
-import type { AuthMode, AuthStatus, Language } from '../types'
+import type { AuthMode, AuthStatus } from '../types'
 
 type AuthPageProps = {
   mode: AuthMode
-  language: Language
   text: Copy
-  onLanguageChange: (language: Language) => string
   onLoginSuccess: (status: AuthStatus) => Promise<void> | void
   onModeChange: (mode: AuthMode) => void
-  onBack: () => void
 }
 
 export function AuthPage({
   mode,
-  language,
   text,
-  onLanguageChange,
   onLoginSuccess,
   onModeChange,
-  onBack,
 }: AuthPageProps) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [notice, setNotice] = useState('')
@@ -67,7 +60,7 @@ export function AuthPage({
     if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
       nextErrors.email = text.emailError
     }
-    if (values.password && values.password.length < 8) {
+    if (isRegister && values.password && values.password.length < 8) {
       nextErrors.password = text.passwordError
     }
     if (isRegister && values.username && values.username.length < 3) {
@@ -124,6 +117,27 @@ export function AuthPage({
         setNotice(text.loginInvalidCredentials)
       } else if (response.status === 429 && !isRegister) {
         setNotice(text.loginRateLimited)
+      } else if (response.status === 422 && !isRegister) {
+        const payload: unknown = await response.json()
+        const detail =
+          typeof payload === 'object' && payload !== null && 'detail' in payload
+            ? payload.detail
+            : undefined
+        const invalidEmail = Array.isArray(detail) && detail.some(
+          (item: unknown) =>
+            typeof item === 'object' &&
+            item !== null &&
+            'msg' in item &&
+            typeof item.msg === 'string' &&
+            item.msg.toLowerCase().includes('valid email address'),
+        )
+        if (invalidEmail) {
+          setErrors({ email: text.emailError })
+          setNotice(text.emailError)
+          form.querySelector<HTMLInputElement>('[name="email"]')?.focus()
+        } else {
+          setNotice(text.loginValidationError)
+        }
       } else if (response.status === 409) {
         const payload: unknown = await response.json()
         const detail =
@@ -191,33 +205,9 @@ export function AuthPage({
   }
 
   const fieldError = (name: string) => errors[name]
-  const changeAuthLanguage = (nextLanguage: Language) => {
-    setErrors({})
-    setNotice(onLanguageChange(nextLanguage))
-    setNoticeIsSuccess(false)
-  }
 
   return (
-    <div className="auth-shell">
-      <header className="auth-topbar">
-        <a
-          className="brand"
-          href="#home"
-          onClick={(event) => {
-            event.preventDefault()
-            onBack()
-          }}
-        >
-          <span className="brand-mark"><Icon name="sparkle" /></span>
-          <span className="brand-name">AI <strong>HelpDesk</strong></span>
-        </a>
-        <div className="auth-toolbar">
-          <button className="auth-back" onClick={onBack} type="button">{text.backToHome}</button>
-          <LanguageSwitch language={language} label={text.language} onChange={changeAuthLanguage} />
-        </div>
-      </header>
-
-      <main className="auth-content">
+    <div className="auth-content">
         <section className="auth-card forced-password-card auth-split-card" aria-labelledby="auth-title">
           <aside className="forced-password-aside auth-promo">
             <div className="forced-password-art" aria-hidden="true">
@@ -370,7 +360,6 @@ export function AuthPage({
           </form>
           </div>
         </section>
-      </main>
     </div>
   )
 }
