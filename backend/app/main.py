@@ -1169,11 +1169,11 @@ def build_knowledge_context(query: str) -> tuple[list[dict[str, object]], str, l
     for source_id, item in zip(source_ids, results):
         excerpts.append(
             f"ID: {source_id} | Source: {item['title']} | {item['source']} | "
-            f"Section: {item['section']} | Status: {item['status']}\\n"
+            f"Section: {item['section']} | Status: {item['status']}\n"
             f"{item['content'][:2200]}"
         )
     context = (
-        "\\n\\n".join(excerpts)[:7000]
+        "\n\n".join(excerpts)[:7000]
         if excerpts
         else "No matching local Knowledge Base source was retrieved. "
              "Do not imply that local documentation supports the answer. "
@@ -1194,7 +1194,7 @@ def format_knowledge_sources(
         for index, item in enumerate(results, start=1)
         if f"kb-{index}" in selected
     ]
-    return "\\n\\nSources / Lähteet:\\n" + "\\n".join(lines) if lines else ""
+    return "\n\nSources / Lähteet:\n" + "\n".join(lines) if lines else ""
 
 
 async def generate_assistant_for_message(
