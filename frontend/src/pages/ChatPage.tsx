@@ -69,7 +69,7 @@ function parseMarkdownBlocks(content: string): MarkdownBlock[] {
 }
 
 function renderInlineMarkdown(text: string, keyPrefix: string) {
-  const tokens = text.split(/(`[^`]+\`|\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~)/g)
+  const tokens = text.split(/(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~)/g)
   return tokens.map((token, index) => {
     if (token.startsWith('`') && token.endsWith('`')) return <code key={`${keyPrefix}-${index}`}>{token.slice(1, -1)}</code>
     if (token.startsWith('**') && token.endsWith('**')) return <strong key={`${keyPrefix}-${index}`}>{token.slice(2, -2)}</strong>
