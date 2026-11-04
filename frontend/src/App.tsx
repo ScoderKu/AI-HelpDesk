@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import './App.css'
-import { AuthPage } from './pages/AuthPage'
 import { HomePage } from './pages/HomePage'
 import { API_BASE_URL } from './api'
 import { copy } from './i18n/copy'
@@ -169,20 +168,6 @@ function App() {
     )
   }
 
-  if (authMode) {
-    return (
-      <AuthPage
-        language={language}
-        mode={authMode}
-        onLoginSuccess={handleLoginSuccess}
-        onBack={() => navigateAuth(null)}
-        onLanguageChange={changeLanguage}
-        onModeChange={navigateAuth}
-        text={text}
-      />
-    )
-  }
-
   return (
     <HomePage
       language={language}
@@ -192,6 +177,10 @@ function App() {
       onUserUpdated={setUser}
       isSigningOut={isSigningOut}
       onLanguageChange={changeLanguage}
+      authMode={authMode}
+      onLoginSuccess={handleLoginSuccess}
+      onAuthModeChange={navigateAuth}
+      onBackToHome={() => navigateAuth(null)}
       onOpenAuth={navigateAuth}
       onSignOut={handleSignOut}
       onPasswordChanged={handlePasswordChanged}

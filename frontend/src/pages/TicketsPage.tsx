@@ -59,20 +59,34 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
   const mode = ticketRoute.mode === 'edit' ? 'detail' : ticketRoute.mode
   const isEditing = ticketRoute.mode === 'edit'
   const [form, setForm] = useState<TicketFormValues>(emptyForm)
-  const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
   const [feedback, setFeedback] = useState('')
   const [showValidation, setShowValidation] = useState(false)
+  const loadRequestKey = ticketRoute.mode === 'list'
+    ? `list:${text.ticketLoadError}:${text.ticketNotFound}`
+    : (ticketRoute.mode === 'detail' || ticketRoute.mode === 'edit') && ticketRoute.ticketId !== null
+      ? `${ticketRoute.mode}:${ticketRoute.ticketId}:${text.ticketLoadError}:${text.ticketNotFound}`
+      : null
+  const [completedLoadRequestKey, setCompletedLoadRequestKey] = useState<string | null>(null)
+  const isLoading = loadRequestKey !== null && loadRequestKey !== completedLoadRequestKey
+  const visibleSelectedTicket =
+    loadRequestKey === completedLoadRequestKey && ticketRoute.ticketId === selectedTicket?.id
+      ? selectedTicket
+      : null
 
   const navigateTicket = (next: TicketRoute) => {
     const hash = next.mode === 'list' ? '#tickets' : next.mode === 'create' ? '#tickets/new' : next.mode === 'edit' ? `#tickets/${next.ticketId}/edit` : `#tickets/${next.ticketId}`
     if (window.location.hash !== hash) window.history.pushState(null, '', hash)
+    setError('')
     setTicketRoute(next)
   }
 
   useEffect(() => {
-    const syncRoute = () => setTicketRoute(readTicketRoute())
+    const syncRoute = () => {
+      setError('')
+      setTicketRoute(readTicketRoute())
+    }
     window.addEventListener('hashchange', syncRoute)
     window.addEventListener('popstate', syncRoute)
     return () => { window.removeEventListener('hashchange', syncRoute); window.removeEventListener('popstate', syncRoute) }
@@ -81,17 +95,12 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
   useEffect(() => {
     let active = true
     if (ticketRoute.mode === 'list') {
-      setIsLoading(true)
-      setError('')
       ticketsApi.list().then((items) => { if (active) setTickets(items) })
         .catch(() => { if (active) setError(text.ticketLoadError) })
-        .finally(() => { if (active) setIsLoading(false) })
+        .finally(() => { if (active && loadRequestKey !== null) setCompletedLoadRequestKey(loadRequestKey) })
     } else if (ticketRoute.mode === 'detail' || ticketRoute.mode === 'edit') {
       const id = ticketRoute.ticketId
       if (id === null) return () => { active = false }
-      setIsLoading(true)
-      setError('')
-      setSelectedTicket(null)
       ticketsApi.get(id).then((ticket) => {
         if (!active) return
         setSelectedTicket(ticket)
@@ -99,14 +108,12 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
         setShowValidation(false)
       }).catch((requestError) => {
         if (active) setError(getErrorStatus(requestError) === 404 ? text.ticketNotFound : text.ticketLoadError)
-      }).finally(() => { if (active) setIsLoading(false) })
+      }).finally(() => { if (active && loadRequestKey !== null) setCompletedLoadRequestKey(loadRequestKey) })
     } else {
-      setIsLoading(false)
-      setSelectedTicket(null)
-      setError('')
+      return () => { active = false }
     }
     return () => { active = false }
-  }, [ticketRoute, text.ticketLoadError, text.ticketNotFound])
+  }, [ticketRoute, loadRequestKey, text.ticketLoadError, text.ticketNotFound])
 
   const openCreate = () => {
     setForm(emptyForm)
@@ -149,14 +156,14 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
 
   const handleUpdate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!selectedTicket) return
+    if (!visibleSelectedTicket) return
     setShowValidation(true)
     setError('')
     if (!form.title.trim()) { setError(text.ticketTitleRequired); return }
     if (!form.description.trim()) { setError(text.ticketDescriptionRequired); return }
     setIsSaving(true)
     try {
-      const ticket = await ticketsApi.update(selectedTicket.id, { ...form, title: form.title.trim(), description: form.description.trim() })
+      const ticket = await ticketsApi.update(visibleSelectedTicket.id, { ...form, title: form.title.trim(), description: form.description.trim() })
       setSelectedTicket(ticket)
       setForm({ title: ticket.title, description: ticket.description, priority: ticket.priority })
       navigateTicket({ mode: 'detail', ticketId: ticket.id })
@@ -169,11 +176,11 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
   }
 
   const handleClose = async () => {
-    if (!selectedTicket) return
+    if (!visibleSelectedTicket) return
     setError('')
     setIsSaving(true)
     try {
-      const ticket = await ticketsApi.close(selectedTicket.id)
+      const ticket = await ticketsApi.close(visibleSelectedTicket.id)
       setSelectedTicket(ticket)
       setFeedback(text.ticketCloseSuccess)
       onChanged()
@@ -292,15 +299,15 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
 
       {(ticketRoute.mode === 'detail' || ticketRoute.mode === 'edit') && isLoading && <p className="ticket-empty-state" role="status">{text.ticketLoading}</p>}
 
-      {mode === 'detail' && selectedTicket && (
+      {mode === 'detail' && visibleSelectedTicket && (
         <div className="ticket-detail-panel">
           <button className="text-link ticket-home-link" onClick={() => void returnToList()} type="button">
             {text.ticketBack}
           </button>
           <div className="ticket-detail-heading">
-            <h2>{selectedTicket.title}</h2>
-            <span className={`ticket-badge ticket-status-${selectedTicket.status.toLowerCase()}`}>
-              {statusLabel(selectedTicket.status, text)}
+            <h2>{visibleSelectedTicket.title}</h2>
+            <span className={`ticket-badge ticket-status-${visibleSelectedTicket.status.toLowerCase()}`}>
+              {statusLabel(visibleSelectedTicket.status, text)}
             </span>
           </div>
           {isEditing ? (
@@ -308,8 +315,8 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
               {formFields}
               <div className="ticket-form-actions">
                 <button className="button button-secondary" disabled={isSaving} onClick={() => {
-                  setForm({ title: selectedTicket.title, description: selectedTicket.description, priority: selectedTicket.priority })
-                  navigateTicket({ mode: 'detail', ticketId: selectedTicket.id })
+                  setForm({ title: visibleSelectedTicket.title, description: visibleSelectedTicket.description, priority: visibleSelectedTicket.priority })
+                  navigateTicket({ mode: 'detail', ticketId: visibleSelectedTicket.id })
                 }} type="button">{text.ticketCancel}</button>
                 <button className="button button-primary" disabled={isSaving} type="submit">
                   {isSaving ? text.ticketLoading : text.ticketSave}
@@ -319,17 +326,17 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
           ) : (
             <>
               <dl className="ticket-detail-meta">
-                <div><dt>{text.ticketPriorityLabel}</dt><dd>{priorityLabel(selectedTicket.priority, text)}</dd></div>
-                <div><dt>{text.ticketCreatedAt}</dt><dd>{formatDate(selectedTicket.created_at, language)}</dd></div>
+                <div><dt>{text.ticketPriorityLabel}</dt><dd>{priorityLabel(visibleSelectedTicket.priority, text)}</dd></div>
+                <div><dt>{text.ticketCreatedAt}</dt><dd>{formatDate(visibleSelectedTicket.created_at, language)}</dd></div>
               </dl>
               <div className="ticket-detail-description">
                 <h3>{text.ticketDescriptionLabel}</h3>
-                <p>{selectedTicket.description}</p>
+                <p>{visibleSelectedTicket.description}</p>
               </div>
               <div className="ticket-form-actions">
-                {selectedTicket.status === 'OPEN' && (
+                {visibleSelectedTicket.status === 'OPEN' && (
                   <>
-                    <button className="button button-secondary" disabled={isSaving} onClick={() => { setShowValidation(false); navigateTicket({ mode: 'edit', ticketId: selectedTicket.id }) }} type="button">
+                    <button className="button button-secondary" disabled={isSaving} onClick={() => { setShowValidation(false); navigateTicket({ mode: 'edit', ticketId: visibleSelectedTicket.id }) }} type="button">
                       {text.ticketEdit}
                     </button>
                     <button className="button button-danger" disabled={isSaving} onClick={() => void handleClose()} type="button">
