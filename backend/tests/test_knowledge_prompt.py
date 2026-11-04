@@ -52,7 +52,7 @@ class KnowledgePromptTests(unittest.TestCase):
         with patch("app.ai._request_chat", side_effect=[classification, generated]) as request_chat:
             result = generate_reply(
                 [{"role": "user", "content": "How do containers connect?"}],
-                knowledge_context="ID: kb-1 | Docker networking\\nUse the service name.",
+                knowledge_context="ID: kb-1 | Docker networking\nUse the service name.",
                 knowledge_source_ids=["kb-1"],
             )
 
@@ -75,7 +75,7 @@ class KnowledgePromptTests(unittest.TestCase):
         with patch("app.ai._request_chat", side_effect=[classification, generated]):
             result = generate_reply(
                 [{"role": "user", "content": "How do I fix a printer?"}],
-                knowledge_context="ID: kb-1 | SQL migrations\\nMigration guide.",
+                knowledge_context="ID: kb-1 | SQL migrations\nMigration guide.",
                 knowledge_source_ids=["kb-1"],
             )
 
@@ -96,7 +96,7 @@ class KnowledgePromptTests(unittest.TestCase):
                     },
                     "done": True,
                 }
-                return iter([(json.dumps(event) + "\\n").encode("utf-8")])
+                return iter([(json.dumps(event) + "\n").encode("utf-8")])
 
         classification = json.dumps({
             "input_language": "English",
@@ -130,7 +130,7 @@ class KnowledgePromptTests(unittest.TestCase):
                     "message": {"content": "[NO_TICKET_RECOMMENDATION]"},
                     "done": True,
                 }
-                return iter([(json.dumps(event) + "\\n").encode("utf-8")])
+                return iter([(json.dumps(event) + "\n").encode("utf-8")])
 
         classification = json.dumps({
             "input_language": "English",
