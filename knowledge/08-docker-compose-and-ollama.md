@@ -65,3 +65,8 @@ Model inference depends on model size/quantization, context length, prompt size,
 
 ### Data loss warning
 `docker compose down -v` removes named volumes. It can delete MySQL and Ollama persistent data. Do not use it as a casual troubleshooting step. Prefer `docker compose down` and targeted rebuild/restart commands unless a full data reset is explicitly intended and backed up.
+
+
+## Tiivistelmä suomeksi
+
+Docker-kuva on sovelluksen paketoitu malli ja kontti sen käynnissä oleva instanssi. Compose määrittelee palvelut, verkot, volyymit ja käynnistysriippuvuudet. Kontin localhost tarkoittaa kyseistä konttia, ei toista palvelua. Palveluiden välisessä yhteydessä käytetään Compose-palvelun DNS-nimeä. Ollaman mallidata tarvitsee pysyvän volyymin. Terveystarkistus kertoo palvelun tilasta, mutta sovellustason yhteys pitää testata erillisellä pyynnöllä.
