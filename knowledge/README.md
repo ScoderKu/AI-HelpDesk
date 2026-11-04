@@ -36,9 +36,15 @@ It is not a replacement for source code, API schemas, migrations, environment co
 | 16-html-and-css-complete-foundation.md | Semantic HTML, CSS, layout, responsive design and accessibility |
 | 17-csharp-dotnet-foundation.md | C#, .NET SDK, language fundamentals, async, NuGet and debugging |
 | 18-scratch-complete-guide-for-children.md | Child-friendly Scratch guide, projects, blocks, debugging and online safety |
-| 19-windows-11-common-problems-and-recovery.md | Windows 11 diagnostics, updates, network, drivers, storage and safe recovery |\n| 00-project-technical-reference-fi-en.md | Bilingual project architecture, data concepts, security, chat lifecycle and RAG constraints |\n| 21-source-code-api-data-compose-audit.md | Source-inspected API route inventory, SQLAlchemy entities and Compose services |
+| 19-windows-11-common-problems-and-recovery.md | Windows 11 diagnostics, updates, network, drivers, storage and safe recovery |
+| 00-project-technical-reference-fi-en.md | Bilingual project architecture, data concepts, security, chat lifecycle and RAG constraints |
+| 21-source-code-api-data-compose-audit.md | Source-inspected API route inventory, SQLAlchemy entities and Compose services |
 
-## Bilingual content convention\n\nEvery document contains an English technical explanation and a substantive Finnish summary (`Tiivistelmä suomeksi`). The Finnish section explains the topic and its practical implications; it is not merely a translated title or keyword list. Keep code identifiers, API names, commands, error strings and file paths unchanged in both languages. When expanding a document, add Finnish explanations for newly introduced concepts and examples as well.\n\n## Retrieval metadata convention
+## Bilingual content convention
+
+Every document contains an English technical explanation and a substantive Finnish summary (`Tiivistelmä suomeksi`). The Finnish section explains the topic and its practical implications; it is not merely a translated title or keyword list. Keep code identifiers, API names, commands, error strings and file paths unchanged in both languages. When expanding a document, add Finnish explanations for newly introduced concepts and examples as well.
+
+## Retrieval metadata convention
 
 Each document begins with:
 - `Document ID`
