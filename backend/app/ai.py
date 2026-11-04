@@ -278,7 +278,10 @@ def generate_ticket_draft(
     if (
         normalize(title) in {normalize(first_user_message), normalize(first_sentence)}
         or normalize(description) == normalize(transcript)
-        or SequenceMatcher(None, normalize(description), normalize(transcript)).ratio() > 0.82
+        or (
+            len(normalize(description)) >= len(normalize(transcript)) * 0.75
+            and SequenceMatcher(None, normalize(description), normalize(transcript)).ratio() > 0.92
+        )
     ):
         raise OllamaUnavailableError("The model returned a transcript instead of a ticket summary")
     return GeneratedTicketDraft(title=title, description=description)
