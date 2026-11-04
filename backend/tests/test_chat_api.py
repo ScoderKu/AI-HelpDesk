@@ -155,6 +155,11 @@ class ChatEndpointTests(unittest.TestCase):
             patch.object(main.redis_client, "eval", return_value=1) as release_lock,
             patch.object(main, "SessionLocal", return_value=persistence_db),
             patch.object(
+                main,
+                "build_knowledge_context",
+                return_value=([], "No matching local Knowledge Base source was retrieved.", []),
+            ),
+            patch.object(
                 main.asyncio,
                 "to_thread",
                 new=AsyncMock(side_effect=generate_after_db_release),
@@ -177,6 +182,8 @@ class ChatEndpointTests(unittest.TestCase):
             main.generate_reply,
             [{"role": "user", "content": "Help with Wi-Fi"}],
             "French",
+            "No matching local Knowledge Base source was retrieved.",
+            [],
         )
         persistence_db.commit.assert_called_once()
         self.assertEqual(db.rollback.call_count, 2)
