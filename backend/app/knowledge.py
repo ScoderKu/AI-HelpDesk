@@ -81,6 +81,7 @@ def _read_sections(path: Path) -> list[tuple[str, str, str, str]]:
             "- **Status:**",
             "- **Applies to:**",
             "- **Keywords:**",
+            "- **RAG Scope:**",
         )):
             current_lines.append(line)
     if seen_heading and current_lines:
