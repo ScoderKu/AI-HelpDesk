@@ -472,6 +472,9 @@ def generate_reply_stream(
                                     if pending_content.endswith(marker[:length]):
                                         hold_length = max(hold_length, length)
                                 safe_length = min(safe_length, len(pending_content) - hold_length)
+                        # Keep a bounded tail buffered so the variable-length source marker
+                        # can be parsed and removed before any part reaches the client.
+                        safe_length = min(safe_length, max(0, len(pending_content) - 160))
                         if safe_length > 0:
                             yield ("content", pending_content[:safe_length])
                             pending_content = pending_content[safe_length:]
