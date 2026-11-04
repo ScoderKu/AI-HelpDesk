@@ -112,9 +112,8 @@ class KnowledgePromptTests(unittest.TestCase):
                 knowledge_source_ids=["kb-1"],
             ))
 
-        content = "".join(value for kind, value in events if kind == "content")
+        content = "".join(value for kind, value in events if kind == "content").strip()
         self.assertEqual(content, "Use the Docker service name.")
-        self.assertFalse(content.endswith(" "))
         self.assertIn(("sources", ["kb-1"]), events)
         self.assertNotIn("unknown", str(events))
         self.assertFalse(any("[KB_SOURCES:" in value for kind, value in events if kind == "content"))

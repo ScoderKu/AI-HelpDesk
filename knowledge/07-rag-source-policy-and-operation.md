@@ -1,6 +1,6 @@
 # RAG Knowledge Sources — Policy and Operational Design
 
-- **Document ID:** KB-RAG-12
+- **Document ID:** KB-RAG-07
 - **Status:** project-specific RAG design and feature-branch implementation; not merged into `main` as of 2026-11-04
 - **RAG Scope:** project-specific
 - **Applies to:** future Knowledge Service and Markdown/TXT corpus
