@@ -2,6 +2,7 @@
 
 - **Document ID:** KB-PROJECT-03
 - **Status:** verified from current backend source and README
+- **RAG Scope:** project-specific
 - **Applies to:** authentication, profile, proxy, Redis rate limiting
 - **Keywords:** authentication, session cookie, HMAC, HttpOnly, SameSite, CSRF, CORS, Origin, proxy, rate limit, kirjautuminen, istunto, tietoturva
 
