@@ -49,3 +49,8 @@ SHOW TABLES;
 SHOW CREATE TABLE users;
 ```
 Do not paste real user data, password hashes, session tokens or personal information into AI chat or Knowledge Base documents.
+
+
+## Tiivistelmä suomeksi
+
+MySQL on pysyvien relaatiotietojen lähde. Taulut, pääavaimet, viiteavaimet, yksilöllisyysrajoitteet ja indeksit muodostavat tietomallin perustan. Transaktioilla varmistetaan usean tietokantatoimenpiteen atomisuus. Redis sopii lyhytikäiseen tilaan, rajoituksiin ja lukkoihin, mutta sitä ei pidä käyttää pysyvän liiketoimintatiedon ainoana tallennuspaikkana. Tietojen säilytys- ja poistokäytännöt on huomioitava myös keskusteluissa.
