@@ -250,6 +250,10 @@ class OllamaResponseTests(unittest.TestCase):
         payload = json.loads(urlopen.call_args.args[0].data)
         self.assertIn("Do not invent causes", payload["messages"][0]["content"])
         self.assertIn("English", payload["messages"][0]["content"])
+        self.assertEqual(payload["messages"][1], messages[0])
+        self.assertEqual(payload["messages"][2], messages[1])
+        self.assertEqual(payload["messages"][-1]["role"], "user")
+        self.assertIn("not a transcript or dialogue", payload["messages"][-1]["content"])
         self.assertEqual(payload["format"]["required"], ["title", "description"])
 
     def test_ticket_draft_rejects_invalid_or_empty_fields(self) -> None:
@@ -281,3 +285,20 @@ class OllamaResponseTests(unittest.TestCase):
         self.assertEqual(content, "I could not solve this reliably. Please create a support ticket.\n")
         self.assertEqual(events[-1], ("ticket_recommendation", True))
         self.assertNotIn(marker, content)
+
+
+    def test_ticket_draft_rejects_a_copied_first_question_and_transcript(self) -> None:
+        messages = [
+            {"role": "user", "content": "The application crashes on startup."},
+            {"role": "assistant", "content": "Try restarting the application."},
+            {"role": "user", "content": "I restarted it and it still crashes."},
+        ]
+        copied = json.dumps({
+            "title": "The application crashes on startup.",
+            "description": "The application crashes on startup. Try restarting the application. I restarted it and it still crashes.",
+        })
+        with (
+            patch("app.ai.urlopen", return_value=ollama_response(copied)),
+            self.assertRaises(OllamaUnavailableError),
+        ):
+            generate_ticket_draft(messages, "English")
