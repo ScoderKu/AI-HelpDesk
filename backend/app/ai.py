@@ -495,7 +495,7 @@ def generate_reply_stream(
             trimmed_content = trimmed_content[:-len(marker)].rstrip()
             break
 
-    source_match = re.search(r"\\[KB_SOURCES:([^\\]]*)\\]\\s*$", trimmed_content)
+    source_match = re.search(r"\[KB_SOURCES:([^\]]*)\]\s*$", trimmed_content)
     source_ids = []
     if source_match:
         raw_ids = source_match.group(1).strip()
