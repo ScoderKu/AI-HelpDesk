@@ -9,7 +9,7 @@
 This collection has two layers:
 
 1. **Project knowledge** — verified architecture, code responsibilities, application workflows, API/data concepts, authentication, chat, ticket creation, Docker and Ollama operation.
-2. **Technical foundation** — JavaScript, TypeScript, Node.js/npm, React, Python/FastAPI, HTTP/REST, SQL/MySQL, Redis, Git/GitHub, Windows and Docker troubleshooting.
+2. **Technical foundation** — JavaScript, TypeScript, Node.js/npm, React, Python/FastAPI, Conda/venv, PHP, HTML/CSS, C#/.NET, Scratch for children, HTTP/REST, SQL/MySQL, Redis, Git/GitHub, Windows 11 and Docker troubleshooting.
 
 It is not a replacement for source code, API schemas, migrations, environment configuration, official product documentation, or the project's Finnish planning documents.
 
@@ -30,6 +30,13 @@ It is not a replacement for source code, API schemas, migrations, environment co
 | 10-http-rest-git-and-debugging.md | HTTP, REST, browser/network debugging, Git workflow |
 | 11-windows-and-development-troubleshooting.md | Windows 11, PowerShell, local development diagnostics |
 | 12-rag-source-policy-and-operation.md | Corpus rules, retrieval expectations, source trust and evaluation |
+| 13-known-project-incidents.md | Historical troubleshooting cases from implementation sessions |
+| 14-python-environments-conda-and-venv.md | Conda, venv, pip, VS Code interpreter and Python environment errors |
+| 15-php-development-and-troubleshooting.md | PHP language, Composer, forms, PDO, security and common errors |
+| 16-html-and-css-complete-foundation.md | Semantic HTML, CSS, layout, responsive design and accessibility |
+| 17-csharp-dotnet-foundation.md | C#, .NET SDK, language fundamentals, async, NuGet and debugging |
+| 18-scratch-complete-guide-for-children.md | Child-friendly Scratch guide, projects, blocks, debugging and online safety |
+| 19-windows-11-common-problems-and-recovery.md | Windows 11 diagnostics, updates, network, drivers, storage and safe recovery |
 
 ## Retrieval metadata convention
 
