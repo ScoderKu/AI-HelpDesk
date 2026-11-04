@@ -9,7 +9,8 @@ from app.knowledge import search_knowledge
 class KnowledgeSearchTests(unittest.TestCase):
     def test_search_returns_bilingual_section_and_real_source_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary) / "knowledge"
+            root.mkdir()
             (root / "docker-guide.md").write_text(
                 "# Docker troubleshooting\n\n"
                 "Docker Compose service DNS lets containers reach each other by service name.\n\n"
