@@ -74,3 +74,8 @@ The UI language is not the same as the AI model's response-language classificati
 - Stale chat content: inspect conversation/request identity guards and asynchronous state updates.
 - Stream parse error: verify buffering of partial newline-delimited JSON records.
 - TypeScript build error: run `npm run build` and fix type errors rather than suppressing them with broad `any`.
+
+
+## Tiivistelmä suomeksi
+
+React rakentaa käyttöliittymän komponenteista. TypeScript tuo staattiset tyypit kehitysaikaiseen tarkistukseen, mutta tyypit poistuvat ajonaikana eivätkä validoi automaattisesti palvelimelta tulevaa JSON-dataa. React-tilan päivitykset tehdään setterien kautta; sivuvaikutukset kuuluvat tarkoituksenmukaisiin hookeihin. API-kutsujen virhetilanteet, lataustila ja käyttäjälle näkyvät virheilmoitukset on käsiteltävä erikseen.
