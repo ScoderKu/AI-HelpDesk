@@ -74,7 +74,12 @@ def _read_sections(path: Path) -> list[tuple[str, str, str, str]]:
             current_heading = heading_text
             current_lines = []
             seen_heading = True
-        elif seen_heading:
+        elif seen_heading and not line.startswith((
+            "- **Document ID:**",
+            "- **Status:**",
+            "- **Applies to:**",
+            "- **Keywords:**",
+        )):
             current_lines.append(line)
     if seen_heading and current_lines:
         sections.append((current_heading, current_lines))
