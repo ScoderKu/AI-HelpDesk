@@ -43,7 +43,7 @@ Ollama exposes a local HTTP API to the backend. The backend sends chat requests 
 
 The feature branch `feature/us15-rag-knowledge-service` adds `backend/app/knowledge.py`, which loads approved Markdown/TXT files from the `knowledge/` directory and performs bounded keyword retrieval. A document is eligible only when it declares `RAG Scope: project-specific`. The branch adds an authenticated `POST /api/v1/knowledge/search` endpoint and integrates retrieval context into chat generation. The branch is a proposal until merged; automated tests and live Docker/Ollama behavior still require verification.
 
-The planned Knowledge Service reads a curated local Markdown/TXT corpus, performs keyword retrieval, and supplies matching excerpts and source metadata to the AI prompt. The README depicts this component, but the reviewed backend source did not yet contain the knowledge-search implementation or a RAG API endpoint. Treat it as planned until code and tests prove otherwise.
+The feature-branch implementation is a first keyword-search slice only. It must not be treated as production-ready: automated tests, Docker integration, live model behavior and user-visible citations still require validation.
 
 ## Request flow
 
