@@ -119,3 +119,8 @@ Commit `composer.json` and `composer.lock` for applications. `composer install` 
 - Validate uploads by content, size and allowed type; store them outside executable web paths.
 - Disable detailed errors for public production responses; log safely on the server.
 - Never commit secrets or display them in error messages.
+
+
+## Tiivistelmä suomeksi
+
+PHP on palvelinpuolen ohjelmointikieli: palvelin suorittaa PHP-koodin ja selain saa tavallisesti HTML-, CSS- ja JavaScript-sisällön. Composer hallitsee PHP-riippuvuuksia ja PDO tarjoaa tietokantayhteyden. Käyttäjän syötteet validoidaan, SQL-kyselyt parametroidaan ja salaisuudet pidetään palvelimen asetuksissa. Yleisiä virheitä ovat syntaksivirheet, puuttuvat laajennukset, väärä PHP-versio, tiedostopolut ja tietokantayhteyden asetukset.
