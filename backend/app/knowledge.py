@@ -54,12 +54,14 @@ def _read_sections(path: Path) -> list[tuple[str, str, str, str]]:
         return []
 
     title = path.stem.replace("-", " ").replace("_", " ").strip()
+    # Only explicitly approved project-specific documents belong in the live RAG corpus.
+    # General reference material may remain in the repository but is not indexed.
+    scope_match = re.search(r"(?im)^-\s*\*\*RAG Scope:\*\*\s*(.+)$", text)
+    if not scope_match or scope_match.group(1).strip().casefold() != "project-specific":
+        return []
+
     status_match = re.search(r"(?im)^-\s*\*\*Status:\*\*\s*(.+)$", text)
-    document_status = (
-        status_match.group(1).strip()
-        if status_match
-        else "general technical guidance"
-    )
+    document_status = status_match.group(1).strip() if status_match else "unverified project document"
     sections: list[tuple[str, list[str]]] = []
     current_heading = title
     current_lines: list[str] = []
