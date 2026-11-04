@@ -173,3 +173,8 @@ Choose an idea you enjoy. Draw a plan before coding: characters, goal, controls,
 ## 15. Teaching approach
 
 For younger learners, explain one new idea at a time. Let the child predict what a block will do before running it. Encourage changing one value and observing the result. Celebrate experiments and debugging, not only finished games. Avoid giving a complete solution immediately; use hints and questions so the child can discover the logic.
+
+
+## Tiivistelmä suomeksi lapsille
+
+Scratchissa ohjelma rakennetaan liittämällä värikkäitä lohkoja toisiinsa. Hahmoa kutsutaan spriteksi ja tausta-aluetta näyttämöksi. Vihreä lippu käynnistää ohjelman. Toisto-lohkot tekevät samoja asioita monta kertaa, ehtolohkot valitsevat mitä tehdään eri tilanteissa ja muuttujat muistavat esimerkiksi pisteet. Kun peli ei toimi, kokeile yhtä lohkoa kerrallaan ja pyydä aikuiselta apua verkon turvallisuuteen.
