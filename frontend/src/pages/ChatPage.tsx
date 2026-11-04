@@ -15,7 +15,7 @@ type MarkdownBlock =
   | { type: 'code'; code: string; language: string }
 
 function parseMarkdownBlocks(content: string): MarkdownBlock[] {
-  const lines = content.replace(/\\r\\n?/g, '\\n').split('\\n')
+  const lines = content.replace(/\r\n?/g, '\n').split('\n')
   const blocks: MarkdownBlock[] = []
   let index = 0
   while (index < lines.length) {
@@ -30,22 +30,22 @@ function parseMarkdownBlocks(content: string): MarkdownBlock[] {
         index += 1
       }
       if (index < lines.length) index += 1
-      blocks.push({ type: 'code', code: codeLines.join('\\n'), language })
+      blocks.push({ type: 'code', code: codeLines.join('\n'), language })
       continue
     }
-    const heading = line.match(/^(#{1,6})\\s+(.+)$/)
+    const heading = line.match(/^(#{1,6})\s+(.+)$/)
     if (heading) {
       blocks.push({ type: 'heading', level: heading[1].length, text: heading[2] })
       index += 1
       continue
     }
-    const unordered = line.match(/^\\s*[-*+]\\s+(.+)$/)
-    const ordered = line.match(/^\\s*\\d+[.)]\\s+(.+)$/)
+    const unordered = line.match(/^\s*[-*+]\s+(.+)$/)
+    const ordered = line.match(/^\s*\d+[.)]\s+(.+)$/)
     if (unordered || ordered) {
       const items: string[] = []
       const isOrdered = Boolean(ordered)
       while (index < lines.length) {
-        const match = lines[index].match(isOrdered ? /^\\s*\\d+[.)]\\s+(.+)$/ : /^\\s*[-*+]\\s+(.+)$/)
+        const match = lines[index].match(isOrdered ? /^\s*\d+[.)]\s+(.+)$/ : /^\s*[-*+]\s+(.+)$/)
         if (!match) break
         items.push(match[1])
         index += 1
@@ -57,19 +57,19 @@ function parseMarkdownBlocks(content: string): MarkdownBlock[] {
     index += 1
     while (index < lines.length && lines[index].trim()
       && !lines[index].trimStart().startsWith('```')
-      && !/^#{1,6}\\s+/.test(lines[index])
-      && !/^\\s*[-*+]\\s+/.test(lines[index])
-      && !/^\\s*\\d+[.)]\\s+/.test(lines[index])) {
+      && !/^#{1,6}\s+/.test(lines[index])
+      && !/^\s*[-*+]\s+/.test(lines[index])
+      && !/^\s*\d+[.)]\s+/.test(lines[index])) {
       paragraph.push(lines[index])
       index += 1
     }
-    blocks.push({ type: 'paragraph', text: paragraph.join('\\n') })
+    blocks.push({ type: 'paragraph', text: paragraph.join('\n') })
   }
   return blocks
 }
 
 function renderInlineMarkdown(text: string, keyPrefix: string) {
-  const tokens = text.split(/(`[^`]+\`|\\*\\*[^*]+\\*\\*|\\*[^*]+\\*|~~[^~]+~~)/g)
+  const tokens = text.split(/(`[^`]+\`|\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~)/g)
   return tokens.map((token, index) => {
     if (token.startsWith('`') && token.endsWith('`')) return <code key={`${keyPrefix}-${index}`}>{token.slice(1, -1)}</code>
     if (token.startsWith('**') && token.endsWith('**')) return <strong key={`${keyPrefix}-${index}`}>{token.slice(2, -2)}</strong>
