@@ -177,3 +177,8 @@ Seek professional or administrator help when:
 - Files backed up:
 - Actions attempted and results:
 - Current status / next safe step:
+
+
+## Tiivistelmä suomeksi
+
+Windows 11 -ongelmissa aloita oireen ja virhekoodin kirjaamisesta. Tarkista Windows Update, Laitehallinta, verkon tila, vapaa levytila ja tapahtumalokit ennen korjaustoimia. Wi-Fi-, Bluetooth-, ääni- ja näyttöongelmissa rajaa ensin laite, ajuri ja yhteys. Varmuuskopioi tärkeät tiedot ennen palautusta tai levytoimia. Käytä virallisia ajureita ja vältä satunnaisia rekisterimuutoksia tai tuntemattomia korjausohjelmia.
