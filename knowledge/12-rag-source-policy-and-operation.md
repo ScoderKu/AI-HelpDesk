@@ -1,15 +1,14 @@
 # RAG Knowledge Sources — Policy and Operational Design
 
 - **Document ID:** KB-RAG-12
-- **Status:** US-15 MVP design plus initial implementation on `feature/us15-rag-knowledge-service`; not merged into `main` as of 2026-11-04
+- **Status:** project-specific RAG design and feature-branch implementation; not merged into `main` as of 2026-11-04
+- **RAG Scope:** project-specific
 - **Applies to:** future Knowledge Service and Markdown/TXT corpus
 - **Keywords:** RAG, retrieval augmented generation, keyword search, Markdown, TXT, corpus, document chunk, source metadata, prompt injection, tietopohjainen tekoäly, avainsanahaku, lähdedokumentti
 
 ## Goal
 
-US-15 requires the AI assistant to use technical documentation when answering technical questions. The MVP corpus has two categories:
-1. General technical knowledge relevant to IT/software development: Windows 11, Docker/Compose, Python/FastAPI, MySQL, Git/GitHub, JavaScript, TypeScript, Node.js, React, HTTP/REST, Redis and Ollama.
-2. Project-specific AI HelpDesk knowledge: architecture, source layout, API behavior, database relationships, authentication, chat streaming, ticket workflow, configuration and troubleshooting already verified in the repository or during implementation.
+US-15 requires the AI assistant to use technical documentation when answering technical questions. The corpus is deliberately limited to AI HelpDesk-specific knowledge: architecture, source layout, API behavior, database relationships, authentication, chat streaming, ticket workflow, project configuration, RAG implementation and troubleshooting verified in the repository or during implementation. General programming and computer knowledge is outside the RAG corpus; the model should answer those questions from its own knowledge.
 
 ## MVP retrieval approach
 
@@ -58,7 +57,7 @@ The same principle applies to user messages and conversation transcripts.
 If no useful source is found:
 - do not invent a source or fabricate a citation;
 - state that no matching item was found in the available Knowledge Base when that matters;
-- the model may still provide safe general troubleshooting guidance, clearly distinguished from repository-specific documented facts;
+- the model may still provide safe general guidance from its own knowledge, clearly distinguished from repository-specific documented facts;
 - ask one focused clarification when essential;
 - recommend a support ticket when the issue needs human follow-up or cannot be safely resolved.
 
