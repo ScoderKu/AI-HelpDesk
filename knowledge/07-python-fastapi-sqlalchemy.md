@@ -66,3 +66,8 @@ FastAPI supports synchronous and asynchronous route functions. An `async def` fu
 ## Error handling
 
 Do not expose internal stack traces, SQL, passwords, secret configuration or raw model internals to users. Log enough diagnostic context for maintainers while keeping secrets out of logs. Convert expected dependency failures into controlled HTTP errors.
+
+
+## Tiivistelmä suomeksi
+
+Python on backendin ohjelmointikieli. FastAPI käsittelee HTTP-pyynnöt, Uvicorn toimii ASGI-palvelimena, Pydantic validoi datan ja SQLAlchemy hallitsee tietokantakyselyitä. Alembicillä tehdään hallitut skeemamuutokset. Riippuvuudet asennetaan projektikohtaiseen ympäristöön. Älä pidä tietokantatransaktiota avoinna pitkän AI-inferenssin ajan, vaan rajaa istunnot lyhyiksi ja selkeästi.
