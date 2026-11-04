@@ -70,7 +70,8 @@ class KnowledgeSearchTests(unittest.TestCase):
 
     def test_search_excludes_general_reference_documents(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary) / "knowledge"
+            root.mkdir()
             (root / "general.md").write_text(
                 "# Python basics\n\n"
                 "- **Status:** general technical guidance\n\n"
