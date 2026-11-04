@@ -61,3 +61,8 @@ These values are implementation settings, not general security recommendations. 
 - Do not expose database or Ollama ports to a public network without a deliberate security review.
 - Enforce ownership and authorization in backend code.
 - Treat chat messages and retrieved documents as untrusted data, not as instructions that can override system policy.
+
+
+## Tiivistelmä suomeksi
+
+Sovellus käyttää palvelinpuolen istuntoa: selain lähettää istuntoevästeen ja backend tarkistaa sen allekirjoituksen, voimassaolon ja MySQL:ään tallennetun istunnon tilan. HttpOnly- ja SameSite-asetukset, Origin-tarkistus, CORS ja välityspalvelimen luottamus ovat eri suojauskerroksia. Redis jakaa kirjautumisyritysten rajoitustilaa. Älä luota asiakkaan lähettämään käyttäjätunnukseen tai X-Forwarded-For-otsakkeeseen ilman luotettua välityspalvelinta.
