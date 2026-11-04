@@ -194,7 +194,7 @@ class TicketEndpointTests(unittest.TestCase):
         ]
         db = MagicMock()
         db.scalar.return_value = conversation
-        db.scalars.return_value = messages
+        db.scalars.return_value.all.return_value = messages
         request = Request({
             "type": "http", "method": "POST", "path": "/",
             "headers": [(b"origin", b"http://localhost:5173")],
