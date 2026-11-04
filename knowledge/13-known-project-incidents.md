@@ -77,3 +77,7 @@ Record:
 - code/configuration change;
 - verification command and observed result;
 - whether the fix is confirmed, provisional or unresolved.
+
+## Tiivistelmä suomeksi
+
+Tämä dokumentti kokoaa kehityksen aikana havaittuja historiallisia ongelmia. Esimerkkejä ovat MySQL-yhteysosoitteen erikoismerkki salasanassa, puuttuva package-lock.json npm ci -asennuksessa ja Ollaman mallin alustus. Historiallinen korjaus ei ole automaattisesti oikea uuteen tilanteeseen. Vertaa aina tarkkaa virheilmoitusta, nykyistä asetusta ja ohjelmistoversiota ennen muutosta. GPU:n suuri käyttöaste ei yksin todista hidastumisen syytä.
