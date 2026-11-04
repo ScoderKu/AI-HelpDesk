@@ -267,7 +267,21 @@ def generate_ticket_draft(
         or len(description.strip().encode("utf-8")) > 5000
     ):
         raise OllamaUnavailableError("Invalid ticket draft returned by Ollama")
-    return GeneratedTicketDraft(title=title.strip(), description=description.strip())
+
+    title = title.strip()
+    description = description.strip()
+    normalize = lambda value: " ".join(value.casefold().split())
+    first_user_message = next(message["content"] for message in messages if message.get("role") == "user")
+    first_sentence = first_user_message.strip().splitlines()[0].split(".")[0].strip()
+    transcript = "\n".join(message.get("content", "") for message in messages)
+    from difflib import SequenceMatcher
+    if (
+        normalize(title) in {normalize(first_user_message), normalize(first_sentence)}
+        or normalize(description) == normalize(transcript)
+        or SequenceMatcher(None, normalize(description), normalize(transcript)).ratio() > 0.82
+    ):
+        raise OllamaUnavailableError("The model returned a transcript instead of a ticket summary")
+    return GeneratedTicketDraft(title=title, description=description)
 
 
 
