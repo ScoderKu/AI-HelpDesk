@@ -25,6 +25,7 @@ class KnowledgeSearchTests(unittest.TestCase):
         self.assertEqual(results[0]["source"], "knowledge/docker-guide.md")
         self.assertIn(results[0]["section"], {"Docker troubleshooting", "Vianmääritys"})
         self.assertGreater(results[0]["score"], 0)
+        self.assertEqual(results[0]["status"], "general technical guidance")
 
     def test_search_returns_empty_for_unmatched_query(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
