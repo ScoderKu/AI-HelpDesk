@@ -66,3 +66,8 @@ If a Compose service name differs, inspect the current Compose file and use the 
 ## Safe troubleshooting sequence
 
 Start with read-only inspection. Avoid destructive commands such as removing Docker volumes, deleting database files, resetting Git history or reinstalling all dependencies until the cause is understood and important data is backed up.
+
+
+## Tiivistelmä suomeksi
+
+PowerShell ja komentokehote eivät käytä kaikilta osin samaa syntaksia kuin Bash. Tarkista ensin nykyinen hakemisto, PATH, ympäristömuuttujat, prosessit ja portit. Jos komentoa ei löydy, selvitä onko ohjelma asennettu ja PATH päivitetty; älä muuta järjestelmäasetuksia summittaisesti. Docker Desktopin, Node.js:n ja muiden kehitystyökalujen ongelmat kannattaa rajata komentoon, palveluun ja käyttöjärjestelmään.
