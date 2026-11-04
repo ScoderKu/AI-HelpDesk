@@ -169,8 +169,8 @@ export function HomePage({
           </button>
         </nav>
 
-        {currentUser && (
-          <div className="sidebar-bottom">
+        <div className="sidebar-bottom">
+          {currentUser ? (
             <div className="account-menu" ref={accountMenuRef}>
               <button
                 aria-controls="account-menu-panel"
@@ -223,30 +223,23 @@ export function HomePage({
                   </button>
               </div>
             </div>
-          </div>
-        )}
+          ) : authLoading ? (
+            <div className="sidebar-auth-loading" role="status">{text.checkingSession}</div>
+          ) : (
+            <div className="sidebar-auth-actions" role="group" aria-label={text.account}>
+              <button className="sidebar-auth-link" onClick={() => onOpenAuth('login')} type="button">
+                {text.signIn}
+              </button>
+              <button className="sidebar-auth-link sidebar-auth-primary" onClick={() => onOpenAuth('register')} type="button">
+                {text.createAccount}
+              </button>
+            </div>
+          )}
+          <div className="lab-signature">Developed by ScoderKu Lab</div>
+        </div>
       </aside>
 
       <main className="main-content" id="home">
-        <header className="topbar">
-          <div className="breadcrumb"><span>HelpDesk</span><span className="breadcrumb-divider">/</span>{text.home}</div>
-          <div className="topbar-actions">
-            <div className="topbar-status"><span className="status-dot" />{currentUser ? text.workspace : text.preview}</div>
-            {currentUser ? (
-              <span className="signed-in-user" title={currentUser.email}>
-                {text.signedInAs} {currentUser.username}
-              </span>
-            ) : authLoading ? (
-              <span className="topbar-auth-loading">{text.checkingSession}</span>
-            ) : (
-              <>
-                <button className="topbar-auth-link" onClick={() => onOpenAuth('login')} type="button">{text.signIn}</button>
-                <button className="topbar-auth-link topbar-auth-primary" onClick={() => onOpenAuth('register')} type="button">{text.createAccount}</button>
-              </>
-            )}
-          </div>
-        </header>
-
         <div className="page-content">
           {activeView === 'chat' && currentUser ? (
             <ChatPage text={text} initialConversationId={route.conversationId} onConversationChange={updateChatConversation} />
@@ -270,14 +263,6 @@ export function HomePage({
               onChanged={() => setSummaryRefresh((value) => value + 1)}
             />
           ) : <>
-          {!currentUser && <div className="preview-notice" role="note">
-            <span className="notice-indicator"><Icon name="layers" /></span>
-            <div>
-              <strong>{text.preview}</strong>
-              <p>{text.previewDetails}</p>
-            </div>
-          </div>}
-
           <section className="welcome-section" aria-labelledby="page-title">
             <div className="welcome-copy">
               <div className="eyebrow"><span className="eyebrow-line" />{text.eyebrow}</div>
@@ -349,7 +334,6 @@ export function HomePage({
           </div>
 
           <footer className="page-footer">{text.footer}</footer>
-          <div className="lab-signature">Developed by ScoderKu Lab</div>
           </>}
         </div>
       </main>

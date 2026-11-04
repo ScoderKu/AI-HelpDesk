@@ -370,7 +370,6 @@ export function AuthPage({
           </form>
           </div>
         </section>
-        <div className="lab-signature">Developed by ScoderKu Lab</div>
       </main>
     </div>
   )
