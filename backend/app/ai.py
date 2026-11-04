@@ -476,8 +476,13 @@ def generate_reply_stream(
                                         hold_length = max(hold_length, length)
                                 safe_length = min(safe_length, len(pending_content) - hold_length)
                         if safe_length > 0:
-                            yield ("content", pending_content[:safe_length])
-                            pending_content = pending_content[safe_length:]
+                            # Keep trailing whitespace buffered until the next chunk tells
+                            # us whether it separates text or sits immediately before a marker.
+                            safe_text = pending_content[:safe_length]
+                            emit_length = len(safe_text.rstrip())
+                            if emit_length > 0:
+                                yield ("content", safe_text[:emit_length])
+                                pending_content = pending_content[emit_length:]
                 if result.get("done") is True:
                     completed = True
                     break
