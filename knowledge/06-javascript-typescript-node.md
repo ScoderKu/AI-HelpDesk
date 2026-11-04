@@ -99,3 +99,8 @@ Run these in the frontend directory unless the project scripts explicitly say ot
 - `Cannot find module`: verify working directory, dependency installation and import path/case.
 - ESM/CommonJS error: inspect `type` in package.json, file extension and dependency module format.
 - TypeScript says a property does not exist: inspect the declared type and actual API response; do not silence the error without checking the data contract.
+
+
+## Tiivistelmä suomeksi
+
+JavaScript suoritetaan selaimessa ja Node.js-ympäristössä. TypeScript lisää staattisen tyyppijärjestelmän, mutta kääntyy JavaScriptiksi. Node.js on palvelinpuolen JavaScript-ajoympäristö, npm hallitsee paketteja ja package-lock.json lukitsee riippuvuuksien ratkaisut. Promise ja async/await helpottavat asynkronista toimintaa. Muista, että TypeScript-tyyppi ei tarkista API:n ajonaikaista dataa; käytä tarvittaessa skeemavalidointia.
