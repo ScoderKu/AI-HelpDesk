@@ -28,8 +28,7 @@
 
 .brand-mark,
 .action-icon,
-.stat-icon,
-.notice-indicator {
+.stat-icon {
   display: grid;
   flex: 0 0 auto;
   place-items: center;
@@ -190,88 +189,9 @@
   min-width: 0;
 }
 
-.topbar {
-  height: 70px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 clamp(24px, 4vw, 64px);
-  border-bottom: 1px solid var(--line);
-  background: #ffffffcc;
-}
-
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  color: #65697a;
-  font-size: 13px;
-}
-
-.breadcrumb span:first-child {
-  color: #65697a;
-}
-
-.breadcrumb-divider {
-  color: #c1c2cb;
-}
-
-.topbar-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #888b9c;
-  font-size: 12px;
-}
-
-.status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #f2ad62;
-  box-shadow: 0 0 0 3px #fff3e5;
-}
-
 .page-content {
   width: min(calc(100% - clamp(40px, 6vw, 112px)), 1480px);
   margin: 30px auto 0;
-}
-
-.preview-notice {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 15px;
-  border: 1px solid #e8e5ff;
-  border-radius: 10px;
-  background: #f7f6ff;
-}
-
-.notice-indicator {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  color: var(--violet);
-  background: #eeecff;
-}
-
-.notice-indicator svg {
-  width: 17px;
-  height: 17px;
-}
-
-.preview-notice strong {
-  display: block;
-  color: #5146a2;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.preview-notice p {
-  margin-top: 2px;
-  color: #77758f;
-  font-size: 13px;
-  line-height: 1.5;
 }
 
 .welcome-section {
@@ -790,11 +710,10 @@
 }
 
 .lab-signature {
-  padding: 4px 0 16px;
+  margin: 14px 11px 0;
   color: #9698a7;
   font-size: 11px;
   letter-spacing: 0.15px;
-  text-align: center;
 }
 
 button:focus-visible,
@@ -810,10 +729,6 @@ a:focus-visible {
 
   .page-content {
     width: min(100% - 56px, 1020px);
-  }
-
-  .topbar {
-    padding-inline: 28px;
   }
 
   .welcome-decoration {
@@ -887,28 +802,9 @@ a:focus-visible {
     display: none;
   }
 
-  .topbar {
-    height: 60px;
-    padding-inline: 16px;
-  }
-
-  .topbar-status {
-    font-size: 12px;
-  }
-
   .page-content {
     width: calc(100% - 36px);
     margin-top: 18px;
-  }
-
-  .preview-notice {
-    align-items: flex-start;
-    padding: 10px;
-  }
-
-  .notice-indicator {
-    width: 28px;
-    height: 28px;
   }
 
   .welcome-section {
@@ -1045,55 +941,46 @@ a:focus-visible {
   }
 }
 
-.topbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.sidebar-auth-loading {
+  padding: 12px 11px;
+  color: #65697a;
+  font-size: 12px;
 }
 
-.topbar-auth-link {
-  padding: 8px 10px;
+.sidebar-auth-actions {
+  display: grid;
+  gap: 7px;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--line);
+}
+
+.sidebar-auth-link {
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 12px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 9px;
   color: var(--violet-dark);
   background: transparent;
   font: inherit;
   font-size: 13px;
   font-weight: 650;
-  white-space: nowrap;
+  text-align: left;
   cursor: pointer;
 }
 
-.topbar-auth-link:hover {
+.sidebar-auth-link:hover {
   background: #f0efff;
 }
 
-.topbar-auth-primary {
+.sidebar-auth-primary,
+.sidebar-auth-primary:hover {
   color: #fff;
   background: var(--violet);
 }
 
-.topbar-auth-primary:hover {
-  color: #fff;
+.sidebar-auth-primary:hover {
   background: var(--violet-dark);
-}
-
-.signed-in-user,
-.topbar-auth-loading {
-  color: #65697a;
-  font-size: 14px;
-}
-
-.signed-in-user {
-  max-width: 240px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.topbar-auth-link:disabled {
-  cursor: wait;
-  opacity: 0.65;
 }
 
 .auth-shell {
@@ -1312,26 +1199,13 @@ a:focus-visible {
 }
 
 .auth-back:focus-visible,
-.topbar-auth-link:focus-visible,
+.sidebar-auth-link:focus-visible,
 .auth-switch button:focus-visible {
   outline: 3px solid #aaa3ff;
   outline-offset: 3px;
 }
 
 @media (max-width: 900px) {
-  .topbar-actions {
-    gap: 4px;
-  }
-
-  .topbar-status {
-    display: none;
-  }
-
-  .topbar-auth-link {
-    padding: 7px 8px;
-    font-size: 12px;
-  }
-
   .auth-topbar {
     min-height: 64px;
     padding-inline: 16px;
@@ -1510,6 +1384,17 @@ a:focus-visible {
   .sidebar-bottom {
     display: block;
     margin-top: 8px;
+  }
+
+  .sidebar-auth-actions {
+    display: flex;
+    gap: 6px;
+    padding-top: 8px;
+  }
+
+  .sidebar-auth-link {
+    min-width: 0;
+    text-align: center;
   }
 
   .account-menu {
