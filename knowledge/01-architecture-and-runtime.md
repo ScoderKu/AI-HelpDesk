@@ -2,6 +2,7 @@
 
 - **Document ID:** KB-PROJECT-01
 - **Status:** architecture verified from repository README and backend/frontend source; Compose details should be checked against the current compose file before operational changes
+- **RAG Scope:** project-specific
 - **Applies to:** full application
 - **Keywords:** architecture, runtime, frontend, backend, API, MySQL, Redis, Ollama, Docker network, arkkitehtuuri, palvelurakenne, verkkoyhteys
 
