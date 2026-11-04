@@ -33,6 +33,7 @@ from app.ai import (
     preload_model,
 )
 from app.database import SessionLocal, engine, get_db
+from app.knowledge import KnowledgeResult, search_knowledge
 from app.models import AuthSession, Conversation, Message, Ticket, User
 from app.schemas import (
     ConversationCreateRequest,
@@ -53,6 +54,9 @@ from app.schemas import (
     UserRegistrationRequest,
     UserRegistrationResponse,
     UserResponse,
+    KnowledgeSearchRequest,
+    KnowledgeSearchResponse,
+    KnowledgeSourceResponse,
 )
 from app.security import hash_password, verify_password
 
@@ -1157,6 +1161,42 @@ def create_ticket_from_conversation(
     return TicketResponse.model_validate(ticket)
 
 
+def build_knowledge_context(query: str) -> tuple[list[KnowledgeResult], str, list[str]]:
+    """Retrieve bounded excerpts and assign request-local IDs for validated citations."""
+    results = search_knowledge(query, limit=3)
+    source_ids = [f"kb-{index}" for index in range(1, len(results) + 1)]
+    excerpts = []
+    for source_id, item in zip(source_ids, results):
+        excerpts.append(
+            f"ID: {source_id} | Source: {item['title']} | {item['source']} | "
+            f"Section: {item['section']} | Status: {item['status']}\n"
+            f"{item['content'][:2200]}"
+        )
+    context = (
+        "\n\n".join(excerpts)[:7000]
+        if excerpts
+        else "No matching local Knowledge Base source was retrieved. "
+             "Do not imply that local documentation supports the answer. "
+             "Give safe general guidance only when appropriate."
+    )
+    return results, context, source_ids
+
+
+def format_knowledge_sources(
+    results: list[KnowledgeResult],
+    source_ids: tuple[str, ...] | list[str],
+) -> str:
+    """Render only retrieved sources explicitly selected by the model."""
+    selected = set(source_ids)
+    lines = [
+        f"- {item['title']} — {item['source']} "
+        f"(section: {item['section']}; status: {item['status']})"
+        for index, item in enumerate(results, start=1)
+        if f"kb-{index}" in selected
+    ]
+    return "\n\nSources / Lähteet:\n" + "\n".join(lines) if lines else ""
+
+
 async def generate_assistant_for_message(
     conversation_id: int,
     user_message_id: int,
@@ -1185,17 +1225,32 @@ async def generate_assistant_for_message(
         )
     response_language = conversation.response_language
     db.rollback()
+    latest_user_content = next(
+        (item.content for item in reversed(history) if item.role == "USER"),
+        "",
+    )
+    retrieved_knowledge, knowledge_context, knowledge_source_ids = build_knowledge_context(
+        latest_user_content
+    )
     generated_reply = await asyncio.to_thread(
         generate_reply,
         ollama_messages,
         response_language,
+        knowledge_context,
+        knowledge_source_ids,
+    )
+    answer_content = generated_reply.content.strip()
+    if not answer_content:
+        raise OllamaUnavailableError("Ollama returned an empty reply")
+    answer_content += format_knowledge_sources(
+        retrieved_knowledge, generated_reply.source_ids
     )
 
     chat_lock.assert_owned()
     assistant_message = Message(
         conversation_id=conversation_id,
         role="ASSISTANT",
-        content=generated_reply.content,
+        content=answer_content,
         created_at=datetime.now(timezone.utc).replace(tzinfo=None),
     )
     with SessionLocal() as persistence_db:
@@ -1314,13 +1369,21 @@ def stream_chat_message(
                 chunks: list[str] = []
                 saved_language = response_language
                 ticket_recommended = False
+                validated_source_ids: list[str] = []
                 try:
-                    for kind, value in generate_reply_stream(ollama_messages, response_language):
+                    retrieved_knowledge, knowledge_context, knowledge_source_ids = build_knowledge_context(
+                        message_data.content
+                    )
+                    for kind, value in generate_reply_stream(
+                        ollama_messages, response_language, knowledge_context, knowledge_source_ids
+                    ):
                         chat_lock.assert_owned()
                         if kind == "language":
                             saved_language = value
                         elif kind == "ticket_recommendation":
                             ticket_recommended = value is True
+                        elif kind == "sources":
+                            validated_source_ids = value
                         elif kind == "content":
                             chunks.append(value)
                             yield event("token", {"content": value})
@@ -1339,6 +1402,7 @@ def stream_chat_message(
                     })
                     return
 
+                full_content += format_knowledge_sources(retrieved_knowledge, validated_source_ids)
                 chat_lock.assert_owned()
                 assistant_message = Message(
                     conversation_id=conversation_id,
@@ -1564,6 +1628,34 @@ async def retry_chat_message(
             user_message=user_message_response,
             assistant_message=assistant_message_response,
         )
+
+
+@app.post(
+    "/api/v1/knowledge/search",
+    response_model=KnowledgeSearchResponse,
+    tags=["Knowledge"],
+)
+def search_knowledge_endpoint(
+    search_data: KnowledgeSearchRequest,
+    request: Request,
+    _user: User = Depends(get_authenticated_user),
+) -> KnowledgeSearchResponse:
+    require_trusted_origin(request)
+    results = search_knowledge(search_data.query, search_data.limit)
+    return KnowledgeSearchResponse(
+        query=search_data.query,
+        results=[
+            KnowledgeSourceResponse(
+                title=item["title"],
+                source=item["source"],
+                section=item["section"],
+                status=item["status"],
+                excerpt=item["excerpt"],
+                score=item["score"],
+            )
+            for item in results
+        ],
+    )
 
 
 @app.get("/api/v1/ai/health", tags=["AI"])

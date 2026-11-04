@@ -31,7 +31,10 @@ class OllamaResponseTests(unittest.TestCase):
             def read(self) -> bytes:
                 return json.dumps({"done": True, "response": ""}).encode()
 
-        with patch("app.ai.urlopen", return_value=FakeResponse()) as urlopen:
+        with (
+            patch("app.ai.OLLAMA_BASE_URL", "http://localhost:11434"),
+            patch("app.ai.urlopen", return_value=FakeResponse()) as urlopen,
+        ):
             preload_model()
 
         request = urlopen.call_args.args[0]
@@ -80,7 +83,7 @@ class OllamaResponseTests(unittest.TestCase):
                     {"input_language": "English", "requested_language": "French"}
                 )
             ),
-            ollama_response(json.dumps({"reply": "Bonjour !"})),
+            ollama_response(json.dumps({"reply": "Bonjour !", "source_ids": []})),
         ]
         with patch("app.ai.urlopen", side_effect=responses) as urlopen:
             result = generate_reply(
@@ -125,7 +128,7 @@ class OllamaResponseTests(unittest.TestCase):
                 ollama_response(
                     json.dumps({"input_language": "other", "requested_language": None})
                 ),
-                ollama_response(json.dumps({"reply": "DNS is a naming system."})),
+                ollama_response(json.dumps({"reply": "DNS is a naming system.", "source_ids": []})),
             ],
         ) as urlopen:
             result = generate_reply([{"role": "user", "content": "¿Qué es DNS?"}])
@@ -158,7 +161,7 @@ class OllamaResponseTests(unittest.TestCase):
                 ollama_response(
                     json.dumps({"input_language": "English", "requested_language": None})
                 ),
-                ollama_response(json.dumps({"reply": "Bonjour."})),
+                ollama_response(json.dumps({"reply": "Bonjour.", "source_ids": []})),
             ],
         ) as urlopen:
             result = generate_reply(
@@ -219,10 +222,12 @@ class OllamaResponseTests(unittest.TestCase):
                 "Finnish",
             ))
 
-        self.assertEqual(events, [
-            ("language", "Finnish"),
-            ("content", "First "),
-            ("content", "second."),
+        content_chunks = [value for kind, value in events if kind == "content"]
+        self.assertGreater(len(content_chunks), 1)
+        self.assertEqual("".join(content_chunks), "First second.")
+        self.assertEqual(events[0], ("language", "Finnish"))
+        self.assertEqual(events[-2:], [
+            ("sources", []),
             ("ticket_recommendation", False),
         ])
         payload = json.loads(urlopen.call_args_list[1].args[0].data)
@@ -281,8 +286,8 @@ class OllamaResponseTests(unittest.TestCase):
             StreamResponse(),
         ]):
             events = list(generate_reply_stream([{"role": "user", "content": "Nothing works"}]))
-        content = "".join(value for kind, value in events if kind == "content")
-        self.assertEqual(content, "I could not solve this reliably. Please create a support ticket.\n")
+        content = "".join(value for kind, value in events if kind == "content").strip()
+        self.assertEqual(content, "I could not solve this reliably. Please create a support ticket.")
         self.assertEqual(events[-1], ("ticket_recommendation", True))
         self.assertNotIn(marker, content)
 
