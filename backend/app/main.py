@@ -1320,13 +1320,17 @@ def stream_chat_message(
                 ticket_recommended = False
                 try:
                     retrieved_knowledge = search_knowledge(message_data.content, limit=3)
-                    knowledge_context = "\n\n".join(
-                        f"Source: {item['title']} | {item['source']} | Section: {item['section']} | Status: {item['status']}\n"
-                        f"{item['content'][:2200]}"
-                        for item in retrieved_knowledge
-                    )[:7000]
+                    knowledge_context = (
+                        "\n\n".join(
+                            f"Source: {item['title']} | {item['source']} | Section: {item['section']} | Status: {item['status']}\n"
+                            f"{item['content'][:2200]}"
+                            for item in retrieved_knowledge
+                        )[:7000]
+                        if retrieved_knowledge
+                        else "No matching local Knowledge Base source was retrieved. Do not imply that the local documentation supports the answer. Give safe general guidance only when appropriate and state the documentation limitation when relevant."
+                    )
                     for kind, value in generate_reply_stream(
-                        ollama_messages, response_language, knowledge_context or None
+                        ollama_messages, response_language, knowledge_context
                     ):
                         chat_lock.assert_owned()
                         if kind == "language":
