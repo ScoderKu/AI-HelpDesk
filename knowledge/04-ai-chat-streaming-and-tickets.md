@@ -67,3 +67,8 @@ The AI prompt may append an internal marker `[TICKET_RECOMMENDED]` or `[NO_TICKE
 ## RAG status
 
 At the reviewed repository snapshot, `backend/app/ai.py` did not yet contain Markdown/TXT keyword retrieval or prompt integration, and the backend did not expose the planned knowledge-search endpoint. Do not claim that current chat answers already use the Knowledge Base until the implementation and tests are merged.
+
+
+## Tiivistelmä suomeksi
+
+Keskustelu muodostuu käyttäjän ja avustajan viesteistä. Backend välittää kontekstin Ollamalle ja voi palauttaa vastauksen NDJSON-suoratoistona. Saman keskustelun rinnakkaiset AI-vuorot sarjallistetaan Redis-lukolla. Pitkän mallivastauksen aikana tietokantayhteyttä ei pidä pitää tarpeettomasti varattuna. US-09:n tukipyyntöluonnos näytetään käyttäjälle, ja tukipyyntö luodaan vasta käyttäjän tarkistuksen ja vahvistuksen jälkeen.
