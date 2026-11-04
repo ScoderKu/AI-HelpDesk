@@ -2,6 +2,7 @@
 
 - **Document ID:** KB-PROJECT-04
 - **Status:** verified from `backend/app/ai.py`, `backend/app/main.py`, `frontend/src/pages/ChatPage.tsx` and US-09 project criteria; RAG integration remains planned
+- **RAG Scope:** project-specific
 - **Applies to:** Ollama chat, conversation history, stream protocol, US-09
 - **Keywords:** Ollama, LLM, chat, conversation, message, NDJSON, streaming, retry, ticket draft, US-09, tekoälychat, keskustelu, viestivirta, tukipyynnön luonti
 
