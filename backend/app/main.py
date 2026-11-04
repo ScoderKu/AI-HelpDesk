@@ -1321,7 +1321,7 @@ def stream_chat_message(
                 try:
                     retrieved_knowledge = search_knowledge(message_data.content, limit=3)
                     knowledge_context = "\n\n".join(
-                        f"Source: {item['title']} | {item['source']} | Section: {item['section']}\n"
+                        f"Source: {item['title']} | {item['source']} | Section: {item['section']} | Status: {item['status']}\n"
                         f"{item['content'][:2200]}"
                         for item in retrieved_knowledge
                     )[:7000]
@@ -1346,7 +1346,7 @@ def stream_chat_message(
                 full_content = "".join(chunks).strip()
                 if retrieved_knowledge:
                     source_lines = [
-                        f"- {item['title']} — {item['source']} (section: {item['section']})"
+                        f"- {item['title']} — {item['source']} (section: {item['section']}; status: {item['status']})"
                         for item in retrieved_knowledge
                     ]
                     full_content += "\n\nSources / Lähteet:\n" + "\n".join(source_lines)
@@ -1603,6 +1603,7 @@ def search_knowledge_endpoint(
                 title=item["title"],
                 source=item["source"],
                 section=item["section"],
+                status=item["status"],
                 excerpt=item["excerpt"],
                 score=item["score"],
             )
