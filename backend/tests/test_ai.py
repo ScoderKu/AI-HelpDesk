@@ -80,7 +80,7 @@ class OllamaResponseTests(unittest.TestCase):
                     {"input_language": "English", "requested_language": "French"}
                 )
             ),
-            ollama_response(json.dumps({"reply": "Bonjour !"})),
+            ollama_response(json.dumps({"reply": "Bonjour !", "source_ids": []})),
         ]
         with patch("app.ai.urlopen", side_effect=responses) as urlopen:
             result = generate_reply(
@@ -125,7 +125,7 @@ class OllamaResponseTests(unittest.TestCase):
                 ollama_response(
                     json.dumps({"input_language": "other", "requested_language": None})
                 ),
-                ollama_response(json.dumps({"reply": "DNS is a naming system."})),
+                ollama_response(json.dumps({"reply": "DNS is a naming system.", "source_ids": []})),
             ],
         ) as urlopen:
             result = generate_reply([{"role": "user", "content": "¿Qué es DNS?"}])
@@ -158,7 +158,7 @@ class OllamaResponseTests(unittest.TestCase):
                 ollama_response(
                     json.dumps({"input_language": "English", "requested_language": None})
                 ),
-                ollama_response(json.dumps({"reply": "Bonjour."})),
+                ollama_response(json.dumps({"reply": "Bonjour.", "source_ids": []})),
             ],
         ) as urlopen:
             result = generate_reply(
@@ -223,6 +223,7 @@ class OllamaResponseTests(unittest.TestCase):
             ("language", "Finnish"),
             ("content", "First "),
             ("content", "second."),
+            ("sources", []),
             ("ticket_recommendation", False),
         ])
         payload = json.loads(urlopen.call_args_list[1].args[0].data)
