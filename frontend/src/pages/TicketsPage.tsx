@@ -52,7 +52,7 @@ function formatDate(value: string, language: Language): string {
   }).format(new Date(value))
 }
 
-export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPageProps) {
+export function TicketsPage({ language, text, onChanged }: TicketsPageProps) {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
   const [ticketRoute, setTicketRoute] = useState<TicketRoute>(readTicketRoute)
@@ -63,6 +63,9 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
   const [error, setError] = useState('')
   const [feedback, setFeedback] = useState('')
   const [showValidation, setShowValidation] = useState(false)
+  const [sortBy, setSortBy] = useState('newest')
+  const [statusFilter, setStatusFilter] = useState('ALL')
+  const [priorityFilter, setPriorityFilter] = useState('ALL')
   const loadRequestKey = ticketRoute.mode === 'list'
     ? `list:${text.ticketLoadError}:${text.ticketNotFound}`
     : (ticketRoute.mode === 'detail' || ticketRoute.mode === 'edit') && ticketRoute.ticketId !== null
@@ -74,6 +77,17 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
     loadRequestKey === completedLoadRequestKey && ticketRoute.ticketId === selectedTicket?.id
       ? selectedTicket
       : null
+  const sortedTickets = tickets.filter((ticket) =>
+    (statusFilter === 'ALL' || ticket.status === statusFilter) &&
+    (priorityFilter === 'ALL' || ticket.priority === priorityFilter)
+  ).sort((a, b) => {
+    const date = new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    const priorityRank = { HIGH: 0, MEDIUM: 1, LOW: 2 }
+    const priority = priorityRank[a.priority] - priorityRank[b.priority]
+    const status = (a.status === b.status ? 0 : a.status === 'OPEN' ? -1 : 1)
+    const orders: Record<string, number[]> = { newest: [date], oldest: [-date], priorityHigh: [priority, date], priorityLow: [-priority, date], openFirst: [status, date], closedFirst: [-status, date] }
+    return (orders[sortBy] ?? orders.newest).find((value) => value !== 0) ?? 0
+  })
 
   const navigateTicket = (next: TicketRoute) => {
     const hash = next.mode === 'list' ? '#tickets' : next.mode === 'create' ? '#tickets/new' : next.mode === 'edit' ? `#tickets/${next.ticketId}/edit` : `#tickets/${next.ticketId}`
@@ -129,8 +143,23 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
   }
 
   const returnToList = () => {
+    setFeedback('')
     setSelectedTicket(null)
     navigateTicket({ mode: 'list', ticketId: null })
+  }
+
+  const changeSortBy = (nextSortBy: string) => {
+    setSortBy(nextSortBy)
+    if ((nextSortBy === 'openFirst' && statusFilter === 'CLOSED') ||
+        (nextSortBy === 'closedFirst' && statusFilter === 'OPEN')) {
+      setStatusFilter('ALL')
+    }
+  }
+
+  const resetTicketControls = () => {
+    setSortBy('newest')
+    setStatusFilter('ALL')
+    setPriorityFilter('ALL')
   }
 
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
@@ -238,9 +267,6 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
     <section className="tickets-page" aria-labelledby="tickets-title">
       <div className="tickets-page-heading">
         <div>
-          <button className="text-link ticket-home-link" onClick={onBackHome} type="button">
-            {text.ticketBackHome}
-          </button>
           <h1 id="tickets-title">{mode === 'create' ? text.ticketCreateTitle : text.ticketTitle}</h1>
           <p>{text.ticketDescription}</p>
         </div>
@@ -252,19 +278,38 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
       </div>
 
       {error && <p className="ticket-message ticket-error" role="alert">{error}</p>}
-      {feedback && <p className="ticket-message ticket-success" role="status">{feedback}</p>}
 
       {mode === 'list' && (
         <div className="ticket-list-panel">
+          {feedback && <p className="ticket-message ticket-success ticket-list-feedback" role="status">{feedback}</p>}
+          <div className="ticket-list-toolbar">
+            <div className="ticket-list-controls">
+              <label><span>{text.ticketSortLabel}</span><select value={sortBy} onChange={(event) => changeSortBy(event.target.value)}>
+                <option value="newest">{text.ticketSortNewest}</option><option value="oldest">{text.ticketSortOldest}</option>
+                <option value="priorityHigh">{text.ticketSortPriorityHigh}</option><option value="priorityLow">{text.ticketSortPriorityLow}</option>
+                <option value="openFirst">{text.ticketSortOpen}</option><option value="closedFirst">{text.ticketSortClosed}</option>
+              </select></label>
+              <label><span>{text.ticketFilterStatus}</span><select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                <option value="ALL">{text.ticketFilterAll}</option>
+                <option value="OPEN" disabled={sortBy === 'closedFirst'}>{text.ticketOpen}</option>
+                <option value="CLOSED" disabled={sortBy === 'openFirst'}>{text.ticketClosed}</option>
+              </select></label>
+              <label><span>{text.ticketFilterPriority}</span><select value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value)}>
+                <option value="ALL">{text.ticketFilterAll}</option><option value="HIGH">{text.priorityHigh}</option><option value="MEDIUM">{text.priorityMedium}</option><option value="LOW">{text.priorityLow}</option>
+              </select></label>
+              <button className="ticket-reset-button" onClick={resetTicketControls} type="button" disabled={sortBy === 'newest' && statusFilter === 'ALL' && priorityFilter === 'ALL'}>{text.ticketResetFilters}</button>
+              <span className="ticket-results-count">{sortedTickets.length} {text.ticketResults}</span>
+            </div>
+          </div>
           {isLoading ? <p className="ticket-empty-state" role="status">{text.ticketLoading}</p> :
             tickets.length === 0 ? (
               <div className="ticket-empty-state">
                 <p>{text.ticketEmpty}</p>
                 <button className="text-link" onClick={openCreate} type="button">{text.newTicket}</button>
               </div>
-            ) : (
+            ) : sortedTickets.length === 0 ? <p className="ticket-empty-state">{text.ticketNoMatches}</p> : (
               <div className="ticket-list" aria-label={text.ticketTitle}>
-                {tickets.map((ticket) => (
+                {sortedTickets.map((ticket) => (
                   <button className="ticket-list-row" key={ticket.id} onClick={() => void openTicket(ticket.id)} type="button">
                     <span className="ticket-list-main">
                       <strong>{ticket.title}</strong>
@@ -285,6 +330,7 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
 
       {mode === 'create' && (
         <form className="ticket-form-panel" noValidate onSubmit={(event) => void handleCreate(event)}>
+          {feedback && <p className="ticket-message ticket-success" role="status">{feedback}</p>}
           {formFields}
           <div className="ticket-form-actions">
             <button className="button button-secondary" disabled={isSaving} onClick={() => navigateTicket({ mode: 'list', ticketId: null })} type="button">
@@ -301,9 +347,7 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
 
       {mode === 'detail' && visibleSelectedTicket && (
         <div className="ticket-detail-panel">
-          <button className="text-link ticket-home-link" onClick={() => void returnToList()} type="button">
-            {text.ticketBack}
-          </button>
+          {feedback && <p className="ticket-message ticket-success ticket-list-feedback" role="status">{feedback}</p>}
           <div className="ticket-detail-heading">
             <h2>{visibleSelectedTicket.title}</h2>
             <span className={`ticket-badge ticket-status-${visibleSelectedTicket.status.toLowerCase()}`}>
@@ -334,6 +378,7 @@ export function TicketsPage({ language, text, onBackHome, onChanged }: TicketsPa
                 <p>{visibleSelectedTicket.description}</p>
               </div>
               <div className="ticket-form-actions">
+                <button className="button button-secondary" onClick={() => void returnToList()} type="button">{text.ticketBack}</button>
                 {visibleSelectedTicket.status === 'OPEN' && (
                   <>
                     <button className="button button-secondary" disabled={isSaving} onClick={() => { setShowValidation(false); navigateTicket({ mode: 'edit', ticketId: visibleSelectedTicket.id }) }} type="button">
