@@ -146,3 +146,8 @@ Test with browser dev tools at multiple widths and zoom levels. Do not rely on o
 ## 10. HTML/CSS in AI HelpDesk
 
 The frontend is React + TypeScript. Component structure belongs in React/TSX, while CSS defines visual styling. When modifying UI, preserve semantic controls, keyboard behavior, responsive layout and the project's existing styling conventions. Do not introduce raw HTML rendering for untrusted AI output.
+
+
+## Tiivistelmä suomeksi
+
+HTML määrittelee verkkosivun rakenteen ja merkityksen, CSS ulkoasun ja asettelun sekä JavaScript toiminnallisuuden. Käytä semanttisia HTML-elementtejä, jotta sisältö on ymmärrettävä myös apuvälineille. CSS:n Box Model, cascade, specificity, Flexbox ja Grid selittävät suuren osan asetteluongelmista. Responsiivinen suunnittelu mukauttaa näkymän eri näyttöleveyksille. Saavutettavuus, kontrasti, näppäimistökäyttö ja lomakekenttien nimet kuuluvat hyvään toteutukseen.
