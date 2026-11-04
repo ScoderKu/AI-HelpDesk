@@ -62,3 +62,8 @@ The project does not promise:
 ## Status caveat
 
 The repository README snapshot dated 2026-11-03 says registration/sign-in, tickets, AI chat and conversation history are connected to the backend; it reports 57 backend tests and frontend lint/build checks passing in the then-current local working tree. Sprint 4–5 work and full acceptance testing were still in progress. Do not infer that RAG is already implemented: README explicitly says it is planned Sprint 5 work.
+
+
+## Tiivistelmä suomeksi
+
+AI HelpDesk on IT- ja ohjelmistokehitysongelmien selvittämiseen tarkoitettu verkkosovellus. Kirjautunut käyttäjä voi keskustella tekoälyn kanssa, tarkastella keskusteluhistoriaa sekä luoda ja hallita tukipyyntöjä. Kyseessä on rajattu opiskelijaprojekti, ei täysimittainen ITSM-järjestelmä. Käyttöoikeudet ja tietojen omistajuus tarkistetaan backendissä. Projektin ominaisuuksien toteutustila on tarkistettava nykyisestä lähdekoodista; suunnitelmaa ei saa sekoittaa valmiiseen ominaisuuteen.
