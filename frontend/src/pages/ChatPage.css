@@ -67,8 +67,16 @@
   overflow-wrap: anywhere;
 }
 
-.chat-history-item:hover,
-.chat-history-item.active { background: #f1f4f8; }
+.chat-history-item:hover:not(.active) {
+  color: var(--violet-dark);
+  text-decoration: underline;
+}
+
+.chat-history-item.active,
+.chat-history-item.active,.chat-history-item.active:hover {
+  color: var(--violet-dark);
+  background: #cac9eb;
+}
 
 .chat-panel {
   display: flex;
