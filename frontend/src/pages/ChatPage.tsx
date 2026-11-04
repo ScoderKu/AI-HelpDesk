@@ -6,7 +6,117 @@ import type { Copy } from '../i18n/copy'
 
 type Conversation = { id: number; title: string | null; created_at: string; updated_at: string }
 type Message = { id: number; role: 'USER' | 'ASSISTANT'; content: string; created_at: string }
+type TicketDraft = { title: string; description: string; priority: 'LOW' | 'MEDIUM' | 'HIGH' }
 type ChatPageProps = { text: Copy; initialConversationId: number | null; onConversationChange: (id: number | null) => void }
+
+type MarkdownBlock =
+  | { type: 'paragraph' | 'heading' ; text: string; level?: number }
+  | { type: 'list'; items: string[]; ordered: boolean }
+  | { type: 'code'; code: string; language: string }
+
+function parseMarkdownBlocks(content: string): MarkdownBlock[] {
+  const lines = content.replace(/\r\n?/g, '\n').split('\n')
+  const blocks: MarkdownBlock[] = []
+  let index = 0
+  while (index < lines.length) {
+    const line = lines[index]
+    if (!line.trim()) { index += 1; continue }
+    if (line.trimStart().startsWith('```')) {
+      const language = line.trim().slice(3).trim()
+      const codeLines: string[] = []
+      index += 1
+      while (index < lines.length && !lines[index].trimStart().startsWith('```')) {
+        codeLines.push(lines[index])
+        index += 1
+      }
+      if (index < lines.length) index += 1
+      blocks.push({ type: 'code', code: codeLines.join('\n'), language })
+      continue
+    }
+    const heading = line.match(/^(#{1,6})\s+(.+)$/)
+    if (heading) {
+      blocks.push({ type: 'heading', level: heading[1].length, text: heading[2] })
+      index += 1
+      continue
+    }
+    const unordered = line.match(/^\s*[-*+]\s+(.+)$/)
+    const ordered = line.match(/^\s*\d+[.)]\s+(.+)$/)
+    if (unordered || ordered) {
+      const items: string[] = []
+      const isOrdered = Boolean(ordered)
+      while (index < lines.length) {
+        const match = lines[index].match(isOrdered ? /^\s*\d+[.)]\s+(.+)$/ : /^\s*[-*+]\s+(.+)$/)
+        if (!match) break
+        items.push(match[1])
+        index += 1
+      }
+      blocks.push({ type: 'list', items, ordered: isOrdered })
+      continue
+    }
+    const paragraph = [line]
+    index += 1
+    while (index < lines.length && lines[index].trim()
+      && !lines[index].trimStart().startsWith('```')
+      && !/^#{1,6}\s+/.test(lines[index])
+      && !/^\s*[-*+]\s+/.test(lines[index])
+      && !/^\s*\d+[.)]\s+/.test(lines[index])) {
+      paragraph.push(lines[index])
+      index += 1
+    }
+    blocks.push({ type: 'paragraph', text: paragraph.join('\n') })
+  }
+  return blocks
+}
+
+function renderInlineMarkdown(text: string, keyPrefix: string) {
+  const tokens = text.split(/(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~)/g)
+  return tokens.map((token, index) => {
+    if (token.startsWith('`') && token.endsWith('`')) return <code key={`${keyPrefix}-${index}`}>{token.slice(1, -1)}</code>
+    if (token.startsWith('**') && token.endsWith('**')) return <strong key={`${keyPrefix}-${index}`}>{token.slice(2, -2)}</strong>
+    if (token.startsWith('*') && token.endsWith('*')) return <em key={`${keyPrefix}-${index}`}>{token.slice(1, -1)}</em>
+    if (token.startsWith('~~') && token.endsWith('~~')) return <del key={`${keyPrefix}-${index}`}>{token.slice(2, -2)}</del>
+    return token
+  })
+}
+
+function MarkdownMessage({ content, copyLabel, copiedLabel }: { content: string; copyLabel: string; copiedLabel: string }) {
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
+  const blocks = parseMarkdownBlocks(content)
+  const copyCode = async (code: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopiedIndex(index)
+    } catch {
+      setCopiedIndex(null)
+    }
+  }
+  return (
+    <div className="markdown-content">
+      {blocks.map((block, index) => {
+        if (block.type === 'code') return (
+          <div className="markdown-code-block" key={index}>
+            <div className="markdown-code-toolbar">
+              <span>{block.language || 'code'}</span>
+              <button type="button" onClick={() => void copyCode(block.code, index)}>
+                {copiedIndex === index ? copiedLabel : copyLabel}
+              </button>
+            </div>
+            <pre><code>{block.code}</code></pre>
+          </div>
+        )
+        if (block.type === 'heading') {
+          const Heading = (`h${block.level ?? 3}`) as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+          return <Heading key={index}>{renderInlineMarkdown(block.text, `heading-${index}`)}</Heading>
+        }
+        if (block.type === 'list') {
+          const List = block.ordered ? 'ol' : 'ul'
+          return <List key={index}>{block.items.map((item, itemIndex) => <li key={itemIndex}>{renderInlineMarkdown(item, `list-${index}-${itemIndex}`)}</li>)}</List>
+        }
+        return <p key={index}>{renderInlineMarkdown(block.text, `paragraph-${index}`)}</p>
+      })}
+    </div>
+  )
+}
 
 class ChatApiError extends Error {
   readonly status: number
@@ -17,6 +127,19 @@ class ChatApiError extends Error {
     this.status = status
     this.savedMessageId = savedMessageId
   }
+}
+
+function truncateUtf8(value: string, maxBytes: number): string {
+  const encoder = new TextEncoder()
+  let result = ''
+  let byteLength = 0
+  for (const character of value) {
+    const size = encoder.encode(character).length
+    if (byteLength + size > maxBytes) break
+    result += character
+    byteLength += size
+  }
+  return result
 }
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -57,6 +180,11 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
   const [error, setError] = useState('')
   const [conversationListError, setConversationListError] = useState(false)
   const [messageLoadError, setMessageLoadError] = useState(false)
+  const [ticketDraft, setTicketDraft] = useState<TicketDraft | null>(null)
+  const [ticketDraftLoading, setTicketDraftLoading] = useState(false)
+  const [ticketRecommendation, setTicketRecommendation] = useState(false)
+  const [creatingTicket, setCreatingTicket] = useState(false)
+  const [ticketFeedback, setTicketFeedback] = useState('')
   const messagesRef = useRef<HTMLDivElement>(null)
   const composerRef = useRef<HTMLTextAreaElement>(null)
   const focusComposerAfterResponse = useRef(false)
@@ -108,6 +236,9 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
       setActiveId(null)
       setMessages([])
       setRetryMessageId(null)
+      setTicketDraft(null)
+      setTicketRecommendation(false)
+      setTicketFeedback('')
       setMessageLoadError(false)
       setError('')
     }
@@ -143,6 +274,9 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     onConversationChange(id)
     setMessages([])
     setRetryMessageId(null)
+    setTicketDraft(null)
+    setTicketRecommendation(false)
+    setTicketFeedback('')
     setMessageLoadError(false)
     try {
       const items = await api<Message[]>(`/api/v1/conversations/${id}/messages`)
@@ -171,6 +305,9 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
       setConversations((current) => [item, ...current])
       setMessages([])
       setRetryMessageId(null)
+      setTicketDraft(null)
+      setTicketRecommendation(false)
+      setTicketFeedback('')
     } catch {
       setError(t.chatLoadError)
     }
@@ -195,6 +332,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     let rejectionDetail = ''
     const previousRetryMessageId = retryMessageId
     setSending(true)
+    setTicketRecommendation(false)
     setError('')
     setDraft('')
     draftRef.current = ''
@@ -254,6 +392,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
           content?: string
           detail?: string
           saved_message_id?: number
+          ticket_recommended?: boolean
         }
         if (activeConversationId.current !== conversationId || conversationRequest.current !== requestId) return
         if (item.event === 'user_message' && item.message) {
@@ -284,6 +423,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
           setMessages((current) => current.map((message) =>
             message.id === assistantMessageId ? item.assistant_message! : message,
           ))
+          setTicketRecommendation(item.ticket_recommended === true)
           streamFailed = false
         } else if (item.event === 'error') {
           streamFailed = true
@@ -350,6 +490,52 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     } finally {
       setStreaming(false)
       setSending(false)
+    }
+  }
+
+  const openTicketDraft = async () => {
+    const conversationId = activeConversationId.current
+    const requestId = conversationRequest.current
+    if (conversationId === null || messages.length === 0 || sending || ticketDraftLoading) return
+    setTicketDraftLoading(true)
+    setTicketFeedback('')
+    setError('')
+    try {
+      const generated = await api<{ title: string; description: string }>(`/api/v1/conversations/${conversationId}/ticket-draft`, { method: 'POST' })
+      if (activeConversationId.current !== conversationId || conversationRequest.current !== requestId) return
+      setTicketDraft({ ...generated, priority: 'MEDIUM' })
+      setTicketRecommendation(false)
+    } catch {
+      if (activeConversationId.current === conversationId && conversationRequest.current === requestId) setError(t.chatTicketDraftError)
+    } finally {
+      setTicketDraftLoading(false)
+    }
+  }
+
+  const createTicketFromConversation = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const conversationId = activeConversationId.current
+    const requestId = conversationRequest.current
+    if (conversationId === null || ticketDraft === null || creatingTicket) return
+    if (!ticketDraft.title.trim() || !ticketDraft.description.trim()) { setError(t.chatTicketFieldsRequired); return }
+    setCreatingTicket(true)
+    setError('')
+    setTicketFeedback('')
+    try {
+      await api(`/api/v1/conversations/${conversationId}/tickets`, {
+        method: 'POST',
+        body: JSON.stringify({ title: ticketDraft.title.trim(), description: ticketDraft.description.trim(), priority: ticketDraft.priority }),
+      })
+      if (activeConversationId.current === conversationId && conversationRequest.current === requestId) {
+        setTicketDraft(null)
+        setTicketFeedback(t.chatTicketCreated)
+      }
+    } catch {
+      if (activeConversationId.current === conversationId && conversationRequest.current === requestId) {
+        setError(t.chatTicketCreateError)
+      }
+    } finally {
+      setCreatingTicket(false)
     }
   }
 
@@ -423,7 +609,9 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
             {messages.length === 0 && !messageLoadError && <p className="chat-empty">{t.chatEmpty}</p>}
             {messages.map((message) => (
               <article key={message.id} className={`chat-message ${message.role.toLowerCase()}`}>
-                <p>{message.content}</p>
+                {message.role === 'ASSISTANT'
+                  ? <MarkdownMessage content={message.content} copyLabel={t.chatCopyCode} copiedLabel={t.chatCodeCopied} />
+                  : <p>{message.content}</p>}
               </article>
             ))}
             {sending && !streaming && <p className="chat-empty" role="status">{t.chatSending}</p>}
@@ -438,6 +626,39 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
             </div>
           )}
           {error && <p className="chat-error" role="alert">{error}</p>}
+          {ticketFeedback && <p className="chat-ticket-feedback" role="status">{ticketFeedback} <a href="#tickets">{t.viewTickets}</a></p>}
+          {ticketRecommendation && !sending && activeId !== null && ticketDraft === null && <p className="chat-ticket-feedback" role="status">{t.chatTicketRecommended}</p>}
+          {activeId !== null && messages.length > 0 && !sending && ticketDraft === null && (
+            <div className="chat-ticket-actions">
+              <button className="button button-secondary" type="button" disabled={ticketDraftLoading} onClick={() => void openTicketDraft()}>
+                {ticketDraftLoading ? t.chatTicketDraftLoading : ticketRecommendation ? t.chatCreateRecommendedTicket : t.chatCreateTicket}
+              </button>
+            </div>
+          )}
+          {ticketDraft !== null && (
+            <form className="chat-ticket-editor" noValidate onSubmit={(event) => void createTicketFromConversation(event)}>
+              <h3>{t.chatTicketReviewTitle}</h3>
+              <p>{t.chatTicketReviewDescription}</p>
+              <label className="chat-ticket-field">
+                <span>{t.ticketTitleLabel}</span>
+                <input maxLength={200} required value={ticketDraft.title} onChange={(event) => setTicketDraft({ ...ticketDraft, title: event.target.value })} />
+              </label>
+              <label className="chat-ticket-field">
+                <span>{t.ticketDescriptionLabel}</span>
+                <textarea maxLength={60000} required rows={6} value={ticketDraft.description} onChange={(event) => setTicketDraft({ ...ticketDraft, description: truncateUtf8(event.target.value, 60000) })} />
+              </label>
+              <label className="chat-ticket-field">
+                <span>{t.ticketPriorityLabel}</span>
+                <select value={ticketDraft.priority} onChange={(event) => setTicketDraft({ ...ticketDraft, priority: event.target.value as TicketDraft['priority'] })}>
+                  <option value="LOW">{t.priorityLow}</option><option value="MEDIUM">{t.priorityMedium}</option><option value="HIGH">{t.priorityHigh}</option>
+                </select>
+              </label>
+              <div className="chat-ticket-editor-actions">
+                <button className="button button-secondary" type="button" disabled={creatingTicket} onClick={() => setTicketDraft(null)}>{t.ticketCancel}</button>
+                <button className="button button-primary" type="submit" disabled={creatingTicket || !ticketDraft.title.trim() || !ticketDraft.description.trim()}>{creatingTicket ? t.chatTicketCreating : t.chatTicketConfirm}</button>
+              </div>
+            </form>
+          )}
           {retryMessageId !== null && (
             <button className="button button-secondary" type="button" onClick={() => void retryAnswer()} disabled={sending}>
               {t.chatRetry}
@@ -451,8 +672,8 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
                 setDraft(event.target.value)
               }}
               onKeyDown={handleComposerKeyDown}
-              placeholder={t.chatPlaceholder} maxLength={12000} rows={3} disabled={sending} />
-            <button className="button button-primary" type="submit" disabled={sending || !draft.trim()}>
+              placeholder={t.chatPlaceholder} maxLength={12000} rows={3} disabled={sending || ticketDraft !== null} />
+            <button className="button button-primary" type="submit" disabled={sending || ticketDraft !== null || !draft.trim()}>
               {t.chatSend}
             </button>
           </form>
