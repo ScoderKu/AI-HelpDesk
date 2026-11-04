@@ -292,6 +292,6 @@ Merkittävät tekniset ja projektinhallinnalliset päätökset kirjataan tähän
 - [Product Backlog](03-product%20backlog.md)
 - [Sprint-suunnitelma](04-sprintin%20suunnitelma.md)
 - [Järjestelmän suunnittelu](05-järjestelmän%20suunnittelu.md)
-- [README](../README.md)
+- [README](../../README.md)
 
 > **Ylläpitokäytäntö:** päivitä tätä dokumenttia projektin edetessä, erityisesti aikataulun, riskien, merkittävien päätösten ja laajuusmuutosten osalta. Älä kopioi tänne muiden dokumenttien yksityiskohtaisia vaatimuksia tai käyttäjätarinoita; linkitä niiden lähteisiin.

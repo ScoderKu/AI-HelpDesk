@@ -1,7 +1,8 @@
 # AI HelpDesk — Source-Code Audit: API, Data Model and Compose
 
-- **Document ID:** KB-PROJECT-21
+- **Document ID:** KB-PROJECT-09
 - **Status:** verified by reading `backend/app/main.py`, `backend/app/models.py` and `compose.yaml` on 2026-11-04
+- **RAG Scope:** project-specific
 - **Applies to:** current repository default-branch source inspected on the date above
 - **Keywords:** API routes, endpoint, SQLAlchemy model, MySQL schema, Compose service, Docker network, rajapinta, tietokantamalli, palvelut
 
@@ -36,6 +37,7 @@ The following route paths were present in the inspected source. HTTP methods are
 | GET | `/api/v1/ai/health` | Authenticated Ollama health check |
 | GET | `/api/health` | Backend health |
 | GET | `/api/health/db` | Database health |
+| POST | `/api/v1/knowledge/search` | **Feature branch addition:** authenticated keyword search over local Markdown/TXT corpus |
 
 **FI:** Nämä reitit on luettu backendin nykyisestä `main.py`-tiedostosta tarkistushetkellä. Tarkista aina myös Pydantic-skeemat, käyttöoikeustarkistukset ja testit ennen asiakkaan tai integraation muuttamista. Reitin olemassaolo ei yksin tarkoita, että käyttäjällä olisi oikeus käyttää sitä kaikkiin tietoihin.
 
@@ -82,3 +84,10 @@ Compose defines a dedicated `proxy` network with subnet `172.30.0.0/24`. The fro
 This audit directly inspected the three named source files. It did not execute Docker Compose, query the live MySQL schema, invoke every endpoint, or run the test suite. Treat runtime behavior as unverified unless a dated test result is separately recorded. The API table should be regenerated when routes change.
 
 Tässä tarkistuksessa luettiin suoraan kolme nimettyä lähdetiedostoa. Docker Composea ei käynnistetty, käytössä olevaa MySQL-skeemaa ei kysytty, kaikkia rajapintoja ei kutsuttu eikä testisarjaa suoritettu. Ajonaikainen toiminta on vahvistamaton, ellei siitä ole erillistä päivättyä testitulosta.
+
+
+## 5. US-15 feature-branch additions (not yet merged)
+
+The separate branch `feature/us15-rag-knowledge-service` adds `backend/app/knowledge.py`, Pydantic search request/response schemas, and the authenticated `POST /api/v1/knowledge/search` route. The streaming chat route also retrieves up to three matching sections and supplies bounded excerpts to the Ollama prompt. Source titles, repository-relative paths and headings are appended to the assistant response when matches are used.
+
+These are proposed code changes on the feature branch, not facts about `main`. The route table above therefore combines default-branch routes with one explicitly labelled feature-branch addition. Do not treat US-15 as released until the branch is reviewed, automated tests pass, Compose is rebuilt, and a user verifies both hit and no-hit chat cases.

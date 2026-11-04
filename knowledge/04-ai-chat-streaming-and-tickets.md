@@ -2,6 +2,7 @@
 
 - **Document ID:** KB-PROJECT-04
 - **Status:** verified from `backend/app/ai.py`, `backend/app/main.py`, `frontend/src/pages/ChatPage.tsx` and US-09 project criteria; RAG integration remains planned
+- **RAG Scope:** project-specific
 - **Applies to:** Ollama chat, conversation history, stream protocol, US-09
 - **Keywords:** Ollama, LLM, chat, conversation, message, NDJSON, streaming, retry, ticket draft, US-09, tekoälychat, keskustelu, viestivirta, tukipyynnön luonti
 
@@ -66,7 +67,9 @@ The AI prompt may append an internal marker `[TICKET_RECOMMENDED]` or `[NO_TICKE
 
 ## RAG status
 
-At the reviewed repository snapshot, `backend/app/ai.py` did not yet contain Markdown/TXT keyword retrieval or prompt integration, and the backend did not expose the planned knowledge-search endpoint. Do not claim that current chat answers already use the Knowledge Base until the implementation and tests are merged.
+The feature branch `feature/us15-rag-knowledge-service` adds local Markdown/TXT keyword retrieval and integrates it with streaming, ordinary non-streaming sends and retry. Retrieved excerpts are passed as untrusted context. The model selects source IDs, and the backend validates them against the retrieved IDs before rendering citations. The branch also exposes authenticated `POST /api/v1/knowledge/search`.
+
+These changes are on PR #21 and are not yet merged into `main`. Automated tests have not yet been executed in this work session; Docker Compose, live Ollama behavior and frontend citation rendering remain unverified. Do not describe RAG as released until those checks pass and the PR is merged.
 
 
 ## Tiivistelmä suomeksi
