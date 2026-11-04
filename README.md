@@ -4,7 +4,7 @@
 
 AI HelpDesk on kehitteillä oleva verkkopohjainen tukipalvelusovellus. Käyttäjä voi keskustella tekoälyn kanssa tietotekniikkaan ja ohjelmistokehitykseen liittyvistä ongelmista sekä hallita omia tukipyyntöjään.
 
-> **Projektin tila 03.11.2026:** kirjautuminen, tukipyynnöt, AI-chat ja keskusteluhistoria toimivat backendin kautta. Projektin tämänhetkisessä työkopiossa backendin 57 testiä sekä frontendin lint- ja tuotantobuild-tarkistukset läpäisevät. Sprinttien 4–5 ominaisuuksia ja koko sovelluksen hyväksymistestausta on vielä kesken; tarkempi tilanne on [projektinhallintadokumentissa](docs/00-projektinhallinta.md).
+> **Projektin tila 04.11.2026:** Sprint 3:n ydintoiminnot ja Sprint 4:n US-09, US-13 ja US-14 on toteutettu kooditasolla nykyisessä työkopiossa. Backendin 65 unittestiä sekä frontendin lint- ja tuotantobuild-tarkistukset läpäisevät. Jäljellä ovat demo-acceptance, clean Compose -käynnistys ja todellinen LAN-välitystestaus. Tarkempi tilanne on [projektinhallintadokumentissa](docs.suomi/00-projektinhallinta.md).
 
 ### Keskeiset ominaisuudet
 
@@ -49,13 +49,13 @@ flowchart LR
 
 ### Projektidokumentaatio
 
-- [Projektinhallinta](docs/00-projektinhallinta.md)
-- [Vaatimusmäärittely](docs/01-vaatimusmaarittely.md)
-- [Käyttäjätarinat ja hyväksymiskriteerit](<docs/02-k%C3%A4ytt%C3%A4j%C3%A4tarinat%20ja%20hyv%C3%A4ksymiskriteerit.md>)
-- [Product Backlog](<docs/03-product%20backlog.md>)
-- [Sprint-suunnitelma](<docs/04-sprintin%20suunnitelma.md>)
-- [Järjestelmän suunnittelu](<docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>)
-- [UX/UI-suunnittelu](docs/06-ux-ui-suunnittelu.md)
+- [Projektinhallinta](docs.suomi/00-projektinhallinta.md)
+- [Vaatimusmäärittely](docs.suomi/01-vaatimusmaarittely.md)
+- [Käyttäjätarinat ja hyväksymiskriteerit](<docs.suomi/02-k%C3%A4ytt%C3%A4j%C3%A4tarinat%20ja%20hyv%C3%A4ksymiskriteerit.md>)
+- [Product Backlog](<docs.suomi/03-product%20backlog.md>)
+- [Sprint-suunnitelma](<docs.suomi/04-sprintin%20suunnitelma.md>)
+- [Järjestelmän suunnittelu](<docs.suomi/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>)
+- [UX/UI-suunnittelu](docs.suomi/06-ux-ui-suunnittelu.md)
 - [Ollama-mallin Modelfile](ollama/Modelfile)
 
 ### Edellytykset
@@ -89,8 +89,10 @@ LAN-käytössä lisää `FRONTEND_ORIGINS`-asetukseen sovelluksen tarkka alkuper
 1. Avaa Compose-käynnistyksen jälkeen `http://localhost:8088` ja luo käyttäjätili tai kirjaudu sisään.
 2. Tukipyynnöt-näkymässä voit luoda pyynnön, valita prioriteetin, muokata avointa pyyntöä ja sulkea sen. Suljetun pyynnön tietoja ei voi enää muokata.
 3. AI-keskustelu-näkymässä voit luoda keskustelun, lähettää viestejä ja palata aiempiin keskusteluihin. Jos AI-palvelu ei vastaa, jo tallennettu käyttäjän viesti säilyy historiassa; käytä kyseisen viestin **Yritä uudelleen** -toimintoa sen sijaan, että lähettäisit saman viestin uudestaan uutena viestinä.
-4. Profiilissa voit vaihtaa käyttäjänimen. Etunimi, sukunimi ja sähköpostiosoite näkyvät vain luettavina tietoina.
-5. Vaihda käyttöliittymän kieltä FI/EN-valinnalla. Valinta tallentuu samaan selaimeen.
+4. AI-keskustelusta voi luoda tukipyynnön: järjestelmä ehdottaa otsikon ja kuvauksen, käyttäjä voi tarkastaa ja vahvistaa luomisen ennen tallennusta. Peruutus tai hylkäys ei luo pyyntöä.
+5. Profiilissa voit vaihtaa käyttäjänimen. Etunimi, sukunimi ja sähköpostiosoite näkyvät vain luettavina tietoina.
+6. Vaihda käyttöliittymän kieltä FI/EN-valinnalla. Valinta tallentuu samaan selaimeen.
+7. Etusivulla näytetään kirjautuneen käyttäjän omien tukipyyntöjen kokonaismäärä sekä `OPEN`- ja `CLOSED`-määrät.
 
 **Tietojen säilytys:** taustatehtävä suoritetaan päivittäin ja poistaa pysyvästi yli kolme kalenterikuukautta suljettuina olleet tukipyynnöt (`closed_at`) sekä yli kolme kalenterikuukautta käyttämättöminä olleet keskustelut (`updated_at`). Keskustelu säilytetään, jos siihen liittyy avoin tukipyyntö tai tukipyyntö, jonka oma säilytysaika ei ole vielä täyttynyt. Keskustelun viestit poistuvat keskustelun mukana. Poistoa ei voi peruuttaa; ota tarvittavat varmuuskopiot ja noudata organisaation tietojen säilytyskäytäntöjä.
 
@@ -155,7 +157,7 @@ Projektin lisenssiä ei ole vielä määritelty. Myös kolmannen osapuolen malli
 
 AI HelpDesk is a web-based support application under development. Users can discuss IT and software development issues with an AI assistant and manage their own support tickets.
 
-> **Project status on 03.11.2026:** Sign-in, support tickets, AI chat, and conversation history are connected to the backend. In the current local working tree, all 57 backend tests and the frontend lint and production-build checks pass. Sprint 4–5 work and full application acceptance testing remain in progress; see the [project management document](docs/00-projektinhallinta.md) for details.
+> **Project status on 04.11.2026:** Sprint 3 core functionality and the Sprint 4 stories US-09, US-13, and US-14 are implemented in the current working tree. All 65 backend tests and frontend lint/production-build checks pass. Clean Compose startup, real LAN forwarding, and full manual acceptance testing are still pending; see the [project management document](docs.eng/docs/00-projektinhallinta.md) for details.
 
 ### Main features
 
@@ -200,13 +202,13 @@ flowchart LR
 
 ### Project documentation
 
-- [Project management](docs/00-projektinhallinta.md)
-- [Requirements specification](docs/01-vaatimusmaarittely.md)
-- [User stories and acceptance criteria](<docs/02-k%C3%A4ytt%C3%A4j%C3%A4tarinat%20ja%20hyv%C3%A4ksymiskriteerit.md>)
-- [Product Backlog](<docs/03-product%20backlog.md>)
-- [Sprint plan](<docs/04-sprintin%20suunnitelma.md>)
-- [System design](<docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>)
-- [UX/UI design](docs/06-ux-ui-suunnittelu.md)
+- [Project management](docs.eng/docs/00-projektinhallinta.md)
+- [Requirements specification](docs.eng/docs/01-vaatimusmaarittely.md)
+- [User stories and acceptance criteria](<docs.eng/docs/02-k%C3%A4ytt%C3%A4j%C3%A4tarinat%20ja%20hyv%C3%A4ksymiskriteerit.md>)
+- [Product Backlog](<docs.eng/docs/03-product%20backlog.md>)
+- [Sprint plan](<docs.eng/docs/04-sprintin%20suunnitelma.md>)
+- [System design](<docs.eng/docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>)
+- [UX/UI design](docs.eng/docs/06-ux-ui-suunnittelu.md)
 - [Ollama model Modelfile](ollama/Modelfile)
 
 ### Prerequisites
@@ -240,8 +242,10 @@ For LAN access, add the exact application origin to `FRONTEND_ORIGINS`, for exam
 1. After starting Compose, open `http://localhost:8088` and create an account or sign in.
 2. In **Support tickets**, create a ticket, select a priority, edit an open ticket, or close it. Closed tickets cannot be edited.
 3. In **AI chat**, create a conversation, send messages, and return to saved conversations. If the AI service fails, the user message remains in history; use **Retry** for that message rather than sending the same text as a new message.
-4. In **Profile**, change the username. First name, last name, and email are read-only.
-5. Switch the interface language with the FI/EN control. The selection is stored in the same browser.
+4. From an AI conversation, generate a support-ticket draft, review or edit its title and description, and confirm to save it. Cancelling does not create a ticket.
+5. In **Profile**, change the username. First name, last name, and email are read-only.
+6. Switch the interface language with the FI/EN control. The selection is stored in the same browser.
+7. The homepage shows the signed-in user's total, `OPEN`, and `CLOSED` ticket counts.
 
 **Data retention:** a daily background task permanently deletes closed support tickets after three calendar months based on `closed_at`, and conversations inactive for three calendar months based on `updated_at`. A conversation is retained while it is linked to an open ticket or a ticket that has not yet reached its own retention date. Messages are deleted with their conversation. Deletion cannot be undone; keep any required backups and follow the organization's data-retention policies.
 
@@ -290,11 +294,11 @@ docker compose exec backend python -m unittest discover -s tests -v
 
 The tests cover proxy client-IP resolution, login rate-limit counters and Redis failures, expired-session cleanup, three-calendar-month data-retention rules, and Ticket API validation, ownership checks, and core actions. They do not replace registration/sign-in API integration tests, a concurrent sign-in test against MySQL, or an IP-forwarding test on a real LAN. Run the frontend build and lint separately from the frontend directory.
 
-In the 03.11.2026 check, all 57 backend `unittest` tests passed; frontend lint, TypeScript checks, and the production build succeeded. Tests ran against the updated source in a Docker container. This does not replace verifying migration application to the active database, startup from empty Docker volumes, actual LAN forwarding, or full manual acceptance testing; see project management for the current status.
+In the 04.11.2026 check, all 65 backend `unittest` tests passed; frontend lint, TypeScript checks, and the production build also succeeded. Tests ran against the updated source in a Docker container. This does not replace verifying migration application to the active database, startup from empty Docker volumes, actual LAN forwarding, or full manual acceptance testing; see project management for the current status.
 
 ### Screenshots
 
-Architecture and interface design materials are available in the [system design](<docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>) and [UX/UI design](docs/06-ux-ui-suunnittelu.md) documents. Screenshots are not currently maintained in the project.
+Architecture and interface design materials are available in the [system design](<docs.eng/docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>) and [UX/UI design](docs.eng/docs/06-ux-ui-suunnittelu.md) documents. Screenshots are not currently maintained in the project.
 
 ### License
 
