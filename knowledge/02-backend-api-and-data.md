@@ -84,3 +84,8 @@ Use the `get_db` dependency for request-scoped sessions and close sessions relia
 ## Schema changes
 
 Use Alembic migrations for schema changes. Review generated migrations manually. Back up the MySQL volume before applying migrations to important existing data. A schema change is not complete until migration-upgrade and relevant application tests have been checked.
+
+
+## Tiivistelmä suomeksi
+
+FastAPI määrittelee HTTP-reitit ja käsittelee pyynnöt. SQLAlchemy yhdistää Python-oliot relaatiotietokantaan, Pydantic validoi pyyntö- ja vastausrakenteita ja Alembic hallitsee tietokantamigraatioita. Keskeiset tietokäsitteet ovat käyttäjät, tukipyynnöt, keskustelut ja viestit. Käyttäjän omistajuus on tarkistettava jokaisessa luku- ja muutosoperaatiossa. Käytä taulujen ja kenttien tarkkoihin nimiin nykyisiä ORM-malleja ja migraatioita, älä vanhaa ER-kuvaa yksinään.
