@@ -969,17 +969,13 @@ a:focus-visible {
   cursor: pointer;
 }
 
-.sidebar-auth-link:hover {
-  background: #f0efff;
+.sidebar-auth-link:hover:not(.active) {
+  color: var(--violet-dark);
+  background: #cac9eb;
 }
 
-.sidebar-auth-primary,
-.sidebar-auth-primary:hover {
+.sidebar-auth-link.active {
   color: #fff;
-  background: var(--violet);
-}
-
-.sidebar-auth-primary:hover {
   background: var(--violet-dark);
 }
 
@@ -1027,8 +1023,9 @@ a:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  min-height: calc(100vh - 76px);
-  padding: 42px 20px;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 42px clamp(18px, 4vw, 56px);
 }
 
 .auth-card {
@@ -1220,8 +1217,8 @@ a:focus-visible {
   }
 
   .auth-content {
-    min-height: calc(100vh - 64px);
-    padding: 28px 16px;
+    min-height: calc(100vh - 170px);
+    padding: 28px 18px;
   }
 
   .auth-card {
