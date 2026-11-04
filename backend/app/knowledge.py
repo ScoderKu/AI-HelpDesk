@@ -57,7 +57,10 @@ def _read_sections(path: Path) -> list[tuple[str, str, str]]:
         if line.startswith("#"):
             if current_lines:
                 sections.append((current_heading, current_lines))
-            current_heading = line.lstrip("#").strip() or title
+            heading_text = line.lstrip("#").strip() or title
+            if line.startswith("# ") and title == path.stem.replace("-", " ").replace("_", " ").strip():
+                title = heading_text
+            current_heading = heading_text
             current_lines = []
         else:
             current_lines.append(line)
