@@ -32,9 +32,8 @@ services:
     volumes:
       - ./knowledge:/knowledge:ro
     environment:
-      DATABASE_URL: "mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mysql:3306/${MYSQL_DATABASE}"
       OLLAMA_BASE_URL: "http://ollama:11434"
-      OLLAMA_MODEL: "poro-helpdesk"
+      OLLAMA_MODEL: "${OLLAMA_MODEL:-poro-helpdesk}"
       FRONTEND_ORIGINS: "${FRONTEND_ORIGINS:-http://localhost:8088,http://127.0.0.1:8088,http://localhost:5173,http://127.0.0.1:5173}"
       AUTH_COOKIE_SECURE: "${AUTH_COOKIE_SECURE:-true}"
       REDIS_URL: "redis://redis:6379/0"
@@ -135,6 +134,8 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     environment:
       OLLAMA_HOST: "http://ollama:11434"
+      OLLAMA_MODEL: "${OLLAMA_MODEL:-poro-helpdesk}"
+      OLLAMA_MODEL_SOURCE: "${OLLAMA_MODEL_SOURCE:-modelfile}"
     volumes:
       - ./ollama:/models:ro
     depends_on:
@@ -145,7 +146,13 @@ services:
         set -e;
         rm -f /tmp/model-ready;
         until ollama list >/dev/null 2>&1; do sleep 2; done;
-        if ! ollama show poro-helpdesk >/dev/null 2>&1; then ollama create poro-helpdesk -f /models/Modelfile; fi;
+        if ! ollama show "$$OLLAMA_MODEL" >/dev/null 2>&1; then
+          case "$$OLLAMA_MODEL_SOURCE" in
+            modelfile) ollama create "$$OLLAMA_MODEL" -f /models/Modelfile ;;
+            registry) ollama pull "$$OLLAMA_MODEL" ;;
+            *) echo "Unsupported OLLAMA_MODEL_SOURCE: $$OLLAMA_MODEL_SOURCE" >&2; exit 1 ;;
+          esac;
+        fi;
         touch /tmp/model-ready;
         while :; do sleep 3600; done
     healthcheck:

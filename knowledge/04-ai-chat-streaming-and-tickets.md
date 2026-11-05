@@ -8,7 +8,7 @@
 
 ## Model and backend integration
 
-The backend calls Ollama's HTTP API at the configured base URL. The model name defaults to `poro-helpdesk`. The selected GGUF artifact is `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`. The Modelfile currently sets `num_ctx 8192` and `temperature 0.2`.
+The backend calls Ollama's HTTP API at the configured base URL. The default model name is `poro-helpdesk`, built from `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`. Compose reads `OLLAMA_MODEL` and `OLLAMA_MODEL_SOURCE` from `.env`; `registry` pulls the configured model from Ollama, while `modelfile` builds it from the local `ollama/Modelfile`. The default Modelfile sets `num_ctx 8192` and `temperature 0.2`. Customer-selected models should support Ollama chat and JSON-format output and must be evaluated with the application's language and RAG questions.
 
 At backend startup, the FastAPI lifespan pings Redis and attempts to preload the configured Ollama model. It retries the preload while Ollama is unavailable. Therefore, backend startup readiness depends on Redis and successful model preload.
 

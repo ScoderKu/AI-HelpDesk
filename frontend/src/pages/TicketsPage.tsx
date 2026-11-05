@@ -154,6 +154,10 @@ export function TicketsPage({ language, text, onChanged }: TicketsPageProps) {
         (nextSortBy === 'closedFirst' && statusFilter === 'OPEN')) {
       setStatusFilter('ALL')
     }
+    if ((nextSortBy === 'priorityHigh' && priorityFilter === 'LOW') ||
+        (nextSortBy === 'priorityLow' && priorityFilter === 'HIGH')) {
+      setPriorityFilter('ALL')
+    }
   }
 
   const resetTicketControls = () => {
@@ -295,7 +299,10 @@ export function TicketsPage({ language, text, onChanged }: TicketsPageProps) {
                 <option value="CLOSED" disabled={sortBy === 'openFirst'}>{text.ticketClosed}</option>
               </select></label>
               <label><span>{text.ticketFilterPriority}</span><select value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value)}>
-                <option value="ALL">{text.ticketFilterAll}</option><option value="HIGH">{text.priorityHigh}</option><option value="MEDIUM">{text.priorityMedium}</option><option value="LOW">{text.priorityLow}</option>
+                <option value="ALL">{text.ticketFilterAll}</option>
+                <option value="HIGH" disabled={sortBy === 'priorityLow'}>{text.priorityHigh}</option>
+                <option value="MEDIUM">{text.priorityMedium}</option>
+                <option value="LOW" disabled={sortBy === 'priorityHigh'}>{text.priorityLow}</option>
               </select></label>
               <button className="ticket-reset-button" onClick={resetTicketControls} type="button" disabled={sortBy === 'newest' && statusFilter === 'ALL' && priorityFilter === 'ALL'}>{text.ticketResetFilters}</button>
               <span className="ticket-results-count">{sortedTickets.length} {text.ticketResults}</span>

@@ -304,6 +304,16 @@ def record_failed_login(email: str) -> None:
         )
 
 
+def clear_login_failures(email: str) -> None:
+    try:
+        redis_client.delete(get_login_account_key(email))
+    except RedisError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Sign-in is temporarily unavailable.",
+        ) from error
+
+
 def get_session_secret() -> bytes:
     secret = os.getenv("JWT_SECRET_KEY", "").encode("utf-8")
     if len(secret) < 32:
@@ -597,6 +607,7 @@ def login_user(
             detail="Invalid email or password.",
         )
 
+    clear_login_failures(credentials.email)
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     expires_at = int(time.time()) + SESSION_COOKIE_MAX_AGE
     session_id = secrets.token_hex(16)
@@ -1252,9 +1263,7 @@ async def generate_assistant_for_message(
         )
         answer_content = generated_reply.content.strip()
         saved_response_language = generated_reply.response_language
-        # The model may omit its machine-readable citation IDs. The top result is
-        # already ranked against this user query, so retain it as a citation fallback.
-        source_ids = list(generated_reply.source_ids) or knowledge_source_ids[:1]
+        source_ids = list(generated_reply.source_ids)
     if not answer_content:
         raise OllamaUnavailableError("Ollama returned an empty reply")
     answer_content += format_knowledge_sources(retrieved_knowledge, source_ids)
@@ -1414,9 +1423,6 @@ def stream_chat_message(
                             elif kind == "content":
                                 chunks.append(value)
                                 yield event("token", {"content": value})
-                        if not validated_source_ids and knowledge_source_ids:
-                            # Keep citations visible when the model omits its hidden marker.
-                            validated_source_ids = knowledge_source_ids[:1]
                 except OllamaUnavailableError:
                     yield event("error", {
                         "detail": "AI assistant is temporarily unavailable. Your message was saved.",

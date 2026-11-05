@@ -56,7 +56,7 @@ The planned project scope includes:
 - RAG-based advice using keyword search over a limited collection of Markdown and TXT documents; semantic search may be added only if test evidence shows that keyword search is insufficient
 - Finnish- and English-language user interface text
 - Docker Compose deployment for the frontend, backend, MySQL database, and Ollama AI service
-- use of the local `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf` model in an Ollama container
+- use of an Ollama model in the Compose environment; the project default is `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`, and the model can be changed through documented environment settings
 - automated or repeatable tests for key functions
 - README, API documentation, database description/ER diagram, screenshots, and presentation
 - use of free tools and libraries, with their licenses and terms of use checked before selection and delivery.
@@ -219,9 +219,11 @@ Verification on 04.11.2026: all 65 backend `unittest` tests passed; frontend `np
 
 The reported acceptance includes a full Compose startup from empty MySQL and Ollama volumes (US-16), confirmed by the project implementer on 05.11.2026. LAN forwarding remains a separate deployment check: the current Compose ports are bound to `127.0.0.1`, and LAN exposure is not part of that local startup acceptance.
 
-**Delivery checks (05.11.2026):** A preliminary license and terms inventory is documented in [Third-Party License Review](07-Third-Party%20License%20Review.md). It identified open release actions, including selecting the project license, recording the exact GGUF source and checksum and required Llama notices, confirming Redis 7.4 terms, and inventorying transitive dependencies and image digests.
+**Delivery checks (05.11.2026):** A preliminary third-party license and terms inventory is documented in [Third-Party License Review](07-Third-Party%20License%20Review.md). The inventory is complete at a preliminary level; distribution actions remain open, including selecting the project license, recording the default GGUF source/revision and checksum and required Llama notices, confirming Redis 7.4 terms, and inventorying transitive dependencies and image digests.
 
-Registration and sign-in integration with MySQL, including eight simultaneous sign-ins, passed against the local Compose stack on 05.11.2026. A repeatable opt-in test is available at `backend/tests/test_auth_mysql_integration.py`. This verifies the local API/database integration; the target/on-site environment still needs its own validation if required. IP forwarding between real LAN devices remains an environment check that cannot be verified in the personal development environment. These are delivery/environment checks, not unaccepted user stories; LAN access remains out of scope unless the delivery target requires it.
+Registration and sign-in integration with MySQL, including eight simultaneous sign-ins, passed against the local Compose stack on 05.11.2026. A repeatable opt-in test is available at `backend/tests/test_auth_mysql_integration.py`. Local API/database verification is complete; the standard backend test run skips this opt-in test unless explicitly enabled. IP forwarding between real LAN devices remains unverified and cannot be checked in the personal development environment. These are delivery/environment checks, not unaccepted user stories; LAN access remains out of scope unless the delivery target requires it.
+
+**Verification update (05.11.2026):** Of 86 backend tests, 85 passed and the opt-in MySQL integration test was skipped in the standard run. The separate integration test passed registration followed by eight concurrent MySQL sign-ins against the local Compose stack. Frontend lint, TypeScript checks, and production build passed. Compose supports selecting either a model pulled from the Ollama registry or one built from a local Modelfile; the default remains the project Poro model. Customer setup instructions are in the README.
 
 **US-15 test finding and retest (05.11.2026):** An initial Finnish retention question returned weakly related Knowledge Base sections. The assistant answered with incorrect 7-day/30-day periods and cited `knowledge/05-data-model.md`, which is absent from the current corpus. After the project knowledge and response handling were updated, the implementer repeated the practical US-15 acceptance and confirmed the criteria met. The initial failure remains a recorded model/RAG limitation and informs the follow-up improvements below.
 
@@ -272,7 +274,7 @@ Significant technical and project management decisions are recorded in this tabl
 | D-02 | 26.10.2026 | RAG, a Finnish- and English-language user interface, and Docker Compose are selected for the final release | Additional features in the assignment and the project's learning objectives | These three features are planned and tested separately |
 | D-03 | 26.10.2026 | US-09 and US-14 are part of the official delivery scope; US-14 includes only the user's total and OPEN/CLOSED counts | Final scope confirmed by the group | The stories are not treated as optional; US-09 requires user review and confirmation |
 | D-04 | 26.10.2026 | US-16 includes Ollama and the selected GGUF model in the Docker Compose environment; Sprint 1 and its 33 SP plan remain unchanged | Containerization approach and Sprint decision confirmed by the group | The backend uses Ollama over the Compose network; production deployment is out of scope |
-| D-05 | 26.10.2026 | The target AI model is `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`, used through Ollama | The project's selected local model | The model is started in an Ollama container; the model file location and persistent model storage are documented |
+| D-05 | 26.10.2026 | The default AI model is `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`, used through Ollama | The project's selected local model; other compatible Ollama models can be configured for customer installations | The model is started in an Ollama container; model choice and persistent model storage are documented |
 | D-06 | 26.10.2026 | The RAG MVP processes Markdown and TXT documents using keyword search; semantic search is added only based on test evidence | A limited and testable MVP implementation | The source collection is limited before implementation; the ER schema is not changed without a new persistent data need |
 | D-07 | 26.10.2026 | Tools and libraries must be free, and their licenses and terms of use are checked | Technology decision confirmed by the group | Choices and possible limitations are documented before delivery |
 | D-09 | 31.10.2026 | The frontend uses only the proxy network and calls the backend through the `backend-proxy` network alias | Ensure the proxy-to-backend connection uses the network on which the proxy IP is trusted | Frontend and backend proxy-network addresses and the `/api/health` route were verified after recreating the containers |
@@ -295,11 +297,11 @@ Significant technical and project management decisions are recorded in this tabl
 
 ## 12. Links to Other Project Documents
 
-- [Requirements Specification](01-vaatimusmaarittely.md)
-- [User Stories and Acceptance Criteria](02-käyttäjätarinat%20ja%20hyväksymiskriteerit.md)
-- [Product Backlog](03-product%20backlog.md)
-- [Sprint Plan](04-sprintin%20suunnitelma.md)
-- [System Design](05-järjestelmän%20suunnittelu.md)
-- [README](../README.md)
+- [Requirements Specification](<01-Requirement%20Specification.md>)
+- [User Stories and Acceptance Criteria](<02-User%20Stories%20and%20Acceptance%20Criteria.md>)
+- [Product Backlog](<03-product%20backlog.md>)
+- [Sprint Plan](<04-Sprint%20Plan.md>)
+- [System Design](<05-System%20Design.md>)
+- [README](../../README.md)
 
 > **Maintenance practice:** update this document as the project progresses, especially regarding the schedule, risks, significant decisions, and scope changes. Do not copy detailed requirements or user stories from other documents here; link to their sources.

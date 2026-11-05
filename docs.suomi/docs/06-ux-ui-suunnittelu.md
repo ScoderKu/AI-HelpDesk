@@ -137,7 +137,7 @@ Kirjautuneen käyttäjän näkymissä käytetään yhteistä sovelluskehystä:
 
 Esimerkkirunko:
 
-![UI_pc](../photos/UI_pc.png)
+![UI_pc](../../photos/UI_pc.png)
 
 ### 5.2 Responsiivisuus
 
@@ -240,7 +240,7 @@ Etusivu pidetään yksinkertaisena ja US-14:n yhteenveto on pakollinen osa sovit
 
 **Suositeltu asettelu**
 
-![AIchat](../photos/AIchat.png)
+![AIchat](../../photos/AIchat.png)
 
 Mobiilissa keskusteluhistoria voidaan avata erillisestä painikkeesta, jotta varsinainen keskustelualue säilyy riittävän leveänä.
 
@@ -527,10 +527,10 @@ US-14:n rajattu etusivuyhteenveto kuuluu toimituslaajuuteen. Sen ulkopuolelle j�
 Tämä dokumentti täydentää seuraavia dokumentteja:
 - [Projektinhallinta](00-projektinhallinta.md) – projektin hallinta, tavoitteet, rajaukset ja riskit;
 - [Vaatimusmäärittely](01-vaatimusmaarittely.md) – toiminnalliset ja ei-toiminnalliset vaatimukset;
-- [Käyttäjätarinat ja hyväksymiskriteerit](02-käyttäjätarinat%20ja%20hyväksymiskriteerit.md) – käyttäjätarinat ja hyväksymiskriteerit;
-- [Product Backlog](03-product%20backlog.md) – priorisoidut kehitystehtävät;
-- [Sprint-suunnitelma](04-sprintin%20suunnitelma.md) – sprinttien tavoitteet ja tehtävät;
-- [Järjestelmän suunnittelu](05-järjestelmän%20suunnittelu.md) – arkkitehtuuri, vastuut ja API-rakenne.
+- [Käyttäjätarinat ja hyväksymiskriteerit](<02-käyttäjätarinat%20ja%20hyväksymiskriteerit.md>) – käyttäjätarinat ja hyväksymiskriteerit;
+- [Product Backlog](<03-product%20backlog.md>) – priorisoidut kehitystehtävät;
+- [Sprint-suunnitelma](<04-sprintin%20suunnitelma.md>) – sprinttien tavoitteet ja tehtävät;
+- [Järjestelmän suunnittelu](<05-järjestelmän%20suunnittelu.md>) – arkkitehtuuri, vastuut ja API-rakenne.
 
 Jos tämän dokumentin ja vaatimusmäärittelyn välillä havaitaan ristiriita, asia tarkistetaan ennen toteutusta ja muutokset kirjataan asianmukaisiin dokumentteihin.
 

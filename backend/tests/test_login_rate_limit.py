@@ -150,6 +150,7 @@ class LoginRateLimitTests(unittest.TestCase):
             patch.object(main, "get_session_secret", return_value=b"s" * 32),
             patch.object(main, "verify_password", return_value=True),
             patch.object(main, "record_failed_login") as record_failure,
+            patch.object(main, "clear_login_failures") as clear_failures,
         ):
             result = main.login_user(
                 credentials,
@@ -160,6 +161,7 @@ class LoginRateLimitTests(unittest.TestCase):
 
         check_limit.assert_called_once_with(self.request, self.email)
         record_failure.assert_not_called()
+        clear_failures.assert_called_once_with(self.email)
         db.commit.assert_called_once_with()
         self.assertFalse(result.must_change_password)
 

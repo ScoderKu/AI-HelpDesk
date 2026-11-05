@@ -209,7 +209,7 @@ The checklist below records the status before the 05.11.2026 update and is super
 
 ### Acceptance update (05.11.2026)
 
-The project implementer has confirmed practical acceptance for all Sprint 4 stories and, subsequently, for US-01 through US-17, including US-07 and US-15. The implementer also confirmed a full Compose startup from empty MySQL and Ollama volumes. Remaining delivery checks are license/terms review and target-environment validation of registration/sign-in integration, concurrent MySQL sign-in, and LAN forwarding; the latter checks cannot be completed in the personal development environment. These are not outstanding user-story acceptance items. Observed model and RAG quality limitations remain documented in project management.
+The project implementer has confirmed practical acceptance for all Sprint 4 stories and, subsequently, for US-01 through US-17, including US-07 and US-15. The implementer also confirmed a full Compose startup from empty MySQL and Ollama volumes. Registration and eight concurrent MySQL sign-ins passed against the local Compose stack on 05.11.2026. A preliminary third-party license inventory is complete; project-license selection and distribution-specific license actions remain open. Real LAN forwarding remains unverified because the personal development environment cannot validate the target-site network. These are delivery/environment items, not outstanding user-story acceptance criteria. Observed model and RAG quality limitations remain documented in project management.
 
 ---
 

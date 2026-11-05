@@ -512,12 +512,12 @@ The limited US-14 summary on the home page is part of the delivery scope. Compre
 ## 15. Relationship to Other Project Documents
 
 This document supplements the following documents:
-- [Project Management](../../docs/00-projektinhallinta.md) – project management, objectives, scope, and risks;
-- [Requirements Specification](../../docs/01-vaatimusmaarittely.md) – functional and non-functional requirements;
-- [User Stories and Acceptance Criteria](02-käyttäjätarinat%20ja%20hyväksymiskriteerit.md) – user stories and acceptance criteria;
-- [Product Backlog](../../docs/03-product%20backlog.md) – prioritized development tasks;
-- [Sprint Plan](../../docs/04-sprintin%20suunnitelma.md) – Sprint goals and tasks;
-- [System Design](05-järjestelmän%20suunnittelu.md) – architecture, responsibilities, and API structure.
+- [Project Management](00-Project%20Management.md) – project management, objectives, scope, and risks;
+- [Requirements Specification](<01-Requirement%20Specification.md>) – functional and non-functional requirements;
+- [User Stories and Acceptance Criteria](<02-User%20Stories%20and%20Acceptance%20Criteria.md>) – user stories and acceptance criteria;
+- [Product Backlog](<03-product%20backlog.md>) – prioritized development tasks;
+- [Sprint Plan](<04-Sprint%20Plan.md>) – Sprint goals and tasks;
+- [System Design](<05-System%20Design.md>) – architecture, responsibilities, and API structure.
 
 If a conflict is found between this document and the requirements specification, it must be reviewed before implementation and changes must be recorded in the appropriate documents.
 

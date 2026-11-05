@@ -210,23 +210,20 @@ Laajentaa sovelluksen toiminnallisuuksia ja parantaa käyttökokemusta. Käyttä
 
 Sprintti voidaan hyväksyä, kun lisäominaisuudet täyttävät niille määritellyt hyväksymiskriteerit ja toimivat yhdessä aiemmin toteutettujen toimintojen kanssa.
 
-### Sprint 4:n nykytila (04.11.2026)
+### Hyväksyntäpäivitys (05.11.2026)
 
-Sprint 4:n tekninen toteutus on kooditasolla pääosin valmis: AI-keskustelusta voidaan generoida tukipyyntö, käyttöliittymä tukee FI/EN -kieltä ja etusivulla näytetään käyttäjän omien tukipyyntöjen yhteenveto.
+Projektin toteuttaja on vahvistanut Sprint 4:n käyttäjätarinoiden ja myöhemmin kaikkien käyttäjätarinoiden US-01–US-17 käytännön hyväksymisen, mukaan lukien US-07 ja US-15. Toteuttaja vahvisti myös koko Compose-pinon käynnistyksen tyhjillä MySQL- ja Ollama-volyymeilla. Rekisteröityminen ja kahdeksan samanaikaista MySQL-kirjautumista läpäisivät paikallisessa Compose-ympäristössä 05.11.2026. Kolmansien osapuolten lisensseistä on tehty alustava inventointi; projektin oman lisenssin valinta ja jakelukohtaiset lisenssitoimet ovat yhä avoinna. Todellista LAN-välitystä ei ole voitu tarkistaa henkilökohtaisessa kehitysympäristössä. Nämä ovat toimitus-/ympäristötarkistuksia, eivät avoimia käyttäjätarinoiden hyväksymiskriteerejä. Mallin ja RAG:n tunnetut laatuhavainnot on kirjattu projektinhallintaan.
 
-Hyväksymistestauksen osalta jäävät vielä jäljellä:
-- clean Compose -käynnistys tyhjästä MySQL- ja Ollama-volyymista
-- real LAN forwarding useammalla laitteella
-- manuaalinen UI-acceptance test koko sovelluksen läpi
+Aiempi Sprint 4:n regressio- ja demotarkistuslista kuvaa 04.11.2026 vallinnutta tilannetta, ja tämän päivityksen myöhemmät varmennukset korvaavat sen avoimina olleet hyväksymistestit.
 - regressiotestaus demo-ympäristössä ennen virallista esittelyä
 
-Tämän perusteella Sprint 4 voidaan pitää teknisesti toteutettuna, mutta sen virallinen hyväksyntä on edelleen sidottu demo- ja ympäristötason validointiin.
+Tämä arvio kuvaa aiempaa 04.11.2026 tilannetta; 05.11.2026 hyväksyntäpäivitys edellä korvaa sen.
 
 ---
 
 ### Hyväksyntäpäivitys (05.11.2026)
 
-Projektin toteuttaja on vahvistanut Sprint 4:n kaikkien tarinoiden käytännön hyväksynnän ja myöhemmin US-01–US-17:n hyväksynnän, mukaan lukien US-07 ja US-15. Toteuttaja vahvisti myös koko Compose-pinon käynnistyksen tyhjillä MySQL- ja Ollama-volyymeilla. Jäljellä ovat lisenssien ja käyttöehtojen tarkistus sekä kohdeympäristössä tehtävät rekisteröitymisen/kirjautumisen integraatio-, MySQL:n rinnakkaiskirjautumis- ja LAN-välitystarkistukset. Näitä ei voida tehdä henkilökohtaisessa kehitysympäristössä, eivätkä ne ole avoimia käyttäjätarinoiden hyväksyntäkohtia. Tekoälymallin ja RAG:n laatuhavainnot on kirjattu projektinhallintadokumenttiin.
+Projektin toteuttaja on vahvistanut Sprint 4:n kaikkien tarinoiden käytännön hyväksynnän ja myöhemmin US-01–US-17:n hyväksynnän, mukaan lukien US-07 ja US-15. Toteuttaja vahvisti myös koko Compose-pinon käynnistyksen tyhjillä MySQL- ja Ollama-volyymeilla. Rekisteröityminen ja kahdeksan rinnakkaista MySQL-kirjautumista testattiin paikallisessa Compose-ympäristössä 05.11.2026, ja testi läpäisi. Kolmansien osapuolten lisensseistä on tehty alustava inventointi; projektin oman lisenssin valinta ja jakelukohtaiset lisenssitoimet ovat yhä avoinna. Todellisen LAN-välityksen tarkistus vaatii kohdeympäristön, eikä sitä voitu tehdä henkilökohtaisessa kehitysympäristössä. Nämä ovat toimitus-/ympäristötarkistuksia, eivät avoimia käyttäjätarinoiden hyväksymiskriteerejä. Mallin ja RAG:n tunnetut laatuhavainnot on kirjattu projektinhallintaan.
 
 # 7. Sprint 5 – Tietopohjainen tekoälyneuvonta (RAG)
 

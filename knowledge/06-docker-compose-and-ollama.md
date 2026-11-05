@@ -31,7 +31,7 @@ The model artifact is:
 The Modelfile uses:
 ```
 FROM /models/models/Llama-Poro-2-8B-Instruct.Q4_K_M.gguf
-PARAMETER num_ctx 4096
+PARAMETER num_ctx 8192
 PARAMETER temperature 0.2
 ```
 The Ollama model name used by the backend defaults to `poro-helpdesk`. The model is stored in a persistent Ollama data volume. The README says the backend preloads the model at startup and asks Ollama to keep it loaded for 24 hours while idle.

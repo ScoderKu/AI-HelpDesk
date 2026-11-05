@@ -48,7 +48,7 @@ Kehittäjärooli kuvaa projektin teknistä vastuuta eikä automaattisesti tarkoi
 
 AI HelpDesk toteutetaan kerroksittaisena web-sovelluksena. Frontend vastaa käyttöliittymästä, backend liiketoimintalogiikasta ja tietoturvatarkistuksista sekä tietokanta pysyvästä tallennuksesta. Tekoälypalvelua käytetään teknisten ongelmien analysointiin ja ratkaisuehdotusten tuottamiseen.
 
-![Järjestelmän looginen arkkitehtuuri: frontend, backend, tietokanta, tekoälypalvelu ja dokumentaatiohaku](../photos/system%20architecture.png)
+![Järjestelmän looginen arkkitehtuuri: frontend, backend, tietokanta, tekoälypalvelu ja dokumentaatiohaku](../../photos/system%20architecture.png)
 
 Arkkitehtuurikuva säilyy rakenteeltaan ennallaan. Valitut lisäominaisuudet näkyvät siinä ja toteutuksen rajauksessa seuraavasti:
 
@@ -124,14 +124,14 @@ Tietokannan viite-eheys varmistetaan pää- ja viiteavaimilla. Käyttäjäkohtai
 
 ### 2.5 Tekoälyintegraatio
 
-AI Service välittää käyttäjän viestin Compose-ympäristössä toimivalle Ollama-palvelulle ja käsittelee saadun vastauksen. Käytettävä malli on `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`, jonka konfiguraatio on [Modelfile](../ollama/Modelfile)-tiedostossa. Mallin kontekstipituus on 4096 ja lämpötila 0.2.
+AI Service välittää käyttäjän viestin Compose-ympäristössä toimivalle Ollama-palvelulle ja käsittelee saadun vastauksen. Oletusmalli on `poro-helpdesk`, joka luodaan GGUF-tiedostosta `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf` [Modelfile](../../ollama/Modelfile)-tiedoston avulla. Mallin nimi ja alustuslähde määritetään asetuksilla `OLLAMA_MODEL` ja `OLLAMA_MODEL_SOURCE`: `registry` hakee mallin Ollama-rekisteristä, kun taas `modelfile` luo mallin paikallisesta Modelfile-tiedostosta. Nykyinen oletus-Modelfile asettaa kontekstipituudeksi 8192 ja lämpötilaksi 0.2.
 
 #### Tekoälyintegraation tulee
 
 - Kutsua Ollamaa backendistä Compose-verkon sisäisellä palvelunimellä ja rajapinnalla; selain ei kutsu Ollamaa suoraan.
 - Käynnistää Ollama Compose-palveluna ja varmistaa terveystarkistuksella, että palvelu sekä valittu malli ovat käytettävissä.
-- Tuoda mallin GGUF-tiedosto Ollama-kontin saataville dokumentoidulla tavalla. Nykyinen Compose-ratkaisu liittää `ollama`-hakemiston konttiin vain luku -tilassa hakemistoon `/models`; `Modelfile` käyttää kontissa polkua `/models/Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`.
-- Luoda valitun mallin Ollamaan automaattisesti Compose-käynnistyksen yhteydessä `Modelfile`-tiedoston perusteella, jos mallia ei vielä ole Ollaman mallivarastossa.
+- Kun `OLLAMA_MODEL_SOURCE=modelfile`, tuoda valittu GGUF-tiedosto paikalliseen `ollama/models/`-hakemistoon. Compose liittää `ollama/`-hakemiston vain luku -tilassa polkuun `/models`, ja oletus-Modelfile käyttää konttipolkua `/models/models/Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`.
+- Alustaa Compose-käynnistyksessä asetuksilla valittu malli joko Modelfile-tiedostosta luomalla tai Ollama-rekisteristä hakemalla; jo pysyvässä Ollama-varastossa olevaa mallia ei alusteta uudelleen.
 - Ladata malli backendin käynnistyessä Ollaman muistivapaalla preload-pyynnöllä ja pyytää Ollamaa pitämään se muistissa 24 tuntia käyttämättömänä; backendin käynnistys odottaa preloadin onnistumista.
 - Säilyttää Ollaman mallivaraston pysyvässä Docker-volyymissa, jotta palvelun uudelleenkäynnistys ei edellytä mallin uutta manuaalista tuontia.
 - Käsitellä aikakatkaisut, palveluvirheet ja käyttörajoitukset.
@@ -162,7 +162,7 @@ Malli, Ollama, Docker-kuvat ja muut työkalut sekä kirjastot tarkistetaan maksu
 
 Järjestelmän keskeiset entiteetit ovat User, Ticket, Conversation ja Message.
 
-![DB construction](../photos/ER_AIHD.svg)
+![DB construction](../../photos/ER_AIHD.svg)
 
 Kaavio on ylläpidetty muuttamattomana yleiskuvana tietokantatauluista ja niiden suhteista. Alla olevat taulukot täsmentävät kenttien nimet ja rajoitteet. Ne sisältävät myös `tickets.created_at`- ja `tickets.updated_at`-kentät, `conversations.created_at`- ja `conversations.updated_at`-kentät sekä `messages.created_at`-kentän, joita ei ole merkitty kaavioon. Tukipyynnön luontiaika vaaditaan FR-05:n täyttämiseksi; muut aikaleimat tukevat historian näyttämistä ja tietojen ylläpitoa.
 

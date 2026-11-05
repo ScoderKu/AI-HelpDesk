@@ -4,7 +4,7 @@
 
 AI HelpDesk on kehitteillä oleva verkkopohjainen tukipalvelusovellus. Käyttäjä voi keskustella tekoälyn kanssa tietotekniikkaan ja ohjelmistokehitykseen liittyvistä ongelmista sekä hallita omia tukipyyntöjään.
 
-> **Projektin tila 05.11.2026:** Projektin toteuttaja on vahvistanut käyttäjätarinoiden US-01–US-17 käytännön hyväksymiskriteerit suoritetuiksi. US-07:n ja US-15:n testauksessa havaittuja tekoälymallin ja RAG:n laatuhavaintoja on kirjattu projektinhallintadokumenttiin. Automaattisten testien ja buildin viimeisin kirjattu tulos on 04.11.2026; tarkempi tilanne on [projektinhallintadokumentissa](docs.suomi/00-projektinhallinta.md).
+> **Projektin tila 05.11.2026:** Projektin toteuttaja on vahvistanut käyttäjätarinoiden US-01–US-17 käytännön hyväksymiskriteerit suoritetuiksi. US-07:n ja US-15:n testauksessa havaittuja tekoälymallin ja RAG:n laatuhavaintoja on kirjattu projektinhallintadokumenttiin. Backendin 86 testistä 85 läpäisi ja yksi valinnainen MySQL-integraatiotesti ohitettiin normaalissa ajossa; erikseen ajettu rekisteröitymisen ja kahdeksan rinnakkaisen kirjautumisen integraatiotesti läpäisi. Frontendin lint, TypeScript-tarkistus ja tuotantobuild onnistuivat. Tarkempi tilanne on [projektinhallintadokumentissa](docs.suomi/docs/00-projektinhallinta.md).
 
 ### Keskeiset ominaisuudet
 
@@ -24,10 +24,10 @@ AI HelpDesk on kehitteillä oleva verkkopohjainen tukipalvelusovellus. Käyttäj
 - Tietokanta: MySQL
 - Kirjautumisen käyttörajoitukset: Redis
 - Tekoälypalvelu: Ollama Docker Compose -ympäristössä
-- Tekoälymalli: `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`
+- Oletusmalli: `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`; käyttäjä voi valita toisen Ollama-mallin `.env`-asetuksilla.
 - Kontitus: Docker Compose
 
-Työkalujen ja kirjastojen tulee olla maksuttomia. Niiden sekä tekoälymallin lisenssit ja käyttöehdot tarkistetaan ennen toimitusta.
+Kolmansien osapuolten lisensseistä ja käyttöehdoista on tehty alustava inventointi ([raportti](docs.suomi/docs/07-kolmansien%20osapuolten%20lisenssiselvitys.md)). Projektin oma lisenssi ja raportissa luetellut jakeluun liittyvät ehdot ovat vielä avoinna.
 
 Ollama-ympäristö testataan projektissa NVIDIA-GPU:lla. Muiden GPU-valmistajien tai -tyyppien yhteensopivuutta ei varmenneta tässä projektissa; niiden käyttöä haluava käyttäjä testaa yhteensopivuuden itse.
 
@@ -49,18 +49,18 @@ flowchart LR
 
 ### Projektidokumentaatio
 
-- [Projektinhallinta](docs.suomi/00-projektinhallinta.md)
-- [Vaatimusmäärittely](docs.suomi/01-vaatimusmaarittely.md)
-- [Käyttäjätarinat ja hyväksymiskriteerit](<docs.suomi/02-k%C3%A4ytt%C3%A4j%C3%A4tarinat%20ja%20hyv%C3%A4ksymiskriteerit.md>)
-- [Product Backlog](<docs.suomi/03-product%20backlog.md>)
-- [Sprint-suunnitelma](<docs.suomi/04-sprintin%20suunnitelma.md>)
-- [Järjestelmän suunnittelu](<docs.suomi/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>)
-- [UX/UI-suunnittelu](docs.suomi/06-ux-ui-suunnittelu.md)
+- [Projektinhallinta](docs.suomi/docs/00-projektinhallinta.md)
+- [Vaatimusmäärittely](docs.suomi/docs/01-vaatimusmaarittely.md)
+- [Käyttäjätarinat ja hyväksymiskriteerit](<docs.suomi/docs/02-k%C3%A4ytt%C3%A4j%C3%A4tarinat%20ja%20hyv%C3%A4ksymiskriteerit.md>)
+- [Product Backlog](<docs.suomi/docs/03-product%20backlog.md>)
+- [Sprint-suunnitelma](<docs.suomi/docs/04-sprintin%20suunnitelma.md>)
+- [Järjestelmän suunnittelu](<docs.suomi/docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>)
+- [UX/UI-suunnittelu](docs.suomi/docs/06-ux-ui-suunnittelu.md)
 - [Ollama-mallin Modelfile](ollama/Modelfile)
 
 ### Edellytykset
 
-Käynnistys edellyttää Dockeria ja Docker Composea. Luo paikallinen `.env` kopioimalla esimerkkitiedosto ja aseta tietokantatunnukset sekä vähintään 32-merkkinen satunnainen `JWT_SECRET_KEY`.
+Käynnistys edellyttää Dockeria ja Docker Composea. Luo paikallinen `.env` kopioimalla esimerkkitiedosto, aseta tietokantatunnukset ja luo jokaiselle ympäristölle oma `JWT_SECRET_KEY`. PowerShellissä luo 32 satunnaisesta tavusta muodostuva 64-merkkinen avain komennolla `[Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))` ja kopioi tulos `.env`-tiedoston `JWT_SECRET_KEY`-arvoksi. Älä käytä samaa avainta eri ympäristöissä.
 
 ```powershell
 if (-not (Test-Path .env)) { Copy-Item .env.example .env }
@@ -74,7 +74,14 @@ Käynnistä frontend, backend, MySQL, Redis ja Ollama yhdellä komennolla:
 docker compose up --build
 ```
 
-Ollama-malli luodaan automaattisesti ensimmäisellä käynnistyskerralla: `ollama-model-init` odottaa Ollaman terveystarkistusta, tarkistaa löytyykö `poro-helpdesk` ja luo sen komennolla `ollama create poro-helpdesk -f /models/Modelfile`, jos mallia ei vielä ole. Kun backend käynnistyy, se lataa mallin valmiiksi ja pyytää Ollamaa pitämään sen muistissa 24 tuntia käyttämättömänä; tämä tapahtuu uudelleen myös backendin/Dockerin käynnistyessä uudelleen. Backend ei aloita palvelua ennen kuin preload onnistuu. Modelfile käyttää tiedostoa `ollama/models/Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`; varmista, että tiedosto on paikallisesti tässä polussa ennen käynnistystä. Luotu malli tallentuu pysyvään `ollama_data`-volyymiin. Seuraavilla käynnistyskerroilla mallia ei luoda uudelleen, jos se on jo olemassa. Tarkista asennus komennolla `docker compose exec ollama ollama list` ja muistissa oleva malli komennolla `docker compose exec ollama ollama ps`.
+Oletusasetuksilla `ollama-model-init` luo mallin `poro-helpdesk` tiedoston `ollama/Modelfile` ja paikallisen GGUF-tiedoston perusteella. Voit valita minkä tahansa käyttötarpeeseesi sopivan Ollama-mallin muuttamalla paikallisessa `.env`-tiedostossa `OLLAMA_MODEL`-arvon ja asettamalla `OLLAMA_MODEL_SOURCE=registry`; alustuspalvelu hakee tällöin mallin Ollama-rekisteristä. Jos haluat käyttää omaa GGUF-mallia, aseta `OLLAMA_MODEL_SOURCE=modelfile`, sijoita GGUF `ollama/models/`-hakemistoon ja päivitä `ollama/Modelfile` käyttämään sitä. Valitse malli, joka tukee Ollaman chat-rajapintaa ja JSON-muotoista ulostuloa. Tarkista mallin laitevaatimukset, viive ja lisenssiehdot sekä kokeile projektin FI/EN- ja RAG-hyväksymiskysymyksiä. Malli tallennetaan pysyvään `ollama_data`-volyymiin; jo olemassa olevaa saman nimistä mallia ei korvata automaattisesti. Mallin vaihtamisen jälkeen tarkista asennus komennolla `docker compose exec ollama ollama list` ja muistissa oleva malli komennolla `docker compose exec ollama ollama ps`.
+
+Esimerkki rekisterimallin valinnasta `.env`-tiedostossa; korvaa mallin nimi Ollama-rekisterissä olevalla mallinimellä:
+
+```dotenv
+OLLAMA_MODEL=your-model:tag
+OLLAMA_MODEL_SOURCE=registry
+```
 
 Paikalliseen HTTP-kehitykseen aseta `.env`-tiedostossa `AUTH_COOKIE_SECURE=false`. Tämä Compose-asetus rajaa frontendin ja backendin `127.0.0.1`-osoitteeseen; sovellus ei tällä asetuksella ole muiden lähiverkon laitteiden käytettävissä. Frontend välittää `/api`-pyynnöt samalle alkuperälle. Compose-ympäristössä frontend käyttää vain erillistä proxy-verkkoa osoitteella `172.30.0.2` ja ottaa backend-yhteyden verkkoaliaksella `backend-proxy`, joten yhteys käyttää sitä verkkorajapintaa, jonka backend tunnistaa luotetuksi. `TRUSTED_PROXY_IPS`-asetuksen oletusarvo rajaa luottamuksen frontendin IP-osoitteeseen. Backend käyttää asiakkaan IP:nä luotetulta proxylta välitetyn ketjun ensimmäistä luottamatonta osoitetta. Jos muutat Compose-verkon tai proxyn osoitetta, päivitä myös `TRUSTED_PROXY_IPS`. Vanhentuneet kirjautumisistunnot siivotaan erillisessä taustatehtävässä tunnin välein, ei kirjautumisen yhteydessä. Nykyistä IP-välitystä ei ole vielä varmennettu kahdella oikealla LAN-laitteella. HTTPS-käyttöönotossa käytä `AUTH_COOKIE_SECURE=true`, aseta `FRONTEND_ORIGINS` sisältämään sovelluksen tarkka HTTPS-alkuperä ja käytä HTTPS:ää tarjoavaa reverse proxyä; määritä myös kyseisen proxyn luottamus erikseen. Aseta `VITE_API_BASE_URL` vain, jos backendin API on eri alkuperässä; arvon tulee olla backendin alkuperäosoite ilman `/api`-polkua.
 
@@ -141,13 +148,13 @@ docker compose exec backend python -m unittest discover -s tests -v
 
 Testit kattavat proxy-IP:n poiminnan, kirjautumisen rate limiting -laskurit ja Redis-virheet, vanhentuneiden istuntojen siivouskyselyn, kolmen kalenterikuukauden tietojen säilytyssäännöt sekä Ticket API:n validoinnin, omistajuusrajauksen ja keskeiset toiminnot. Erillinen valinnainen integraatiotesti `backend/tests/test_auth_mysql_integration.py` testaa rekisteröitymisen ja kahdeksan samanaikaista kirjautumista käynnissä olevaa Compose API:a ja MySQL:ää vasten. Paikallinen testi ei korvaa ympäristökohtaista LAN-välityksen testausta. Frontendin build ja lint ajetaan erikseen frontend-kansiossa.
 
-03.11.2026 tehdyssä tarkistuksessa backendin kaikki 57 `unittest`-testiä läpäisivät, frontendin lint oli puhdas ja TypeScript-tarkistus sekä tuotantobuild onnistuivat. Testit ajettiin päivitetyllä lähdekoodilla Docker-kontissa. Tämä ei korvaa käyttöönotetun tietokannan migraation, tyhjistä Docker-volyymeista käynnistyksen, todellisen LAN-välityksen eikä manuaalisen toiminnallisen hyväksymistestauksen tarkistusta; ajantasainen projektitilanne on projektinhallintadokumentissa.
+03.11.2026 tehdyssä tarkistuksessa backendin kaikki 57 `unittest`-testiä läpäisivät, frontendin lint oli puhdas ja TypeScript-tarkistus sekä tuotantobuild onnistuivat. Tuolloin clean Compose -käynnistys ja integraatiotesti olivat vielä tarkistamatta; ne vahvistettiin erikseen 05.11.2026. Todellisen LAN-välityksen tarkistus on edelleen ympäristökohtainen, eikä se kuulu käyttäjätarinoiden hyväksyntään. Ajantasainen projektitilanne on projektinhallintadokumentissa.
 
 Toteuttaja vahvisti 05.11.2026 koko Compose-pinon käynnistyksen tyhjillä MySQL- ja Ollama-volyymeilla sekä kaikkien US-01–US-17-kriteerien käytännön hyväksynnän. Samana päivänä rekisteröitymisen ja kahdeksan rinnakkaisen kirjautumisen integraatiotesti läpäisi paikallisessa Compose/MySQL-ympäristössä. LAN-välitys todellisessa käyttöympäristössä on edelleen erillinen tarkistus. Nämä eivät ole avoimia user story -hyväksyntöjä.
 
 ### Kuvat
 
-Arkkitehtuuri- ja käyttöliittymäsuunnitelmat löytyvät [järjestelmän suunnittelusta](<docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>) ja [UX/UI-suunnittelusta](docs/06-ux-ui-suunnittelu.md>). Kuvakaappauksia ei tällä hetkellä ylläpidetä projektissa.
+Arkkitehtuuri- ja käyttöliittymäsuunnitelmat löytyvät [järjestelmän suunnittelusta](<docs.suomi/docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>) ja [UX/UI-suunnittelusta](docs.suomi/docs/06-ux-ui-suunnittelu.md). Kuvakaappauksia ei tällä hetkellä ylläpidetä projektissa.
 
 ### Lisenssi
 
@@ -159,7 +166,7 @@ Projektin omaa lisenssiä ei ole vielä määritelty. Kolmansien osapuolten lise
 
 AI HelpDesk is a web-based support application under development. Users can discuss IT and software development issues with an AI assistant and manage their own support tickets.
 
-> **Project status on 05.11.2026:** The project implementer has confirmed practical acceptance for US-01 through US-17. AI model and RAG quality limitations observed while testing US-07 and US-15 are recorded in the project management document. The latest recorded automated test/build results are dated 04.11.2026; see the [project management document](docs.eng/docs/00-Project%20Management.md) for details.
+> **Project status on 05.11.2026:** The project implementer has confirmed practical acceptance for US-01 through US-17. AI model and RAG quality limitations observed while testing US-07 and US-15 are recorded in the project management document. Of 86 backend tests, 85 passed and one opt-in MySQL integration test was skipped in the standard run; the separate registration/eight-concurrent-sign-in integration test passed. Frontend lint, TypeScript checks, and production build passed. See the [project management document](docs.eng/docs/00-Project%20Management.md) for details.
 
 ### Main features
 
@@ -179,10 +186,10 @@ AI HelpDesk is a web-based support application under development. Users can disc
 - Database: MySQL
 - Login rate limiting: Redis
 - AI service: Ollama in the Docker Compose environment
-- AI model: `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`
+- Default model: `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`; users can select another Ollama model in `.env`.
 - Containerization: Docker Compose
 
-Tools and libraries must be free of charge. Their licenses and terms of use, as well as those of the AI model, will be checked before delivery.
+An initial third-party license and terms inventory is available in the [English review](<docs.eng/docs/07-Third-Party%20License%20Review.md>). The project's own license and the distribution actions listed in that review remain open.
 
 The Ollama environment is tested on NVIDIA GPUs. Compatibility with GPUs from other vendors or of other types is not verified by this project; users who want to use them are responsible for testing compatibility.
 
@@ -204,18 +211,18 @@ flowchart LR
 
 ### Project documentation
 
-- [Project management](docs.eng/docs/00-projektinhallinta.md)
-- [Requirements specification](docs.eng/docs/01-vaatimusmaarittely.md)
-- [User stories and acceptance criteria](<docs.eng/docs/02-k%C3%A4ytt%C3%A4j%C3%A4tarinat%20ja%20hyv%C3%A4ksymiskriteerit.md>)
+- [Project management](<docs.eng/docs/00-Project%20Management.md>)
+- [Requirements specification](<docs.eng/docs/01-Requirement%20Specification.md>)
+- [User stories and acceptance criteria](<docs.eng/docs/02-User%20Stories%20and%20Acceptance%20Criteria.md>)
 - [Product Backlog](<docs.eng/docs/03-product%20backlog.md>)
-- [Sprint plan](<docs.eng/docs/04-sprintin%20suunnitelma.md>)
-- [System design](<docs.eng/docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>)
-- [UX/UI design](docs.eng/docs/06-ux-ui-suunnittelu.md)
+- [Sprint plan](<docs.eng/docs/04-Sprint%20Plan.md>)
+- [System design](<docs.eng/docs/05-System%20Design.md>)
+- [UX/UI design](<docs.eng/docs/06-UX%20and%20UI%20Design.md>)
 - [Ollama model Modelfile](ollama/Modelfile)
 
 ### Prerequisites
 
-The setup requires Docker and Docker Compose. Create a local `.env` from the example file and set the database credentials and a random `JWT_SECRET_KEY` of at least 32 characters.
+The setup requires Docker and Docker Compose. Create a local `.env` from the example file, set database credentials, and generate a unique `JWT_SECRET_KEY` for each environment. In PowerShell, run `[Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))` to generate a 64-character key and paste it into `.env`. Do not reuse the key across environments.
 
 ```powershell
 if (-not (Test-Path .env)) { Copy-Item .env.example .env }
@@ -229,7 +236,14 @@ Start the frontend, backend, MySQL, Redis, and Ollama with:
 docker compose up --build
 ```
 
-The Ollama model is created automatically on first startup: `ollama-model-init` waits for Ollama's health check, checks whether `poro-helpdesk` exists, and runs `ollama create poro-helpdesk -f /models/Modelfile` when it does not. When the backend starts, it preloads the model and asks Ollama to keep it in memory for 24 hours while idle; this runs again after backend/Docker restarts. The backend does not start serving until preload succeeds. The Modelfile uses `ollama/models/Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`; make sure this file exists locally at that path before startup. The created model is stored in the persistent `ollama_data` volume and is not recreated on later starts if it already exists. Check installation with `docker compose exec ollama ollama list` and the loaded model with `docker compose exec ollama ollama ps`.
+By default, `ollama-model-init` creates `poro-helpdesk` from `ollama/Modelfile` and the local GGUF file. To choose another Ollama model, set `OLLAMA_MODEL` in the local `.env` and set `OLLAMA_MODEL_SOURCE=registry`; the init service pulls that model from the Ollama registry. To use your own GGUF, set `OLLAMA_MODEL_SOURCE=modelfile`, put the GGUF under `ollama/models/`, and update `ollama/Modelfile` to reference it. Choose a model compatible with Ollama chat and JSON-formatted output, check its hardware requirements, latency, and license, and repeat the project's Finnish/English and RAG acceptance questions. The model is stored in the persistent `ollama_data` volume; an existing model with the same name is not replaced automatically. Check installed models with `docker compose exec ollama ollama list` and the loaded model with `docker compose exec ollama ollama ps`.
+
+Example `.env` settings for a registry model; replace the model name with one that exists in the Ollama registry:
+
+```dotenv
+OLLAMA_MODEL=your-model:tag
+OLLAMA_MODEL_SOURCE=registry
+```
 
 For local HTTP development, set `AUTH_COOKIE_SECURE=false` in `.env`. Compose binds the frontend and backend to `127.0.0.1`, so this setup is not accessible from other devices on the LAN. The frontend sends `/api` requests through the same-origin proxy. In Compose, the frontend uses only the dedicated proxy network at `172.30.0.2` and connects to the backend through the `backend-proxy` network alias, ensuring the connection uses the interface trusted by the backend. The default `TRUSTED_PROXY_IPS` value trusts only the frontend IP. The backend uses the first untrusted address in the chain forwarded by a trusted proxy as the client IP. If you change the Compose network or proxy address, update `TRUSTED_PROXY_IPS` as well. Expired login sessions are cleaned by an hourly background task. A separate daily task permanently deletes closed tickets after three calendar months and inactive conversations after three calendar months without activity. Conversations linked to an open ticket or a ticket that has not yet reached its retention date are preserved. Forwarding has not yet been verified using two real LAN devices. For an HTTPS deployment, use `AUTH_COOKIE_SECURE=true`, set `FRONTEND_ORIGINS` to include the exact HTTPS application origin, and use an HTTPS reverse proxy; configure trust for that proxy separately. Set frontend `VITE_API_BASE_URL` only when the backend API uses a different origin; its value must be the backend origin without an `/api` path.
 
@@ -296,7 +310,7 @@ docker compose exec backend python -m unittest discover -s tests -v
 
 The tests cover proxy client-IP resolution, login rate-limit counters and Redis failures, expired-session cleanup, three-calendar-month data-retention rules, and Ticket API validation, ownership checks, and core actions. A separate opt-in integration test, `backend/tests/test_auth_mysql_integration.py`, exercises registration and eight concurrent sign-ins against the running Compose API and MySQL. This local test does not replace environment-specific LAN forwarding checks. Run the frontend build and lint separately from the frontend directory.
 
-In the 04.11.2026 check, all 65 backend `unittest` tests passed; frontend lint, TypeScript checks, and the production build also succeeded. Tests ran against the updated source in a Docker container. On 05.11.2026, the project implementer confirmed full Compose startup with empty MySQL and Ollama volumes and practical acceptance of all US-01–US-17 criteria. The registration and eight-concurrent-sign-in integration test also passed against local Compose/MySQL on 05.11.2026. Real LAN forwarding remains an environment-specific check; see project management for its scope.
+In the 05.11.2026 check, 85 of 86 backend tests passed and one opt-in MySQL integration test was skipped in the standard run. Frontend lint, TypeScript checks, and production build passed. The separate registration/eight-concurrent-sign-in integration test passed against local Compose/MySQL. The project implementer confirmed full Compose startup from empty MySQL and Ollama volumes and practical acceptance of all US-01–US-17 criteria. Real LAN forwarding remains an environment-specific check; see project management for its scope.
 
 ### License
 
@@ -304,4 +318,4 @@ The project's own license has not yet been selected. A preliminary third-party l
 
 ### Screenshots
 
-Architecture and interface design materials are available in the [system design](<docs.eng/docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>) and [UX/UI design](docs.eng/docs/06-ux-ui-suunnittelu.md) documents. Screenshots are not currently maintained in the project.
+Architecture and interface design materials are available in the [system design](<docs.eng/docs/05-System%20Design.md>) and [UX/UI design](<docs.eng/docs/06-UX%20and%20UI%20Design.md>) documents. Screenshots are not currently maintained in the project.

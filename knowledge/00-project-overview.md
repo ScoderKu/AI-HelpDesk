@@ -34,7 +34,7 @@ First name, last name and email are read-only in the profile. Username is the ed
 - ORM and migrations: SQLAlchemy and Alembic.
 - Redis: login-attempt rate limiting and conversation-generation locking.
 - AI runtime: Ollama.
-- Model artifact: `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`, exposed to the backend under the model name `poro-helpdesk`.
+- Default model artifact: `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`, exposed to the backend as `poro-helpdesk`. Compose lets an installation choose another Ollama registry model or build a model from its own local Modelfile.
 - Runtime/orchestration: Docker Compose.
 - Frontend package manager: npm.
 

@@ -81,6 +81,37 @@ class KnowledgePromptTests(unittest.TestCase):
 
         self.assertEqual(result.source_ids, ())
 
+    def test_streaming_reply_keeps_sources_empty_when_model_omits_source_marker(self) -> None:
+        class StreamResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def __iter__(self):
+                event = {
+                    "message": {"content": "General advice. [NO_TICKET_RECOMMENDATION]"},
+                    "done": True,
+                }
+                return iter([(json.dumps(event) + "\n").encode("utf-8")])
+
+        classification = json.dumps({
+            "input_language": "English",
+            "requested_language": None,
+        })
+        with (
+            patch("app.ai._request_chat", return_value=classification),
+            patch("app.ai.urlopen", return_value=StreamResponse()),
+        ):
+            events = list(generate_reply_stream(
+                [{"role": "user", "content": "How do containers connect?"}],
+                knowledge_context="ID: kb-1 | Docker networking",
+                knowledge_source_ids=["kb-1"],
+            ))
+
+        self.assertIn(("sources", []), events)
+
     def test_streaming_strips_and_validates_source_marker(self) -> None:
         class StreamResponse:
             def __enter__(self):
