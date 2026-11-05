@@ -139,9 +139,11 @@ Backendin koko `unittest`-testisarjan voi ajaa projektin juuresta Dockerilla:
 docker compose exec backend python -m unittest discover -s tests -v
 ```
 
-Testit kattavat proxy-IP:n poiminnan, kirjautumisen rate limiting -laskurit ja Redis-virheet, vanhentuneiden istuntojen siivouskyselyn, kolmen kalenterikuukauden tietojen säilytyssäännöt sekä Ticket API:n validoinnin, omistajuusrajauksen ja keskeiset toiminnot. Testit eivät korvaa rekisteröitymisen ja kirjautumisen API-integraatiotestejä, rinnakkaisten kirjautumisten testiä MySQL:llä tai oikeassa LAN-verkossa tehtävää IP-välitystestiä. Frontendin build ja lint ajetaan erikseen frontend-kansiossa.
+Testit kattavat proxy-IP:n poiminnan, kirjautumisen rate limiting -laskurit ja Redis-virheet, vanhentuneiden istuntojen siivouskyselyn, kolmen kalenterikuukauden tietojen säilytyssäännöt sekä Ticket API:n validoinnin, omistajuusrajauksen ja keskeiset toiminnot. Erillinen valinnainen integraatiotesti `backend/tests/test_auth_mysql_integration.py` testaa rekisteröitymisen ja kahdeksan samanaikaista kirjautumista käynnissä olevaa Compose API:a ja MySQL:ää vasten. Paikallinen testi ei korvaa ympäristökohtaista LAN-välityksen testausta. Frontendin build ja lint ajetaan erikseen frontend-kansiossa.
 
 03.11.2026 tehdyssä tarkistuksessa backendin kaikki 57 `unittest`-testiä läpäisivät, frontendin lint oli puhdas ja TypeScript-tarkistus sekä tuotantobuild onnistuivat. Testit ajettiin päivitetyllä lähdekoodilla Docker-kontissa. Tämä ei korvaa käyttöönotetun tietokannan migraation, tyhjistä Docker-volyymeista käynnistyksen, todellisen LAN-välityksen eikä manuaalisen toiminnallisen hyväksymistestauksen tarkistusta; ajantasainen projektitilanne on projektinhallintadokumentissa.
+
+Toteuttaja vahvisti 05.11.2026 koko Compose-pinon käynnistyksen tyhjillä MySQL- ja Ollama-volyymeilla sekä kaikkien US-01–US-17-kriteerien käytännön hyväksynnän. Samana päivänä rekisteröitymisen ja kahdeksan rinnakkaisen kirjautumisen integraatiotesti läpäisi paikallisessa Compose/MySQL-ympäristössä. LAN-välitys todellisessa käyttöympäristössä on edelleen erillinen tarkistus. Nämä eivät ole avoimia user story -hyväksyntöjä.
 
 ### Kuvat
 
@@ -149,7 +151,7 @@ Arkkitehtuuri- ja käyttöliittymäsuunnitelmat löytyvät [järjestelmän suunn
 
 ### Lisenssi
 
-Projektin lisenssiä ei ole vielä määritelty. Myös kolmannen osapuolen mallien, työkalujen ja kirjastojen lisenssit sekä käyttöehdot tarkistetaan ennen julkaisua.
+Projektin omaa lisenssiä ei ole vielä määritelty. Kolmansien osapuolten lisensseistä ja käyttöehdoista on tehty alustava inventointi: [lisenssiselvitys suomeksi](docs.suomi/docs/07-kolmansien%20osapuolten%20lisenssiselvitys.md) ja [englanniksi](<docs.eng/docs/07-Third-Party%20License%20Review.md>). Ennen jakelua on vielä ratkaistava selvityksessä luetellut avoimet toimet, kuten projektin lisenssi, mallin lähdetiedot ja Redis 7.4:n ehdot.
 
 ---
 
@@ -292,14 +294,14 @@ Run the complete backend `unittest` suite from the project root using Docker:
 docker compose exec backend python -m unittest discover -s tests -v
 ```
 
-The tests cover proxy client-IP resolution, login rate-limit counters and Redis failures, expired-session cleanup, three-calendar-month data-retention rules, and Ticket API validation, ownership checks, and core actions. They do not replace registration/sign-in API integration tests, a concurrent sign-in test against MySQL, or an IP-forwarding test on a real LAN. Run the frontend build and lint separately from the frontend directory.
+The tests cover proxy client-IP resolution, login rate-limit counters and Redis failures, expired-session cleanup, three-calendar-month data-retention rules, and Ticket API validation, ownership checks, and core actions. A separate opt-in integration test, `backend/tests/test_auth_mysql_integration.py`, exercises registration and eight concurrent sign-ins against the running Compose API and MySQL. This local test does not replace environment-specific LAN forwarding checks. Run the frontend build and lint separately from the frontend directory.
 
-In the 04.11.2026 check, all 65 backend `unittest` tests passed; frontend lint, TypeScript checks, and the production build also succeeded. Tests ran against the updated source in a Docker container. This does not replace verifying migration application to the active database, startup from empty Docker volumes, actual LAN forwarding, or full manual acceptance testing; see project management for the current status.
+In the 04.11.2026 check, all 65 backend `unittest` tests passed; frontend lint, TypeScript checks, and the production build also succeeded. Tests ran against the updated source in a Docker container. On 05.11.2026, the project implementer confirmed full Compose startup with empty MySQL and Ollama volumes and practical acceptance of all US-01–US-17 criteria. The registration and eight-concurrent-sign-in integration test also passed against local Compose/MySQL on 05.11.2026. Real LAN forwarding remains an environment-specific check; see project management for its scope.
+
+### License
+
+The project's own license has not yet been selected. A preliminary third-party license and terms inventory is available in the [English review](<docs.eng/docs/07-Third-Party%20License%20Review.md>) and [Finnish review](docs.suomi/docs/07-kolmansien%20osapuolten%20lisenssiselvitys.md). Open distribution actions include choosing the project license, recording the model source and checksum and required Llama notices, confirming Redis 7.4 terms, and completing dependency and image inventories.
 
 ### Screenshots
 
 Architecture and interface design materials are available in the [system design](<docs.eng/docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>) and [UX/UI design](docs.eng/docs/06-ux-ui-suunnittelu.md) documents. Screenshots are not currently maintained in the project.
-
-### License
-
-The project license has not yet been defined. Licenses and terms of use for third-party models, tools, and libraries will also be checked before release.
