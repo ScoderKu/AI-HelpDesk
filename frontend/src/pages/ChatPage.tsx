@@ -292,25 +292,20 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     }
   }
 
-  const startConversation = async () => {
+  const startConversation = () => {
+    ++conversationRequest.current
+    activeConversationId.current = null
+    setActiveId(null)
+    onConversationChange(null)
+    setMessages([])
+    setDraft('')
+    draftRef.current = ''
+    setRetryMessageId(null)
+    setTicketDraft(null)
+    setTicketRecommendation(false)
+    setTicketFeedback('')
+    setMessageLoadError(false)
     setError('')
-    try {
-      const item = await api<Conversation>('/api/v1/conversations', {
-        method: 'POST', body: JSON.stringify({}),
-      })
-      ++conversationRequest.current
-      activeConversationId.current = item.id
-      setActiveId(item.id)
-      onConversationChange(item.id)
-      setConversations((current) => [item, ...current])
-      setMessages([])
-      setRetryMessageId(null)
-      setTicketDraft(null)
-      setTicketRecommendation(false)
-      setTicketFeedback('')
-    } catch {
-      setError(t.chatLoadError)
-    }
   }
 
   const sendMessage = async (event: FormEvent) => {
@@ -586,7 +581,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
         <aside className="chat-history" aria-label={t.chatHistory}>
           <div className="chat-history-heading">
             <h2>{t.chatHistory}</h2>
-            <button className="button button-primary" type="button" onClick={() => void startConversation()}>{t.chatNew}</button>
+            <button className="button button-primary" type="button" onClick={startConversation}>{t.chatNew}</button>
           </div>
           <div className="chat-history-list" aria-busy={loading}>
             {loading ? <p role="status">{t.chatLoadingHistory}</p> : conversations.length === 0 ? (

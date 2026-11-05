@@ -3,8 +3,8 @@
 - **Document ID:** KB-PROJECT-03
 - **Status:** verified from current backend source and README
 - **RAG Scope:** project-specific
-- **Applies to:** authentication, profile, proxy, Redis rate limiting
-- **Keywords:** authentication, session cookie, HMAC, HttpOnly, SameSite, CSRF, CORS, Origin, proxy, rate limit, kirjautuminen, istunto, tietoturva
+- **Applies to:** authentication, profile, proxy, Redis rate limiting, forgotten password recovery
+- **Keywords:** authentication, session cookie, HMAC, HttpOnly, SameSite, CSRF, CORS, Origin, proxy, rate limit, forgot password, password reset, password recovery, kirjautuminen, istunto, tietoturva, unohdin salasanani, unohtunut salasana, salasanan palautus, salasanan nollaus
 
 ## Server-side sessions
 
@@ -32,6 +32,16 @@ Never ask a user to provide their real password, one-time code, API token or oth
 The backend can mark a user as requiring a password change. While this flag is set, authenticated access is restricted to checking authentication status and changing the password. After a successful change, the flag is cleared and existing sessions are deleted; the user must sign in again.
 
 US-17 password reset is an administrative backend command, not a public reset endpoint or user-facing reset form. The command outputs a temporary password once; it must be delivered through a separately verified secure channel. The repository README contains the exact command and operational warnings.
+
+## Forgotten password and account recovery / Unohtunut salasana ja salasanan palautus
+
+Users may ask “I forgot my password”, “how do I reset my password”, “unohdin salasanani”, “olen unohtanut salasanani”, “salasanan palautus”, or “salasanan nollaus”. The current application has no public self-service reset page, public reset API, email recovery, or one-time-code flow. A user who forgot the current password should contact an authorized helpdesk administrator through the organization's approved channel and verify their identity outside the AI chat. The AI cannot reset the account. Never ask the user to send a current password, temporary password, one-time code, or other secret in chat.
+
+Jos käyttäjä on unohtanut salasanansa, tavallinen profiilin salasananvaihto ei onnistu, koska se edellyttää nykyistä salasanaa. Sovelluksessa ei ole julkista salasanan palautussivua, palautusrajapintaa, sähköpostipalautusta tai kertakäyttökoodia. Käyttäjän tulee ottaa yhteyttä valtuutettuun helpdesk-ylläpitäjään organisaation hyväksytyn kanavan kautta ja varmentaa henkilöllisyytensä chatin ulkopuolella. Tekoäly ei voi palauttaa tiliä. Älä pyydä käyttäjää lähettämään salasanaa, väliaikaista salasanaa tai kertakäyttökoodia chattiin.
+
+For an authorized operator, the reset is performed only from the protected backend/Docker environment using the maintenance procedure documented in README. The command stores only a password hash, revokes existing sessions, and prints a temporary password once after a successful transaction. Deliver it through a separately verified secure channel. The user must change it before accessing other protected features and sign in again afterward. Do not instruct an ordinary end user to run the maintenance command or disclose the temporary password in chat.
+
+Valtuutettu ylläpitäjä tekee palautuksen vain suojatussa backend-/Docker-ympäristössä README-ohjeen mukaisesti. Komento tallentaa vain salasanan tiivisteen, mitätöi aiemmat istunnot ja tulostaa väliaikaisen salasanan kerran onnistuneen tietokantatransaktion jälkeen. Salasana toimitetaan erikseen varmennetun turvallisen kanavan kautta. Käyttäjän on vaihdettava se ennen muiden suojattujen toimintojen käyttöä ja kirjauduttava sen jälkeen uudelleen. Tavallista käyttäjää ei pidä neuvoa suorittamaan ylläpitokomentoa.
 
 ## Origin and CORS
 

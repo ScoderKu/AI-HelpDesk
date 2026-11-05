@@ -4,7 +4,7 @@
 
 AI HelpDesk on kehitteillä oleva verkkopohjainen tukipalvelusovellus. Käyttäjä voi keskustella tekoälyn kanssa tietotekniikkaan ja ohjelmistokehitykseen liittyvistä ongelmista sekä hallita omia tukipyyntöjään.
 
-> **Projektin tila 04.11.2026:** Sprint 3:n ydintoiminnot ja Sprint 4:n US-09, US-13 ja US-14 on toteutettu kooditasolla nykyisessä työkopiossa. Backendin 65 unittestiä sekä frontendin lint- ja tuotantobuild-tarkistukset läpäisevät. Jäljellä ovat demo-acceptance, clean Compose -käynnistys ja todellinen LAN-välitystestaus. Tarkempi tilanne on [projektinhallintadokumentissa](docs.suomi/00-projektinhallinta.md).
+> **Projektin tila 05.11.2026:** Projektin toteuttaja on vahvistanut käyttäjätarinoiden US-01–US-17 käytännön hyväksymiskriteerit suoritetuiksi. US-07:n ja US-15:n testauksessa havaittuja tekoälymallin ja RAG:n laatuhavaintoja on kirjattu projektinhallintadokumenttiin. Automaattisten testien ja buildin viimeisin kirjattu tulos on 04.11.2026; tarkempi tilanne on [projektinhallintadokumentissa](docs.suomi/00-projektinhallinta.md).
 
 ### Keskeiset ominaisuudet
 
@@ -14,7 +14,7 @@ AI HelpDesk on kehitteillä oleva verkkopohjainen tukipalvelusovellus. Käyttäj
 - Tukipyyntöjen prioriteetit LOW, MEDIUM ja HIGH erotetaan visuaalisesti toisistaan.
 - Etusivun rajattu yhteenveto käyttäjän omista tukipyynnöistä: kokonaismäärä sekä `OPEN`- ja `CLOSED`-määrät.
 - Suomen- ja englanninkielinen käyttöliittymä.
-- RAG-neuvonta rajatusta Markdown- ja TXT-dokumenttikokoelmasta on suunniteltu Sprint 5:n työtä, eikä sitä pidä pitää nykyisen käyttöliittymän valmiina ominaisuutena.
+- RAG hakee avainsanoilla rajatusta Markdown- ja TXT-dokumenttikokoelmasta ja on integroitu AI-keskusteluun; US-15 on hyväksytty käytännössä, ja hakujen sekä generatiivisten vastausten tunnetut rajoitteet on kirjattu.
 - Kehitys- ja esittely-ympäristön käynnistäminen Docker Composella, mukaan lukien Ollama ja valittu tekoälymalli.
 
 ### Teknologiapino
@@ -157,7 +157,7 @@ Projektin lisenssiä ei ole vielä määritelty. Myös kolmannen osapuolen malli
 
 AI HelpDesk is a web-based support application under development. Users can discuss IT and software development issues with an AI assistant and manage their own support tickets.
 
-> **Project status on 04.11.2026:** Sprint 3 core functionality and the Sprint 4 stories US-09, US-13, and US-14 are implemented in the current working tree. All 65 backend tests and frontend lint/production-build checks pass. Clean Compose startup, real LAN forwarding, and full manual acceptance testing are still pending; see the [project management document](docs.eng/docs/00-projektinhallinta.md) for details.
+> **Project status on 05.11.2026:** The project implementer has confirmed practical acceptance for US-01 through US-17. AI model and RAG quality limitations observed while testing US-07 and US-15 are recorded in the project management document. The latest recorded automated test/build results are dated 04.11.2026; see the [project management document](docs.eng/docs/00-Project%20Management.md) for details.
 
 ### Main features
 
@@ -167,7 +167,7 @@ AI HelpDesk is a web-based support application under development. Users can disc
 - Support-ticket priorities LOW, MEDIUM, and HIGH are visually distinguished.
 - A limited dashboard for the signed-in user's tickets: total count and `OPEN`/`CLOSED` counts.
 - Finnish and English user interface.
-- RAG over a selected Markdown and TXT document collection is planned Sprint 5 work and is not yet a completed user-facing feature.
+- RAG keyword search over a selected Markdown and TXT collection is integrated into AI chat and US-15 has passed practical acceptance; known retrieval and generative-answer limitations are documented.
 - Starting the development and demo environment with Docker Compose, including Ollama and the selected AI model.
 
 ### Technology stack

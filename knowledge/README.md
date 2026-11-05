@@ -22,6 +22,8 @@ A document without this exact approval marker is not retrieved. This is enforced
 | 07-rag-source-policy-and-operation.md | US-15 scope, retrieval design, prompt safety and validation |
 | 08-known-project-incidents.md | Historical project incidents, verified fixes and unresolved investigations |
 | 09-source-code-api-data-compose-audit.md | Source-inspected API routes, ORM entities and Compose configuration |
+| 10-data-retention.md | Verified three-calendar-month retention rules and exceptions, in English and Finnish |
+| 11-account-access-and-password-recovery.md | User guidance and protected operator procedure for password recovery, in English and Finnish |
 
 The exact list is controlled by each document's `RAG Scope` metadata. Do not add general material just because it uses the same technology as the project.
 

@@ -1,7 +1,7 @@
 # AI HelpDesk — Product Overview
 
 - **Document ID:** KB-PROJECT-00
-- **Status:** verified project facts; status snapshot dated 2026-11-04
+- **Status:** verified project facts; source and RAG acceptance snapshot dated 2026-11-05
 - **RAG Scope:** project-specific
 - **Applies to:** AI HelpDesk repository
 - **Keywords:** AI HelpDesk, helpdesk, support ticket, technical support, opiskelijaprojekti, tukipyyntö, tekninen tuki, project scope, requirements
@@ -42,7 +42,7 @@ The project aims to use free-of-charge tools and libraries. A free-to-use price 
 
 ## Agreed scope and exclusions
 
-RAG (US-15) uses a curated Markdown/TXT corpus with keyword search first. The initial implementation is on PR #21 (`feature/us15-rag-knowledge-service`) and is not yet merged into `main`. The live corpus is restricted to project-specific AI HelpDesk knowledge. General programming and computer knowledge is handled by the model directly and is kept outside the searchable corpus. Semantic search is not part of the MVP unless tests show keyword search is insufficient.
+RAG (US-15) is implemented on the current `main` branch using a curated Markdown/TXT corpus and keyword search; the project implementer confirmed practical acceptance on 2026-11-05. Testing nevertheless exposed answer-quality limitations: the model once returned incorrect retention periods and a citation to a nonexistent file, and it invented a password self-service flow absent from the application. The corpus is restricted to project-specific AI HelpDesk knowledge; general programming and computer knowledge is handled by the model directly. The selected 8B quantized model can contribute to weak instruction following, but retrieval gaps and incomplete evidence are separate causes that a larger model alone would not solve.
 
 The project does not promise:
 - voice input or spoken responses;
@@ -58,11 +58,11 @@ The project does not promise:
 - The AI must not request passwords, one-time codes, tokens or other secrets.
 - The AI must not claim to have created a ticket. Ticket creation is a separate application action requiring the user's review and confirmation.
 - Users may access only their own tickets, conversations and messages.
-- The project has a data-retention task that permanently deletes eligible closed tickets and inactive conversations after three calendar months. This is not an archive/undo feature.
+- Eligible closed tickets and inactive conversations are permanently deleted after three calendar months, subject to linked-ticket retention rules. See `knowledge/10-data-retention.md` for the full English and Finnish policy.
 
 ## Status caveat
 
-The repository README snapshot dated 2026-11-03 says registration/sign-in, tickets, AI chat and conversation history are connected to the backend; it reports 57 backend tests and frontend lint/build checks passing in the then-current local working tree. Sprint 4–5 work and full acceptance testing were still in progress. Do not infer that RAG is already implemented: README explicitly says it is planned Sprint 5 work.
+The README and project-management documents contain dated progress snapshots. Use the current source code for implementation facts and the latest user-confirmed status for practical acceptance. Do not treat historical test counts or dated plans as current runtime verification.
 
 
 ## Tiivistelmä suomeksi

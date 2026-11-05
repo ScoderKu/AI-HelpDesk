@@ -1,20 +1,20 @@
 # AI HelpDesk — AI Chat, Streaming and Ticket Creation
 
 - **Document ID:** KB-PROJECT-04
-- **Status:** verified from `backend/app/ai.py`, `backend/app/main.py`, `frontend/src/pages/ChatPage.tsx` and US-09 project criteria; RAG integration remains planned
+- **Status:** verified from current `main` source; US-07 and US-15 practical acceptance confirmed by the project implementer on 2026-11-05; known AI quality limitations documented
 - **RAG Scope:** project-specific
 - **Applies to:** Ollama chat, conversation history, stream protocol, US-09
 - **Keywords:** Ollama, LLM, chat, conversation, message, NDJSON, streaming, retry, ticket draft, US-09, tekoälychat, keskustelu, viestivirta, tukipyynnön luonti
 
 ## Model and backend integration
 
-The backend calls Ollama's HTTP API at the configured base URL. The model name defaults to `poro-helpdesk`. The selected GGUF artifact is `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`. The Modelfile sets `num_ctx 4096` and `temperature 0.2`.
+The backend calls Ollama's HTTP API at the configured base URL. The model name defaults to `poro-helpdesk`. The selected GGUF artifact is `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`. The Modelfile currently sets `num_ctx 8192` and `temperature 0.2`.
 
 At backend startup, the FastAPI lifespan pings Redis and attempts to preload the configured Ollama model. It retries the preload while Ollama is unavailable. Therefore, backend startup readiness depends on Redis and successful model preload.
 
 ## Language handling
 
-The AI module first asks the model to classify the latest user message as Finnish, English or other, and to identify an explicitly requested response language. It then constructs a system prompt requiring the response language. The streaming path emits a language event before content.
+The AI module asks the model to classify the latest user message as Finnish, English or other, uses deterministic Finnish/English word cues when clear, and identifies an explicitly requested response language. It then constructs a system prompt requiring the response language. The streaming path emits a language event before content. Manual testing found occasional language mismatches, including Finnish questions answered in English; the classifier and a password-recovery fast path were strengthened, but generated language consistency remains a model-quality limitation.
 
 The frontend's UI language and the AI response language are related but distinct concepts. The frontend stores its UI choice as `fi` or `en`; the backend also reasons about the language of the conversation and explicit language requests.
 
@@ -65,11 +65,11 @@ The ticket-generation prompt treats conversation content as untrusted source mat
 
 The AI prompt may append an internal marker `[TICKET_RECOMMENDED]` or `[NO_TICKET_RECOMMENDATION]`. The backend strips this marker from visible text and exposes a boolean recommendation signal. The marker is machine metadata, not user-facing prose.
 
-## RAG status
+## RAG implementation and current acceptance status
 
-The feature branch `feature/us15-rag-knowledge-service` adds local Markdown/TXT keyword retrieval and integrates it with streaming, ordinary non-streaming sends and retry. Retrieved excerpts are passed as untrusted context. The model selects source IDs, and the backend validates them against the retrieved IDs before rendering citations. The branch also exposes authenticated `POST /api/v1/knowledge/search`.
+The current `main` source includes local Markdown/TXT keyword retrieval for streaming, ordinary non-streaming sends and retry. Retrieved excerpts are passed as untrusted context. The model returns source IDs separately, and the backend validates them against retrieved IDs before rendering citations. The authenticated `POST /api/v1/knowledge/search` endpoint exposes the retrieval results for inspection.
 
-These changes are on PR #21 and are not yet merged into `main`. Automated tests have not yet been executed in this work session; Docker Compose, live Ollama behavior and frontend citation rendering remain unverified. Do not describe RAG as released until those checks pass and the PR is merged.
+The project implementer confirmed practical acceptance for US-15 on 2026-11-05. In an initial Finnish retention test, keyword retrieval returned weakly related chunks and the model answered with incorrect periods and cited a file absent from the corpus. In password-recovery testing, it invented a public reset page and email link. The corpus and backend response handling were improved; fixed password guidance and a citation fallback address those observed cases. These mitigations do not guarantee that the model will never hallucinate. The 8B quantized model may be a contributing factor to instruction-following and bilingual-consistency errors; weak or missing retrieval evidence and corpus coverage are separate factors. A larger model may improve generation quality but cannot correct retrieval misses or guarantee factuality, and should be assessed against the same bilingual acceptance set and available hardware.
 
 
 ## Tiivistelmä suomeksi

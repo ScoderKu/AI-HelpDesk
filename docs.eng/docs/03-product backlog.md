@@ -8,6 +8,8 @@ Complete descriptions and acceptance criteria for the user stories are defined i
 
 The core MVP functions and the agreed US-09 and US-14 are implemented according to their Sprint allocation. RAG and the multilingual user interface are implemented in their respective Sprints. The Docker Compose environment, including Ollama and the selected model, is built in Sprint 1 for the development and demonstration environment.
 
+**Acceptance status (05.11.2026):** The project implementer has confirmed practical acceptance for US-01 through US-17. Known AI model and RAG quality limitations observed during US-07 and US-15 testing are recorded in the project management document; acceptance does not mean that generative answers are error-proof.
+
 ---
 
 ## 2. Story Point Scale

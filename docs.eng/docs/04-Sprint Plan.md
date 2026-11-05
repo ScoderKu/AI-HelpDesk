@@ -213,6 +213,10 @@ Final acceptance still requires:
 
 Sprint 4 is therefore implemented, while formal demo/environment acceptance remains pending.
 
+### Acceptance update (05.11.2026)
+
+The project implementer has confirmed practical acceptance for all Sprint 4 stories and, subsequently, for US-01 through US-17, including US-07 and US-15. Observed model and RAG quality limitations remain documented in project management; these do not change the user's confirmation that the acceptance criteria were met.
+
 ---
 
 # 7. Sprint 5 – Knowledge-Based AI Advice (RAG)
