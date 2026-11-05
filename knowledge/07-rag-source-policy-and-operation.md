@@ -1,7 +1,7 @@
 # RAG Knowledge Sources — Policy and Operational Design
 
 - **Document ID:** KB-RAG-07
-- **Status:** project-specific RAG design and feature-branch implementation; not merged into `main` as of 2026-11-04
+- **Status:** current-main RAG design and implementation; practical acceptance confirmed on 2026-11-05; known model/retrieval limitations recorded
 - **RAG Scope:** project-specific
 - **Applies to:** future Knowledge Service and Markdown/TXT corpus
 - **Keywords:** RAG, retrieval augmented generation, keyword search, Markdown, TXT, corpus, document chunk, source metadata, prompt injection, tietopohjainen tekoäly, avainsanahaku, lähdedokumentti
@@ -80,12 +80,12 @@ Test:
 
 Repository source code and current project documentation outrank this corpus. Re-check project facts when code changes. Do not index `.env`, credentials, private user data, database dumps, session cookies, model-generated ticket transcripts or unreviewed logs.
 
-The corpus is not yet the implemented retrieval engine. The backend search service, prompt integration, source rendering and tests must be delivered before US-15 can be marked complete.
+The corpus is consumed by the current backend retrieval engine. The project implementer confirmed practical acceptance for US-15 on 2026-11-05 after testing retrieval relevance, no-match behavior, source rendering, live Ollama responses and Finnish/English questions. The known limitations and initial failed retention case remain documented for future evaluation.
 
 
-## Initial implementation on feature branch
+## Current implementation
 
-The first code slice now exists on `feature/us15-rag-knowledge-service`:
+The current `main` implementation:
 
 - `backend/app/knowledge.py` loads local Markdown/TXT files, splits them by headings and paragraphs, preserves each document's status label, and ranks sections using a lightweight bilingual keyword/prefix match.
 - `compose.yaml` mounts `./knowledge` read-only at `/knowledge` in the backend container and sets `KNOWLEDGE_BASE_DIR=/knowledge`; local non-container execution defaults to the repository's root `knowledge/` directory.
@@ -96,7 +96,7 @@ The first code slice now exists on `feature/us15-rag-knowledge-service`:
 - No match produces no fabricated source list. The model is instructed to distinguish general guidance from claims supported by the local corpus.
 - No embeddings, vector store, paid API, new database table or external retrieval service is introduced.
 
-This is an initial keyword implementation, not a mature Finnish morphological search engine. Finnish inflections are handled only by simple token-prefix matching. A bilingual evaluation set is needed to measure retrieval quality before tuning or expanding the algorithm.
+This is a lightweight keyword implementation, not a Finnish morphological search engine. Finnish inflections are handled only by simple token-prefix matching. An initial Finnish retention query retrieved weakly related sections and led to an incorrect answer; the corpus and relevance threshold were subsequently improved, and practical acceptance was confirmed. The case still demonstrates that lexical search and model-generated answers can fail independently.
 
 ## Initial automated tests added
 
@@ -106,7 +106,7 @@ This is an initial keyword implementation, not a mature Finnish morphological se
 - Result-limit cap.
 - Prompt injection boundary: retrieved content is marked as untrusted context.
 
-Tests have been added to the repository but have **not yet been executed** in this work session. The feature is not ready to be marked complete until tests, Docker integration and manual chat verification pass.
+The repository contains unit tests for keyword retrieval and prompt/source handling. Existing recorded backend test results include these tests, but they do not replace ongoing evaluation as the corpus and model configuration change. US-15 practical acceptance was confirmed on 2026-11-05; future changes should preserve the bilingual retrieval and live-chat checks.
 
 
 ## Tiivistelmä suomeksi

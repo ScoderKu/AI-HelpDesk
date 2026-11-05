@@ -215,6 +215,16 @@ The UI now uses wider workspace layouts, visually distinct LOW/MEDIUM/HIGH ticke
 
 Verification on 04.11.2026: all 65 backend `unittest` tests passed; frontend `npm run lint`, TypeScript checks, and `npm run build` succeeded. Remaining acceptance checks include starting the full Compose stack with empty database and model volumes, forwarding from real LAN devices, and manually testing the complete application. Sprint 4 is implemented at code level; its final demo/environment acceptance is pending. This status describes the local working tree as of 04.11.2026.
 
+**Acceptance update on 05.11.2026:** The project implementer has confirmed that the real-world acceptance criteria for **US-01 through US-17** have been completed. This includes US-07 and US-15, which had been awaiting the demo acceptance pass. Story-level acceptance does not by itself record completion of every project delivery item, such as documentation and licensing review.
+
+The reported acceptance includes practical use of the documented Compose startup (US-16). LAN forwarding remains a separate deployment check: the current Compose ports are bound to `127.0.0.1`, and LAN exposure is not part of that local startup acceptance.
+
+**US-15 test finding and retest (05.11.2026):** An initial Finnish retention question returned weakly related Knowledge Base sections. The assistant answered with incorrect 7-day/30-day periods and cited `knowledge/05-data-model.md`, which is absent from the current corpus. After the project knowledge and response handling were updated, the implementer repeated the practical US-15 acceptance and confirmed the criteria met. The initial failure remains a recorded model/RAG limitation and informs the follow-up improvements below.
+
+**Observed AI limitations (US-07 and US-15, 05.11.2026):** During practical testing, the model sometimes answered in the wrong language, especially Finnish questions receiving English answers. It also invented a self-service “Forgot Password”/email-link flow that the application does not provide. Earlier RAG testing produced unsupported retention periods and a citation to a nonexistent corpus file. The password guidance was subsequently made deterministic, language selection was strengthened, and missing-source behavior was tightened. These mitigations reduce known failures but cannot guarantee that a generative model will always follow instructions.
+
+The selected model is an 8B-parameter quantized local model. Its limited capacity can contribute to weaker instruction following, multilingual consistency, and faithful use of retrieved evidence; this is a plausible contributing factor, not proof that model size caused every observed error. US-15 also uses keyword and token-prefix retrieval rather than semantic search or Finnish morphological analysis, so it can miss relevant passages or retrieve weak matches. A larger model may improve language and instruction-following quality, but it will not by itself fix retrieval misses, incomplete documentation, or fabricated claims. Any model replacement should be evaluated with the same Finnish/English acceptance questions and actual resource, latency, license, and citation checks.
+
 ### 8.4 Definition of Done
 
 A user story or function can be marked complete when:

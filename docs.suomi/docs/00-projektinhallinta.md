@@ -221,6 +221,16 @@ Käyttöliittymää on levennetty työtilanäkymissä, tukipyyntöjen LOW/MEDIUM
 
 Tämä tilanne kuvaa paikallista työkopiota 04.11.2026. Sprint 4:n status on koodin tasolla vahvistettu, mutta demo- ja tuotantotason hyväksymistestaus on vielä ajoitettu ennen virallista demoa.
 
+**Hyväksyntäpäivitys 05.11.2026:** Projektin toteuttaja on vahvistanut käyttäjätarinoiden **US-01–US-17** käytännön hyväksymiskriteerit suoritetuiksi. Tämä sisältää myös US-07:n ja US-15:n, jotka odottivat aiemmin demokierroksen hyväksyntää. Tarinakohtainen hyväksyntä ei yksin vahvista kaikkien toimituskokonaisuuden tehtävien, kuten dokumentaation ja lisenssien tarkistuksen, valmistumista.
+
+Vahvistus sisältää dokumentoidun Compose-käynnistyksen käytännön hyväksynnän (US-16). LAN-välitystesti on erillinen käyttöympäristön tarkistus: nykyisen Compose-tiedoston portit on sidottu `127.0.0.1`-osoitteeseen, eikä LAN-käytettävyys sisälly paikalliseen käynnistyshyväksyntään.
+
+**US-15-testihavainto ja uusintatesti (05.11.2026):** Ensimmäinen suomenkielinen säilytysaikakysymys palautti heikosti aiheeseen liittyviä Knowledge Base -osumia. Avustaja vastasi virheellisesti 7 ja 30 päivän säilytysajoilla ja viittasi tiedostoon `knowledge/05-data-model.md`, jota nykyisessä korpuksessa ei ole. Tietopohjan ja vastauskäsittelyn päivityksen jälkeen toteuttaja uusi US-15:n käytännön hyväksyntätestin ja vahvisti kriteerien täyttyvän. Alkuperäinen virhe kirjataan silti mallin ja RAG:n rajoitteeksi ja se ohjaa jatkokehitystä.
+
+**Tekoälyn testauksessa havaitut rajoitteet (US-07 ja US-15, 05.11.2026):** Käytännön testauksessa malli vastasi toisinaan väärällä kielellä; erityisesti suomenkieliseen kysymykseen tuli englanninkielinen vastaus. Malli myös keksi sovellukseen itsepalveluna toimivan “Forgot Password” -sivun ja sähköpostilinkkipalautuksen, joita toteutuksessa ei ole. Aiemmassa RAG-testissä se keksi säilytysajat ja viittasi korpuksesta puuttuvaan tiedostoon. Salasanan palautus ohjataan nyt kiinteällä, projektin mukaiseen tietoon perustuvalla vastauksella, kielentunnistusta on vahvistettu ja lähteettömien projektivastausten ohjeistusta tiukennettu. Korjaukset vähentävät havaittuja virheitä, mutta eivät takaa, että generatiivinen malli noudattaa ohjeita aina.
+
+Käytössä on 8 miljardin parametrin kvantisoitu paikallinen malli. Sen rajallinen kapasiteetti voi osaltaan heikentää ohjeiden noudattamista, kielten välistä johdonmukaisuutta ja haettujen lähteiden täsmällistä käyttöä; tämä on uskottava vaikuttava tekijä, ei todiste siitä, että mallin koko yksin aiheutti jokaisen virheen. US-15 käyttää lisäksi avainsana- ja token-etuliitehakua, ei semanttista hakua tai suomen kielen taivutusmuotoja ymmärtävää analyysiä. Se voi siksi ohittaa olennaisen kohdan tai palauttaa heikon osuman. Suurempi malli voi parantaa kieli- ja ohjeiden noudattamisen laatua, mutta se ei yksin korjaa hakujen puutteita, keskeneräisiä lähdeasiakirjoja tai virheellisiä väitteitä. Mahdollinen mallinvaihto arvioidaan samoilla suomen- ja englanninkielisillä hyväksymiskysymyksillä sekä resurssi-, viive-, lisenssi- ja lähdeviitetarkistuksilla.
+
 ### 8.4 Definition of Done
 
 Käyttäjätarina tai toiminto voidaan merkitä valmiiksi, kun:

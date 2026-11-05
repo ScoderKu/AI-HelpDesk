@@ -39,11 +39,11 @@ Redis is not the system of record for user accounts or conversations. In the cur
 
 Ollama exposes a local HTTP API to the backend. The backend sends chat requests to Ollama using the configured model name. Ollama runs in the Compose environment according to the README's current architecture.
 
-### Knowledge Service (US-15 feature branch; not merged)
+### Knowledge Service (US-15 current-main implementation)
 
-The feature branch `feature/us15-rag-knowledge-service` adds `backend/app/knowledge.py`, which loads approved Markdown/TXT files from the `knowledge/` directory and performs bounded keyword retrieval. A document is eligible only when it declares `RAG Scope: project-specific`. The branch adds an authenticated `POST /api/v1/knowledge/search` endpoint and integrates retrieval context into chat generation. The branch is a proposal until merged; automated tests and live Docker/Ollama behavior still require verification.
+`backend/app/knowledge.py` loads approved Markdown/TXT files from the `knowledge/` directory and performs bounded keyword retrieval. A document is eligible only when it declares `RAG Scope: project-specific`. The current `main` source includes authenticated `POST /api/v1/knowledge/search` and integrates retrieval context into chat generation. The project implementer confirmed US-15 practical acceptance on 2026-11-05.
 
-The feature-branch implementation is a first keyword-search slice only. It must not be treated as production-ready: automated tests, Docker integration, live model behavior and user-visible citations still require validation.
+The retrieval method is a lightweight keyword and token-prefix search, not semantic search or a Finnish morphological analyzer. It can miss relevant passages or return weak matches. An initial Finnish retention test returned weakly related sections; the model then supplied incorrect periods and cited a nonexistent file. This case was corrected and later passed practical acceptance, but remains evidence of the retrieval/model boundary. A larger model cannot recover evidence the retriever did not provide.
 
 ## Request flow
 

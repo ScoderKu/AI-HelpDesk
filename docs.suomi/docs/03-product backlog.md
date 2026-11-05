@@ -10,6 +10,8 @@ MVP:n perustoiminnot sekä sovitut US-09 ja US-14 toteutetaan niiden Sprint-jaon
 
 ---
 
+**Hyväksyntätila (05.11.2026):** Projektin toteuttaja on vahvistanut US-01–US-17:n käytännön hyväksynnän. US-07:n ja US-15:n testauksessa havaitut tekoälymallin ja RAG:n laatuhavainnot on kirjattu projektinhallintadokumenttiin; hyväksyntä ei tarkoita, että generatiiviset vastaukset olisivat virheettömiä.
+
 ## 2. Story Point -asteikko
 
 Työmääräarviot perustuvat suhteelliseen Story Point -arviointiin. Arvioinnissa huomioidaan toteutuksen monimutkaisuus, epävarmuus, testauksen tarve ja riippuvuudet muihin toimintoihin.

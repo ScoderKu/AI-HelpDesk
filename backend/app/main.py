@@ -30,6 +30,7 @@ from app.ai import (
     generate_reply,
     generate_reply_stream,
     generate_ticket_draft,
+    password_recovery_guidance,
     preload_model,
 )
 from app.database import SessionLocal, engine, get_db
@@ -1232,19 +1233,31 @@ async def generate_assistant_for_message(
     retrieved_knowledge, knowledge_context, knowledge_source_ids = build_knowledge_context(
         latest_user_content
     )
-    generated_reply = await asyncio.to_thread(
-        generate_reply,
-        ollama_messages,
-        response_language,
-        knowledge_context,
-        knowledge_source_ids,
-    )
-    answer_content = generated_reply.content.strip()
+    recovery_guidance = password_recovery_guidance(latest_user_content)
+    saved_response_language = None
+    if recovery_guidance is not None:
+        _, answer_content = recovery_guidance
+        source_ids = [
+            f"kb-{index}"
+            for index, item in enumerate(retrieved_knowledge, start=1)
+            if item["source"] == "knowledge/11-account-access-and-password-recovery.md"
+        ]
+    else:
+        generated_reply = await asyncio.to_thread(
+            generate_reply,
+            ollama_messages,
+            response_language,
+            knowledge_context,
+            knowledge_source_ids,
+        )
+        answer_content = generated_reply.content.strip()
+        saved_response_language = generated_reply.response_language
+        # The model may omit its machine-readable citation IDs. The top result is
+        # already ranked against this user query, so retain it as a citation fallback.
+        source_ids = list(generated_reply.source_ids) or knowledge_source_ids[:1]
     if not answer_content:
         raise OllamaUnavailableError("Ollama returned an empty reply")
-    answer_content += format_knowledge_sources(
-        retrieved_knowledge, generated_reply.source_ids
-    )
+    answer_content += format_knowledge_sources(retrieved_knowledge, source_ids)
 
     chat_lock.assert_owned()
     assistant_message = Message(
@@ -1273,7 +1286,7 @@ async def generate_assistant_for_message(
             )
         chat_lock.assert_owned()
         persistence_db.add(assistant_message)
-        conversation.response_language = generated_reply.response_language
+        conversation.response_language = saved_response_language
         conversation.updated_at = assistant_message.created_at
         chat_lock.assert_owned()
         persistence_db.commit()
@@ -1374,19 +1387,36 @@ def stream_chat_message(
                     retrieved_knowledge, knowledge_context, knowledge_source_ids = build_knowledge_context(
                         message_data.content
                     )
-                    for kind, value in generate_reply_stream(
-                        ollama_messages, response_language, knowledge_context, knowledge_source_ids
-                    ):
-                        chat_lock.assert_owned()
-                        if kind == "language":
-                            saved_language = value
-                        elif kind == "ticket_recommendation":
-                            ticket_recommended = value is True
-                        elif kind == "sources":
-                            validated_source_ids = value
-                        elif kind == "content":
-                            chunks.append(value)
-                            yield event("token", {"content": value})
+                    recovery_guidance = password_recovery_guidance(
+                        message_data.content
+                    )
+                    if recovery_guidance is not None:
+                        _, guidance_text = recovery_guidance
+                        saved_language = None
+                        chunks.append(guidance_text)
+                        yield event("token", {"content": guidance_text})
+                        validated_source_ids = [
+                            f"kb-{index}"
+                            for index, item in enumerate(retrieved_knowledge, start=1)
+                            if item["source"] == "knowledge/11-account-access-and-password-recovery.md"
+                        ]
+                    else:
+                        for kind, value in generate_reply_stream(
+                            ollama_messages, response_language, knowledge_context, knowledge_source_ids
+                        ):
+                            chat_lock.assert_owned()
+                            if kind == "language":
+                                saved_language = value
+                            elif kind == "ticket_recommendation":
+                                ticket_recommended = value is True
+                            elif kind == "sources":
+                                validated_source_ids = value
+                            elif kind == "content":
+                                chunks.append(value)
+                                yield event("token", {"content": value})
+                        if not validated_source_ids and knowledge_source_ids:
+                            # Keep citations visible when the model omits its hidden marker.
+                            validated_source_ids = knowledge_source_ids[:1]
                 except OllamaUnavailableError:
                     yield event("error", {
                         "detail": "AI assistant is temporarily unavailable. Your message was saved.",

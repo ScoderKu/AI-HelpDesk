@@ -224,6 +224,10 @@ Tämän perusteella Sprint 4 voidaan pitää teknisesti toteutettuna, mutta sen 
 
 ---
 
+### Hyväksyntäpäivitys (05.11.2026)
+
+Projektin toteuttaja on vahvistanut Sprint 4:n kaikkien tarinoiden käytännön hyväksynnän ja myöhemmin US-01–US-17:n hyväksynnän, mukaan lukien US-07 ja US-15. Tekoälymallin ja RAG:n testauksessa havaitut laatuhavainnot on kirjattu projektinhallintadokumenttiin; ne eivät muuta toteuttajan vahvistusta hyväksymiskriteerien täyttymisestä.
+
 # 7. Sprint 5 – Tietopohjainen tekoälyneuvonta (RAG)
 
 ## 7.1 Sprintin tavoite

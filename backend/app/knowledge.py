@@ -23,6 +23,7 @@ STOP_WORDS = {
     "ja", "että", "ei", "en", "et", "se", "sen", "on", "ovat", "kuinka",
     "mitä", "mikä", "miksi", "kun", "tai", "sekä", "voi", "voiko", "minä",
     "miten", "tämä", "tuo", "niin", "jos", "olen", "olla", "ole",
+    "kuinka", "kauan", "ennen", "mistä", "missä", "voinko", "sain",
 }
 
 
@@ -139,8 +140,13 @@ def search_knowledge(query: str, limit: int = DEFAULT_LIMIT) -> list[KnowledgeRe
             }
             if not matched:
                 continue
+            # A multiword question must match more than one content term. This
+            # filters chunks that only mention a broad topic word such as "ticket".
+            if len(terms) > 1 and len(matched) < 2:
+                continue
             score = sum(body_tokens.count(term) for term in matched)
-            score += 2 * len(matched)
+            score += 3 * len(matched)
+            score += int(4 * len(matched) / len(terms))
             if any(term in path.name.casefold() for term in terms):
                 score += 3
             if any(term in heading.casefold() for term in terms):
