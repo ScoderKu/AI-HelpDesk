@@ -210,7 +210,7 @@ export function HomePage({
                   <Icon name="user" />
                 </span>
                 <span className="account-identity">
-                  <span className="account-name">{currentUser.first_name} {currentUser.last_name}</span>
+                  <span className="account-name">{currentUser.username}</span>
                   <span className="account-email">{currentUser.email}</span>
                 </span>
                 <span className="account-chevron" aria-hidden="true">⌃</span>
