@@ -205,17 +205,11 @@ The Sprint can be accepted when the additional features meet their defined accep
 
 The Sprint 4 implementation is complete at code level: users can create a support-ticket draft from an AI conversation, switch the interface between Finnish and English, and view their own ticket summary.
 
-Final acceptance still requires:
-- a clean Compose startup with empty MySQL and Ollama volumes
-- real LAN forwarding tests across devices
-- manual acceptance testing across the complete application
-- a regression pass in the demo environment
-
-Sprint 4 is therefore implemented, while formal demo/environment acceptance remains pending.
+The checklist below records the status before the 05.11.2026 update and is superseded by the latest acceptance and delivery-check status that follows. At that earlier point, clean Compose startup, real LAN forwarding, full manual acceptance, and a demo-environment regression pass were still listed as pending.
 
 ### Acceptance update (05.11.2026)
 
-The project implementer has confirmed practical acceptance for all Sprint 4 stories and, subsequently, for US-01 through US-17, including US-07 and US-15. Observed model and RAG quality limitations remain documented in project management; these do not change the user's confirmation that the acceptance criteria were met.
+The project implementer has confirmed practical acceptance for all Sprint 4 stories and, subsequently, for US-01 through US-17, including US-07 and US-15. The implementer also confirmed a full Compose startup from empty MySQL and Ollama volumes. Remaining delivery checks are license/terms review and target-environment validation of registration/sign-in integration, concurrent MySQL sign-in, and LAN forwarding; the latter checks cannot be completed in the personal development environment. These are not outstanding user-story acceptance items. Observed model and RAG quality limitations remain documented in project management.
 
 ---
 
