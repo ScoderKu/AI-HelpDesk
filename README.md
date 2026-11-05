@@ -320,10 +320,13 @@ The project's own license has not yet been selected. A preliminary third-party l
 
 Architecture and interface design materials are available in the [system design](<docs.eng/docs/05-System%20Design.md>) and [UX/UI design](<docs.eng/docs/06-UX%20and%20UI%20Design.md>) documents. 
 
+Etusivu/ Homepage
 ![homepage](./images/homepage.png)
 
 ![homepage_suomeksi](./images/etusivu.png)
 
+Sign in page
 ![signup](./images/signup.png)
 
+Sign up page
 ![signin](./images/signin.png)
