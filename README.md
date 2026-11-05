@@ -325,8 +325,8 @@ Etusivu/ Homepage
 
 ![homepage_suomeksi](./images/etusivu.png)
 
-Sign in page
+Sign up page
 ![signup](./images/signup.png)
 
-Sign up page
+Sign in page
 ![signin](./images/signin.png)
