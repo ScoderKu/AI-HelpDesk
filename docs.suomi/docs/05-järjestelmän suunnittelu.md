@@ -166,6 +166,12 @@ Järjestelmän keskeiset entiteetit ovat User, Ticket, Conversation ja Message.
 
 Kaavio on ylläpidetty muuttamattomana yleiskuvana tietokantatauluista ja niiden suhteista. Alla olevat taulukot täsmentävät kenttien nimet ja rajoitteet. Ne sisältävät myös `tickets.created_at`- ja `tickets.updated_at`-kentät, `conversations.created_at`- ja `conversations.updated_at`-kentät sekä `messages.created_at`-kentän, joita ei ole merkitty kaavioon. Tukipyynnön luontiaika vaaditaan FR-05:n täyttämiseksi; muut aikaleimat tukevat historian näyttämistä ja tietojen ylläpitoa.
 
+**Päivitetty tietokanta** (11/11/2026)
+
+Olen lisännyt projektiini joitakin ominaisuuksia, joten myös nykyistä tietokantaani täytyi päivittää alla olevalla tavalla.
+
+![updatedDB](../../images/final.png)
+
 ### 3.2 Entiteettien kuvaukset
 
 #### User
