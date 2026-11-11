@@ -48,7 +48,7 @@ The developer role describes technical responsibility for the project and does n
 
 AI HelpDesk will be implemented as a layered web application. The frontend is responsible for the user interface, the backend for business logic and security checks, and the database for persistent storage. The AI service is used to analyze technical problems and generate suggested solutions.
 
-![System logical architecture: frontend, backend, database, AI service, and documentation search](../../photos/system%20architecture.png)
+![System logical architecture: frontend, backend, database, AI service, and documentation search](../../images/system%20architecture.png)
 
 The architecture diagram will remain structurally unchanged. The selected additional features are reflected in it and in the implementation scope as follows:
 
@@ -159,7 +159,7 @@ The model, Ollama, Docker images, and other tools and libraries will be checked 
 
 The system's key entities are User, Ticket, Conversation, and Message.
 
-![DB construction](../../photos/ER_AIHD.svg)
+![DB construction](../../images/ER_AIHD.svg)
 
 The diagram is maintained unchanged as a high-level view of the database tables and their relationships. The tables below specify the field names and constraints in more detail. They also include the `tickets.created_at` and `tickets.updated_at` fields, the `conversations.created_at` and `conversations.updated_at` fields, and the `messages.created_at` field, which are not marked in the diagram. A support ticket creation time is required to meet FR-05; the other timestamps support displaying history and maintaining the data.
 

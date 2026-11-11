@@ -48,7 +48,7 @@ Kehittäjärooli kuvaa projektin teknistä vastuuta eikä automaattisesti tarkoi
 
 AI HelpDesk toteutetaan kerroksittaisena web-sovelluksena. Frontend vastaa käyttöliittymästä, backend liiketoimintalogiikasta ja tietoturvatarkistuksista sekä tietokanta pysyvästä tallennuksesta. Tekoälypalvelua käytetään teknisten ongelmien analysointiin ja ratkaisuehdotusten tuottamiseen.
 
-![Järjestelmän looginen arkkitehtuuri: frontend, backend, tietokanta, tekoälypalvelu ja dokumentaatiohaku](../../photos/system%20architecture.png)
+![Järjestelmän looginen arkkitehtuuri: frontend, backend, tietokanta, tekoälypalvelu ja dokumentaatiohaku](../../images/system%20architecture.png)
 
 Arkkitehtuurikuva säilyy rakenteeltaan ennallaan. Valitut lisäominaisuudet näkyvät siinä ja toteutuksen rajauksessa seuraavasti:
 
@@ -162,7 +162,7 @@ Malli, Ollama, Docker-kuvat ja muut työkalut sekä kirjastot tarkistetaan maksu
 
 Järjestelmän keskeiset entiteetit ovat User, Ticket, Conversation ja Message.
 
-![DB construction](../../photos/ER_AIHD.svg)
+![DB construction](../../images/ER_AIHD.svg)
 
 Kaavio on ylläpidetty muuttamattomana yleiskuvana tietokantatauluista ja niiden suhteista. Alla olevat taulukot täsmentävät kenttien nimet ja rajoitteet. Ne sisältävät myös `tickets.created_at`- ja `tickets.updated_at`-kentät, `conversations.created_at`- ja `conversations.updated_at`-kentät sekä `messages.created_at`-kentän, joita ei ole merkitty kaavioon. Tukipyynnön luontiaika vaaditaan FR-05:n täyttämiseksi; muut aikaleimat tukevat historian näyttämistä ja tietojen ylläpitoa.
 
