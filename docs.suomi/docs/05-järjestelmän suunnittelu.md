@@ -170,7 +170,7 @@ Kaavio on ylläpidetty muuttamattomana yleiskuvana tietokantatauluista ja niiden
 
 Olen lisännyt projektiini joitakin ominaisuuksia, joten myös nykyistä tietokantaani täytyi päivittää alla olevalla tavalla.
 
-![updatedDB](../../images/final.png)
+![updatedDB](../../images/finalDB.png)
 
 ### 3.2 Entiteettien kuvaukset
 

@@ -167,7 +167,7 @@ The diagram is maintained unchanged as a high-level view of the database tables 
 
 I have added some features to my project, so my existing database also needed to be updated as shown below.
 
-![updatedDB](../../images/final.png)
+![updatedDB](../../images/finalDB.png)
 
 ### 3.2 Entity Descriptions
 
