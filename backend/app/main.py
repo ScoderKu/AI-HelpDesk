@@ -1226,12 +1226,13 @@ async def create_conversation_ticket_draft(
     response_language = conversation.response_language
     db.rollback()
     try:
-        with lock_ai_generation():
+        with lock_ai_generation() as ai_lock:
             generated = await asyncio.to_thread(
                 generate_ticket_draft,
                 ollama_messages,
                 response_language,
             )
+            ai_lock.assert_owned()
     except OllamaUnavailableError as error:
         logger.warning("AI ticket draft generation failed: %s", str(error))
         raise HTTPException(
@@ -1361,7 +1362,7 @@ async def generate_assistant_for_message(
             if item["source"] == "knowledge/11-account-access-and-password-recovery.md"
         ]
     else:
-        with lock_ai_generation():
+        with lock_ai_generation() as ai_lock:
             generated_reply = await asyncio.to_thread(
                 generate_reply,
                 ollama_messages,
@@ -1369,6 +1370,7 @@ async def generate_assistant_for_message(
                 knowledge_context,
                 knowledge_source_ids,
             )
+            ai_lock.assert_owned()
         answer_content = generated_reply.content.strip()
         saved_response_language = generated_reply.response_language
         source_ids = list(generated_reply.source_ids)
