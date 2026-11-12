@@ -43,10 +43,6 @@ Testitulokset kuvaavat dokumentoitua testaushetkeä. Ne eivät takaa virheettöm
 - CORS- ja luotetun Originin tarkistukset osassa tilaa muuttavista pyynnöistä.
 - Docker Compose -ympäristössä tietokanta ja Redis eivät julkaise host-portteja; palveluiden portit on rajattu paikalliseen loopback-käyttöön.
 
-### Tietoturvahaaraan lisätty, mutta vielä testaamatta
-
-Erillisessä haarassa `security/hardening-demo` on lisätty keskitetty Origin-tarkistus istuntoevästeen sisältäville tilaa muuttaville API-pyynnöille, rekisteröinnin IP-kohtainen käyttörajoitus, globaali AI-generoinnin lukko, yksityisten API-vastausten `no-store`-välimuistiasetus ja perustason tietoturvaotsakkeet. Muutoksia ei ole vielä varmennettu ajamalla testejä todellisessa Compose/MySQL/Redis-ympäristössä, eikä niitä pidä merkitä tuotannossa testatuiksi ennen tätä.
-
 ### Puutteet ja riskit LAN/WAN-käytössä
 
 - Todellista kahden laitteen LAN-käyttöä, reverse proxyn IP-välitystä ja HTTPS-käyttöönottoa ei ole varmennettu.
@@ -63,7 +59,6 @@ Yksityiskohtaiset kontrollit, LAN/WAN-vaatimukset ja varmennettavat asiat on kuv
 - Kolmansien osapuolten lisensseistä on tehty alustava inventointi, mutta projektin oman lisenssin valinta ja mahdolliset jakelukohtaiset toimet ovat avoinna.
 - Todellinen LAN-verkkotestaus on tehtävä siinä ympäristössä, jossa sovellusta aiotaan käyttää.
 - WAN-julkaisu ei kuulu kouluprojektin hyväksyttyyn toimituslaajuuteen.
-- Tietoturvahaara on testattava ja arvioitava erikseen ennen mahdollista yhdistämistä päähaaraan.
 
 ## 6. Kokonaisarvio
 
@@ -119,10 +114,6 @@ These results describe the documented test run at that time. They do not guarant
 - CORS and trusted-Origin checks on some state-changing requests.
 - In the Docker Compose environment, the database and Redis do not publish host ports; service ports are bound to local loopback interfaces.
 
-### Added to the security branch but not yet tested
-
-The separate `security/hardening-demo` branch adds centralized Origin checks for state-changing API requests carrying a session cookie, IP-based registration rate limiting, a global AI-generation lock, `no-store` caching policy for private API responses, and baseline security headers. These changes have not yet been verified by running tests in the actual Compose/MySQL/Redis environment. They must not be described as runtime-tested until that verification is complete.
-
 ### Gaps and risks for LAN/WAN deployment
 
 - LAN access using two actual devices, reverse-proxy client-IP forwarding, and HTTPS deployment have not been verified.
@@ -139,7 +130,6 @@ Detailed controls, LAN/WAN requirements, and items requiring verification are de
 - A preliminary third-party license inventory has been completed, but selection of the project's own license and any distribution-related actions remain open.
 - LAN network testing must be performed in the actual environment where the application is intended to run.
 - WAN publication is outside the accepted scope of the student project.
-- The security branch must be tested and reviewed separately before it is considered for merging into the main branch.
 
 ## 6. Overall evaluation
 
