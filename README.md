@@ -56,7 +56,9 @@ flowchart LR
 - [Sprint-suunnitelma](<docs.suomi/docs/04-sprintin%20suunnitelma.md>)
 - [Järjestelmän suunnittelu](<docs.suomi/docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>)
 - [UX/UI-suunnittelu](docs.suomi/docs/06-ux-ui-suunnittelu.md)
-- [Tietoturva ja käyttöönoton huomioitavat asiat](docs.suomi/docs/08-security-deployment-considerations.md)
+- [Tietoturva ja käyttöönoton huomioitavat asiat (suomeksi)](docs.suomi/docs/08-tietoturva-ja-kayttoonotto.md)
+- [Security and deployment considerations (English)](docs.english/docs/08-security-deployment-considerations.md)
+- [Projektin loppuraportti ja kokonaisarviointi](PROJECT_ACCEPTANCE_REPORT.md)
 - [Ollama-mallin Modelfile](ollama/Modelfile)
 
 ### Edellytykset
