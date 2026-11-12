@@ -2,7 +2,6 @@
 
 **Raportin päiväys:** 12.11.2026  
 **Tarkastelun kohde:** kouluprojektin toiminnallinen kokonaisuus ja dokumentoitu hyväksyntä  
-**Tietoturvamuutokset:** erillinen haara `security/hardening-demo`; ei vielä hyväksytty osaksi päähaaraa
 
 ## 1. Projektin tavoite ja toteutunut laajuus
 
@@ -79,7 +78,6 @@ Projektin dokumentoidun hyväksyntätilanteen perusteella kouluprojektin sovittu
 
 **Report date:** 12 November 2026  
 **Review scope:** Functional scope of the student project and documented acceptance  
-**Security changes:** Separate branch `security/hardening-demo`; not yet accepted into the main branch
 
 ## 1. Project objective and delivered scope
 
