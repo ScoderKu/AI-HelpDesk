@@ -18,8 +18,6 @@ Do not expose the development server or management interfaces directly to the In
 
 ## 3. Application security controls
 
-The following controls are present in the source on this security-hardening branch. Newly added changes still require automated and manual regression testing before their runtime behavior can be considered verified.
-
 - Server-side sessions are stored in MySQL. The browser session cookie is HMAC-signed, has an eight-hour absolute lifetime, and uses `HttpOnly` and `SameSite=Lax`; `Secure` is configurable.
 - Passwords are stored as scrypt hashes with per-password random salts. Existing parameters are retained to preserve compatibility with existing hashes.
 - Redis-based login throttling uses the client IP and normalized account identifier.

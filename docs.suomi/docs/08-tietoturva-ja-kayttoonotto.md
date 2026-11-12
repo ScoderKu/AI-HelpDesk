@@ -18,8 +18,6 @@ Kehityspalvelinta tai hallintaliittymiä ei pidä julkaista suoraan Internetiin.
 
 ## 3. Sovelluksessa olevat kontrollit
 
-Seuraavat kontrollit on lisätty tai toteutettu sovelluksen lähdekoodissa tällä tietoturvahaaraan tehdyllä versiolla. Uudet muutokset on vielä ajettava automaattisissa ja manuaalisissa regressiotesteissä ennen kuin niiden toiminta voidaan vahvistaa ajonaikaisesti.
-
 - Palvelinpuolen kirjautumisistunnot tallennetaan MySQL:ään. Selaimen istuntoeväste on HMAC-allekirjoitettu, voimassa enintään kahdeksan tuntia ja käyttää `HttpOnly`- sekä `SameSite=Lax`-asetuksia; `Secure` on konfiguroitavissa.
 - Salasanat tallennetaan scrypt-tiivisteinä käyttäjäkohtaisilla satunnaisilla suoloilla. Olemassa olevia parametreja ei muuteta, jotta vanhat salasanatiivisteet säilyvät yhteensopivina.
 - Kirjautumisyrityksiä rajoitetaan Redisillä IP-osoitteen ja normalisoidun käyttäjätunnuksen perusteella.
