@@ -132,9 +132,10 @@ services:
   ollama-model-init:
     image: ollama/ollama
     entrypoint: ["/bin/sh", "-c"]
+    working_dir: /models
     environment:
       OLLAMA_HOST: "http://ollama:11434"
-      OLLAMA_MODEL: "${OLLAMA_MODEL:-poro-helpdesk}"
+      OLLAMA_MODEL: "${OLLAMA_MODEL:-poro}"
       OLLAMA_MODEL_SOURCE: "${OLLAMA_MODEL_SOURCE:-modelfile}"
     volumes:
       - ./ollama:/models:ro
