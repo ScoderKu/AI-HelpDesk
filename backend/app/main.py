@@ -82,6 +82,15 @@ LOGIN_IP_ATTEMPT_LIMIT = 20
 LOGIN_IP_WINDOW_SECONDS = 60
 LOGIN_ACCOUNT_FAILURE_LIMIT = 5
 LOGIN_ACCOUNT_WINDOW_SECONDS = 15 * 60
+REGISTER_IP_ATTEMPT_LIMIT = 5
+REGISTER_IP_WINDOW_SECONDS = 60 * 60
+REGISTER_ATTEMPT_SCRIPT = """
+local count = redis.call('INCR', KEYS[1])
+if count == 1 then
+    redis.call('EXPIRE', KEYS[1], ARGV[1])
+end
+return {count, redis.call('TTL', KEYS[1])}
+"""
 LOGIN_ATTEMPT_CHECK_SCRIPT = """
 local ip_count = redis.call('INCR', KEYS[1])
 if ip_count == 1 then
@@ -209,6 +218,37 @@ def lock_conversation_chat(conversation_id: int) -> Iterator[ChatLockLease]:
             logger.exception("Could not release chat lock for conversation %s", conversation_id)
 
 
+@contextmanager
+def lock_ai_generation() -> Iterator[ChatLockLease]:
+    """Allow one Ollama generation at a time across backend instances sharing Redis."""
+    key = "ai:generation:global"
+    token = secrets.token_urlsafe(24)
+    try:
+        acquired = redis_client.set(key, token, nx=True, ex=CHAT_LOCK_TTL_SECONDS)
+    except RedisError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI capacity could not be verified. Please try again.",
+        ) from error
+    if not acquired:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="The AI assistant is busy. Please try again shortly.",
+            headers={"Retry-After": "5"},
+        )
+
+    lease = ChatLockLease(key, token)
+    lease.start()
+    try:
+        yield lease
+    finally:
+        lease.stop()
+        try:
+            redis_client.eval(RELEASE_CHAT_LOCK_SCRIPT, 1, key, token)
+        except RedisError:
+            logger.exception("Could not release the global AI generation lock.")
+
+
 def get_client_ip(request: Request) -> str:
     peer_ip = ipaddress.ip_address(
         request.client.host if request.client is not None else "0.0.0.0"
@@ -232,6 +272,32 @@ def get_client_ip(request: Request) -> str:
             ):
                 return str(forwarded_ip)
     return str(peer_ip)
+
+
+def enforce_registration_rate_limit(request: Request) -> None:
+    client_ip_hash = hashlib.sha256(get_client_ip(request).encode()).hexdigest()
+    try:
+        count, ttl = (
+            int(value)
+            for value in redis_client.eval(
+                REGISTER_ATTEMPT_SCRIPT,
+                1,
+                f"register-limit:ip:{client_ip_hash}",
+                REGISTER_IP_WINDOW_SECONDS,
+            )
+        )
+    except RedisError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Registration is temporarily unavailable.",
+        ) from error
+
+    if count > REGISTER_IP_ATTEMPT_LIMIT:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many registration attempts. Please try again later.",
+            headers={"Retry-After": str(max(ttl, 1))},
+        )
 
 
 def enforce_login_rate_limit(request: Request, email: str) -> None:
@@ -556,10 +622,48 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=list(FRONTEND_ORIGINS),
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PATCH"],
+    allow_headers=["Content-Type"],
     expose_headers=["X-Chat-Message-Id", "X-Chat-Message-Saved"],
 )
+
+
+@app.middleware("http")
+async def apply_api_security_headers(request: Request, call_next):
+    if (
+        request.method in {"POST", "PUT", "PATCH", "DELETE"}
+        and request.url.path.startswith("/api/v1/")
+        and request.url.path not in {
+            "/api/v1/auth/login",
+            "/api/v1/auth/register",
+        }
+        and request.cookies.get(SESSION_COOKIE_NAME)
+        and request.headers.get("origin") not in FRONTEND_ORIGINS
+    ):
+        return JSONResponse(
+            status_code=status.HTTP_403_FORBIDDEN,
+            content={"detail": "Request origin is not allowed."},
+            headers={
+                "Cache-Control": "no-store",
+                "X-Content-Type-Options": "nosniff",
+                "Referrer-Policy": "strict-origin-when-cross-origin",
+                "X-Frame-Options": "DENY",
+                "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+            },
+        )
+
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault(
+        "Permissions-Policy",
+        "camera=(), microphone=(), geolocation=()",
+    )
+    if request.url.path.startswith("/api/v1/"):
+        response.headers["Cache-Control"] = "no-store"
+    return response
+
 
 @app.exception_handler(RequestValidationError)
 async def validation_error_handler(
@@ -951,8 +1055,10 @@ def logout_user(
 )
 def register_user(
     registration: UserRegistrationRequest,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> UserRegistrationResponse:
+    enforce_registration_rate_limit(request)
     # Check both fields before returning a conflict
     existing_email = db.scalar(
         select(User.id).where(User.email == registration.email)
@@ -1120,11 +1226,13 @@ async def create_conversation_ticket_draft(
     response_language = conversation.response_language
     db.rollback()
     try:
-        generated = await asyncio.to_thread(
-            generate_ticket_draft,
-            ollama_messages,
-            response_language,
-        )
+        with lock_ai_generation() as ai_lock:
+            generated = await asyncio.to_thread(
+                generate_ticket_draft,
+                ollama_messages,
+                response_language,
+            )
+            ai_lock.assert_owned()
     except OllamaUnavailableError as error:
         logger.warning("AI ticket draft generation failed: %s", str(error))
         raise HTTPException(
@@ -1254,13 +1362,15 @@ async def generate_assistant_for_message(
             if item["source"] == "knowledge/11-account-access-and-password-recovery.md"
         ]
     else:
-        generated_reply = await asyncio.to_thread(
-            generate_reply,
-            ollama_messages,
-            response_language,
-            knowledge_context,
-            knowledge_source_ids,
-        )
+        with lock_ai_generation() as ai_lock:
+            generated_reply = await asyncio.to_thread(
+                generate_reply,
+                ollama_messages,
+                response_language,
+                knowledge_context,
+                knowledge_source_ids,
+            )
+            ai_lock.assert_owned()
         answer_content = generated_reply.content.strip()
         saved_response_language = generated_reply.response_language
         source_ids = list(generated_reply.source_ids)
@@ -1410,19 +1520,21 @@ def stream_chat_message(
                             if item["source"] == "knowledge/11-account-access-and-password-recovery.md"
                         ]
                     else:
-                        for kind, value in generate_reply_stream(
-                            ollama_messages, response_language, knowledge_context, knowledge_source_ids
-                        ):
-                            chat_lock.assert_owned()
-                            if kind == "language":
-                                saved_language = value
-                            elif kind == "ticket_recommendation":
-                                ticket_recommended = value is True
-                            elif kind == "sources":
-                                validated_source_ids = value
-                            elif kind == "content":
-                                chunks.append(value)
-                                yield event("token", {"content": value})
+                        with lock_ai_generation() as ai_lock:
+                            for kind, value in generate_reply_stream(
+                                ollama_messages, response_language, knowledge_context, knowledge_source_ids
+                            ):
+                                chat_lock.assert_owned()
+                                ai_lock.assert_owned()
+                                if kind == "language":
+                                    saved_language = value
+                                elif kind == "ticket_recommendation":
+                                    ticket_recommended = value is True
+                                elif kind == "sources":
+                                    validated_source_ids = value
+                                elif kind == "content":
+                                    chunks.append(value)
+                                    yield event("token", {"content": value})
                 except OllamaUnavailableError:
                     yield event("error", {
                         "detail": "AI assistant is temporarily unavailable. Your message was saved.",
