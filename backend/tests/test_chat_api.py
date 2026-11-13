@@ -258,6 +258,7 @@ class ChatEndpointTests(unittest.TestCase):
             "French",
             "No matching local Knowledge Base source was retrieved.",
             [],
+            context_summary=None,
         )
         persistence_db.commit.assert_called_once()
         self.assertEqual(db.rollback.call_count, 2)
