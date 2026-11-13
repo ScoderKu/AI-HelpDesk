@@ -56,7 +56,7 @@ class Conversation(Base):
     last_context_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
     parent_conversation_id: Mapped[int | None] = mapped_column(
         BigInteger,
-        ForeignKey("conversations.id", ondelete="SET NULL"),
+        ForeignKey("conversations.id", ondelete="SET NULL", name="fk_conversations_parent_conversation_id"),
         nullable=True,
     )
     context_summary: Mapped[str | None] = mapped_column(Text, nullable=True)

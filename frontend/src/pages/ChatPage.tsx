@@ -907,7 +907,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
                       aria-valuemin={0} aria-valuemax={100} aria-valuenow={displayedPercentage}>
                       <div className={`chat-context-fill ${level}`} style={{ width: `${percentage}%` }} />
                     </div>
-                    <small>{t.chatContextLatestPrompt}</small>
+                    <small>{t.chatContextLatestGeneration}</small>
                   </>
                 )
               })() : (

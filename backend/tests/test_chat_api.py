@@ -193,7 +193,6 @@ class ChatEndpointTests(unittest.TestCase):
 
     def test_new_message_can_supplement_an_unanswered_user_message(self) -> None:
         conversation = make_conversation()
-        previous_message = make_user_message(41)
         assistant_message = main.MessageResponse(
             id=43,
             role="ASSISTANT",
