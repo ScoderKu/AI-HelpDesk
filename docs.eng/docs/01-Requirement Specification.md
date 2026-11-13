@@ -183,6 +183,7 @@ The following table maps functional requirements to user stories, acceptance cri
 
 | ID | Requirement |
 |---|---|
+| FR-17 | An authorized administrator can reset a user's forgotten password using a protected backend maintenance command; the user must change the temporary password before accessing other protected features. |
 | FR-18 | A user can start an independent conversation that has no parent reference and does not inherit another conversation's messages or context summary. |
 | FR-19 | A user can create a child conversation from an owned conversation after reviewing and confirming an AI-generated, editable title and non-empty context summary. The child stores its parent relationship and summary snapshot; the parent conversation remains unchanged. |
 | FR-20 | The child-conversation action is available only when the active conversation's latest completed-generation context usage is valid and strictly greater than 70% of its valid context capacity. Missing or invalid measurements and exactly 70% do not satisfy the condition. |
