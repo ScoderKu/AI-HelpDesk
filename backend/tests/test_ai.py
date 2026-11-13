@@ -21,6 +21,25 @@ def ollama_response(content: str) -> object:
 
 class OllamaResponseTests(unittest.TestCase):
 
+    def test_reply_prompt_includes_persisted_conversation_context(self) -> None:
+        classification = json.dumps({"input_language": "English", "requested_language": None})
+        reply = json.dumps({"reply": "Try restarting the adapter.", "source_ids": []})
+        with patch("app.ai.urlopen", side_effect=[
+            ollama_response(classification),
+            ollama_response(reply),
+        ]) as urlopen:
+            generate_reply(
+                [{"role": "user", "content": "It still disconnects."}],
+                "English",
+                None,
+                [],
+                context_summary="The computer runs Windows 11 and uses Wi-Fi 6.",
+            )
+        payload = json.loads(urlopen.call_args_list[1].args[0].data)
+        self.assertIn("Windows 11", payload["messages"][0]["content"])
+        self.assertIn("UNTRUSTED REFERENCE DATA", payload["messages"][0]["content"])
+
+
     def test_conversation_summary_generates_title_and_redacts_secrets(self) -> None:
         response = json.dumps({
             "title": "Wi-Fi drops after login",

@@ -166,7 +166,7 @@ class ChatEndpointTests(unittest.TestCase):
             created_at=datetime(2026, 11, 3, 10, 1),
         )
         db = MagicMock()
-        db.scalar.side_effect = [conversation.id, conversation, previous_message]
+        db.scalar.side_effect = [conversation.id, conversation]
         db.refresh.side_effect = lambda item: setattr(item, "id", 42)
         with (
             patch.object(main.redis_client, "set", return_value=True),

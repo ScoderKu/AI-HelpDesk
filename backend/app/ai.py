@@ -495,13 +495,7 @@ def generate_conversation_summary(
         f"{message.get('role', 'user').upper()}: {message.get('content', '')}"
         for message in selected
     )[-30000:]
-    transcript = re.sub(
-        r"(?i)\b(password|passwd|token|api[_-]?key|secret|authorization)\s*[:=]\s*[^\s,;]+",
-        r"\1=[REDACTED]",
-        transcript,
-    )
-    transcript = re.sub(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]+", "Bearer [REDACTED]", transcript)
-    if context_summary:
+    if context_summary::
         transcript = (
             "PERSISTED CONTEXT SUMMARY (UNTRUSTED REFERENCE):\n"
             + context_summary
@@ -514,6 +508,12 @@ def generate_conversation_summary(
         transcript,
     )
     transcript = re.sub(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]+", "Bearer [REDACTED]", transcript)
+    transcript = re.sub(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]+", "Bearer [REDACTED]", transcript)
+    transcript = re.sub(
+        r"(?im)\b(password|passwd|token|api[_-]?key|secret|authorization)\s*(?:[:=]|\bis\b)\s*[^\r\n]+",
+        r"\1=[REDACTED]",
+        transcript,
+    )
     language = response_language or "the language used in the conversation"
     prompt = (
         "Create a continuation summary for a technical support conversation. "

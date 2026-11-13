@@ -575,6 +575,11 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
           void api<{ model: string; context_length: number | null }>('/api/v1/ai/context')
             .then((result) => setContextCapacity(result.context_length))
             .catch(() => setContextCapacity(null))
+        } else if (item.event === 'cancelled') {
+          streamFailed = true
+          userStoppedStream.current = true
+          setStreaming(false)
+          setMessages((current) => current.filter((message) => message.id !== assistantMessageId))
         } else if (item.event === 'done' && item.assistant_message) {
           completed = true
           setStreaming(false)

@@ -1199,6 +1199,15 @@ async def preview_conversation_continuation(
     db: Session = Depends(get_db),
 ) -> ConversationContinuationPreviewResponse:
     require_trusted_origin(request)
+    owned_conversation = db.scalar(
+        select(Conversation.id).where(
+            Conversation.id == conversation_id,
+            Conversation.user_id == user.id,
+        )
+    )
+    if owned_conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+    db.rollback()
     try:
         with lock_conversation_chat(conversation_id) as chat_lock:
             conversation = db.scalar(
@@ -1254,9 +1263,11 @@ async def preview_conversation_continuation(
 )
 def create_conversation(
     conversation_data: ConversationCreateRequest,
+    request: Request,
     user: User = Depends(get_authenticated_user),
     db: Session = Depends(get_db),
 ) -> ConversationResponse:
+    require_trusted_origin(request)
     parent_id = conversation_data.parent_conversation_id
     if parent_id is not None:
         parent = db.scalar(
@@ -1289,10 +1300,12 @@ def create_conversation(
 )
 def update_conversation_title(
     title_data: ConversationTitleUpdateRequest,
+    request: Request,
     conversation_id: int = Path(gt=0),
     user: User = Depends(get_authenticated_user),
     db: Session = Depends(get_db),
 ) -> ConversationResponse:
+    require_trusted_origin(request)
     item = db.scalar(
         select(Conversation).where(
             Conversation.id == conversation_id,
@@ -1893,12 +1906,6 @@ async def send_chat_message(
         if conversation is None:
             raise HTTPException(status_code=404, detail="Conversation not found.")
 
-        latest_message = db.scalar(
-            select(Message)
-            .where(Message.conversation_id == conversation_id)
-            .order_by(Message.id.desc())
-            .limit(1)
-        )
         now = datetime.now(timezone.utc).replace(tzinfo=None)
         user_message = Message(
             conversation_id=conversation.id,
