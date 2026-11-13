@@ -2,7 +2,7 @@ import json
 import unittest
 from unittest.mock import patch
 
-from app.ai import GeneratedReply, GeneratedTicketDraft, OllamaUnavailableError, generate_reply, generate_reply_stream, generate_ticket_draft, preload_model
+from app.ai import GeneratedConversationSummary, GeneratedReply, GeneratedTicketDraft, OllamaUnavailableError, generate_conversation_summary, generate_reply, generate_reply_stream, generate_ticket_draft, preload_model
 
 
 def ollama_response(content: str) -> object:
@@ -20,6 +20,108 @@ def ollama_response(content: str) -> object:
 
 
 class OllamaResponseTests(unittest.TestCase):
+
+    def test_stream_reply_reports_prompt_and_generated_token_usage(self) -> None:
+        classification = ollama_response(json.dumps({
+            "input_language": "English",
+            "requested_language": None,
+        }))
+        class StreamResponse:
+            def __init__(self, lines):
+                self.lines = lines
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def __iter__(self):
+                return iter(self.lines)
+
+        stream = StreamResponse([
+            json.dumps({"message": {"content": "Hello."}, "done": False}).encode("utf-8"),
+            json.dumps({
+                "message": {"content": ""},
+                "done": True,
+                "prompt_eval_count": 321,
+                "eval_count": 17,
+            }).encode("utf-8"),
+        ])
+        with patch("app.ai.urlopen", side_effect=[classification, stream]):
+            events = list(generate_reply_stream([{"role": "user", "content": "Hello"}], "English"))
+        usage = next(value for kind, value in events if kind == "usage")
+        self.assertEqual(usage, {"prompt_tokens": 321, "response_tokens": 17, "context_tokens": 338})
+
+
+    def test_conversation_summary_can_continue_from_an_inherited_summary_without_new_messages(self) -> None:
+        response = json.dumps({
+            "title": "Continue Windows troubleshooting",
+            "context_summary": "Windows 11 networking issue; next check the adapter driver.",
+        })
+        with patch("app.ai.urlopen", return_value=ollama_response(response)) as urlopen:
+            result = generate_conversation_summary(
+                [],
+                "English",
+                "The user is troubleshooting a Windows 11 network adapter.",
+            )
+        self.assertIn("Windows 11", json.loads(urlopen.call_args.args[0].data)["messages"][1]["content"])
+        self.assertEqual(result.title, "Continue Windows troubleshooting")
+
+
+    def test_reply_prompt_includes_persisted_conversation_context(self) -> None:
+        classification = json.dumps({"input_language": "English", "requested_language": None})
+        reply = json.dumps({"reply": "Try restarting the adapter.", "source_ids": []})
+        with patch("app.ai.urlopen", side_effect=[
+            ollama_response(classification),
+            ollama_response(reply),
+        ]) as urlopen:
+            generate_reply(
+                [{"role": "user", "content": "It still disconnects."}],
+                "English",
+                None,
+                [],
+                context_summary="The computer runs Windows 11 and uses Wi-Fi 6.",
+            )
+        payload = json.loads(urlopen.call_args_list[1].args[0].data)
+        self.assertIn("Windows 11", payload["messages"][0]["content"])
+        self.assertIn("UNTRUSTED REFERENCE DATA", payload["messages"][0]["content"])
+
+
+    def test_conversation_summary_generates_title_and_redacts_secrets(self) -> None:
+        response = json.dumps({
+            "title": "Wi-Fi drops after login",
+            "context_summary": "Wi-Fi disconnects after login; password: model-leaked-secret.",
+        })
+        messages = [
+            {"role": "user", "content": "Wi-Fi drops after login. password: hunter2"},
+            {"role": "assistant", "content": "Try restarting the router."},
+        ]
+        with patch("app.ai.urlopen", return_value=ollama_response(response)) as urlopen:
+            result = generate_conversation_summary(messages, "English")
+
+        self.assertEqual(result, GeneratedConversationSummary(
+            "Wi-Fi drops after login",
+            "Wi-Fi disconnects after login; password=[REDACTED]",
+        ))
+        payload = json.loads(urlopen.call_args.args[0].data)
+        self.assertIn("[REDACTED]", payload["messages"][1]["content"])
+        self.assertNotIn("hunter2", payload["messages"][1]["content"])
+
+    def test_ticket_draft_includes_persisted_context_summary(self) -> None:
+        response = json.dumps({
+            "title": "Wi-Fi disconnects after login",
+            "description": "Wi-Fi disconnects after login; restarting the router did not help.",
+        })
+        with patch("app.ai.urlopen", return_value=ollama_response(response)) as urlopen:
+            generate_ticket_draft(
+                [{"role": "user", "content": "It still disconnects."}],
+                "English",
+                "The user uses Windows 11.",
+            )
+        payload = json.loads(urlopen.call_args.args[0].data)
+        self.assertIn("The user uses Windows 11.", payload["messages"][0]["content"])
+
     def test_preload_requests_model_without_generation_and_keeps_it_loaded(self) -> None:
         class FakeResponse:
             def __enter__(self):

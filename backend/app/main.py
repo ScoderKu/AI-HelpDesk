@@ -27,7 +27,9 @@ from sqlalchemy.orm import Session
 from app.ai import (
     OLLAMA_TIMEOUT_SECONDS,
     OllamaUnavailableError,
+    GenerationCancelledError,
     generate_reply,
+    generate_conversation_summary,
     generate_reply_stream,
     generate_ticket_draft,
     password_recovery_guidance,
@@ -39,6 +41,8 @@ from app.models import AuthSession, Conversation, Message, Ticket, User
 from app.schemas import (
     ConversationCreateRequest,
     ConversationResponse,
+    ConversationTitleUpdateRequest,
+    ConversationContinuationPreviewResponse,
     MessageResponse,
     ChatMessageRequest,
     ChatMessageResponse,
@@ -185,6 +189,51 @@ redis_client: Redis = Redis.from_url(
     socket_connect_timeout=2,
     socket_timeout=2,
 )
+
+
+class GenerationControl:
+    """Cancellation handle for one authenticated conversation stream."""
+
+    def __init__(self) -> None:
+        self.cancelled = threading.Event()
+        self.done = threading.Event()
+        self._lock = threading.Lock()
+        self._response = None
+        self._completed = False
+
+    def attach_response(self, response) -> None:
+        with self._lock:
+            self._response = response
+            should_close = response is not None and self.cancelled.is_set()
+        if should_close:
+            try:
+                response.close()
+            except Exception:
+                logger.debug("Ollama response was already closed during cancellation.")
+
+    def cancel(self) -> bool:
+        with self._lock:
+            if self._completed or self.done.is_set():
+                return False
+            self.cancelled.set()
+            response = self._response
+        if response is not None:
+            try:
+                response.close()
+            except Exception:
+                logger.debug("Ollama response was already closed during cancellation.")
+        return True
+
+    def mark_completed(self) -> bool:
+        with self._lock:
+            if self.cancelled.is_set():
+                return False
+            self._completed = True
+            return True
+
+
+_active_generations: dict[tuple[int, int], GenerationControl] = {}
+_active_generations_lock = threading.Lock()
 
 
 def require_trusted_origin(request: Request) -> None:
@@ -1141,17 +1190,135 @@ def list_conversations(
     return [ConversationResponse.model_validate(item) for item in items]
 
 
-@app.post("/api/v1/conversations", response_model=ConversationResponse,
-          status_code=status.HTTP_201_CREATED, tags=["Conversations"])
+@app.post(
+    "/api/v1/conversations/{conversation_id}/continuation-preview",
+    response_model=ConversationContinuationPreviewResponse,
+    tags=["Conversations"],
+)
+async def preview_conversation_continuation(
+    request: Request,
+    conversation_id: int = Path(gt=0),
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> ConversationContinuationPreviewResponse:
+    require_trusted_origin(request)
+    owned_conversation = db.scalar(
+        select(Conversation.id).where(
+            Conversation.id == conversation_id,
+            Conversation.user_id == user.id,
+        )
+    )
+    if owned_conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+    db.rollback()
+    try:
+        with lock_conversation_chat(conversation_id) as chat_lock:
+            conversation = db.scalar(
+                select(Conversation).where(
+                    Conversation.id == conversation_id,
+                    Conversation.user_id == user.id,
+                )
+            )
+            if conversation is None:
+                raise HTTPException(status_code=404, detail="Conversation not found.")
+
+            messages = db.scalars(
+                select(Message)
+                .where(Message.conversation_id == conversation_id)
+                .order_by(Message.created_at.asc(), Message.id.asc())
+            ).all()
+            response_language = conversation.response_language
+            context_summary = conversation.context_summary
+            if not any(message.role == "USER" for message in messages) and not context_summary:
+                raise HTTPException(status_code=400, detail="The conversation has no context to continue.")
+
+            ollama_messages = [
+                {"role": "user" if message.role == "USER" else "assistant", "content": message.content}
+                for message in messages
+            ]
+            db.rollback()
+
+            with lock_ai_generation() as ai_lock:
+                summary = await asyncio.to_thread(
+                    generate_conversation_summary,
+                    ollama_messages,
+                    response_language,
+                    context_summary,
+                )
+                chat_lock.assert_owned()
+                ai_lock.assert_owned()
+    except OllamaUnavailableError:
+        raise HTTPException(
+            status_code=503,
+            detail="The AI could not prepare a conversation summary. Please try again.",
+        ) from None
+
+    return ConversationContinuationPreviewResponse(
+        title=summary.title,
+        context_summary=summary.context_summary,
+    )
+
+@app.post(
+    "/api/v1/conversations",
+    response_model=ConversationResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Conversations"],
+)
 def create_conversation(
     conversation_data: ConversationCreateRequest,
+    request: Request,
     user: User = Depends(get_authenticated_user),
     db: Session = Depends(get_db),
 ) -> ConversationResponse:
+    require_trusted_origin(request)
+    parent_id = conversation_data.parent_conversation_id
+    if parent_id is not None:
+        parent = db.scalar(
+            select(Conversation.id).where(
+                Conversation.id == parent_id,
+                Conversation.user_id == user.id,
+            )
+        )
+        if parent is None:
+            raise HTTPException(status_code=404, detail="Parent conversation not found.")
     now = datetime.now(timezone.utc).replace(tzinfo=None)
-    item = Conversation(user_id=user.id, title=conversation_data.title,
-                        created_at=now, updated_at=now)
+    item = Conversation(
+        user_id=user.id,
+        title=conversation_data.title,
+        parent_conversation_id=parent_id,
+        context_summary=conversation_data.context_summary,
+        created_at=now,
+        updated_at=now,
+    )
     db.add(item)
+    db.commit()
+    db.refresh(item)
+    return ConversationResponse.model_validate(item)
+
+
+@app.patch(
+    "/api/v1/conversations/{conversation_id}/title",
+    response_model=ConversationResponse,
+    tags=["Conversations"],
+)
+def update_conversation_title(
+    title_data: ConversationTitleUpdateRequest,
+    request: Request,
+    conversation_id: int = Path(gt=0),
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> ConversationResponse:
+    require_trusted_origin(request)
+    item = db.scalar(
+        select(Conversation).where(
+            Conversation.id == conversation_id,
+            Conversation.user_id == user.id,
+        )
+    )
+    if item is None:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+    item.title = title_data.title
+    item.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
     db.commit()
     db.refresh(item)
     return ConversationResponse.model_validate(item)
@@ -1224,6 +1391,7 @@ async def create_conversation_ticket_draft(
         for message in messages
     ]
     response_language = conversation.response_language
+    context_summary = conversation.context_summary
     db.rollback()
     try:
         with lock_ai_generation() as ai_lock:
@@ -1231,6 +1399,7 @@ async def create_conversation_ticket_draft(
                 generate_ticket_draft,
                 ollama_messages,
                 response_language,
+                context_summary,
             )
             ai_lock.assert_owned()
     except OllamaUnavailableError as error:
@@ -1317,25 +1486,64 @@ def format_knowledge_sources(
     return "\n\nSources / Lähteet:\n" + "\n".join(lines) if lines else ""
 
 
+def build_effective_chat_history(
+    db: Session,
+    conversation_id: int,
+    through_message_id: int,
+    context_limit: int = 20,
+) -> tuple[list[dict[str, str]], str]:
+    """Use recent answered context and combine all pending user messages."""
+    last_answer_id = db.scalar(
+        select(Message.id)
+        .where(
+            Message.conversation_id == conversation_id,
+            Message.id < through_message_id,
+            Message.role == "ASSISTANT",
+        )
+        .order_by(Message.id.desc())
+        .limit(1)
+    )
+    pending_query = select(Message).where(
+        Message.conversation_id == conversation_id,
+        Message.id <= through_message_id,
+        Message.role == "USER",
+    )
+    if last_answer_id is not None:
+        pending_query = pending_query.where(Message.id > last_answer_id)
+    pending = db.scalars(pending_query.order_by(Message.id.asc())).all()
+
+    context = []
+    if last_answer_id is not None:
+        context_query = (
+            select(Message)
+            .where(
+                Message.conversation_id == conversation_id,
+                Message.id <= last_answer_id,
+            )
+            .order_by(Message.id.desc())
+            .limit(context_limit)
+        )
+        context = list(reversed(db.scalars(context_query).all()))
+
+    effective_user_content = "\n\n".join(item.content for item in pending)
+    messages = [
+        {"role": "user" if item.role == "USER" else "assistant", "content": item.content}
+        for item in context
+    ]
+    if effective_user_content:
+        messages.append({"role": "user", "content": effective_user_content})
+    return messages, effective_user_content
+
+
 async def generate_assistant_for_message(
     conversation_id: int,
     user_message_id: int,
     db: Session,
     chat_lock: ChatLockLease,
 ) -> MessageResponse:
-    history = db.scalars(
-        select(Message)
-        .where(
-            Message.conversation_id == conversation_id,
-            Message.id <= user_message_id,
-        )
-        .order_by(Message.created_at.desc(), Message.id.desc())
-        .limit(20)
-    ).all()
-    ollama_messages = [
-        {"role": "user" if item.role == "USER" else "assistant", "content": item.content}
-        for item in reversed(history)
-    ]
+    ollama_messages, latest_user_content = build_effective_chat_history(
+        db, conversation_id, user_message_id
+    )
 
     conversation = db.get(Conversation, conversation_id)
     if conversation is None:
@@ -1344,11 +1552,8 @@ async def generate_assistant_for_message(
             detail="Conversation not found.",
         )
     response_language = conversation.response_language
+    context_summary = conversation.context_summary
     db.rollback()
-    latest_user_content = next(
-        (item.content for item in reversed(history) if item.role == "USER"),
-        "",
-    )
     retrieved_knowledge, knowledge_context, knowledge_source_ids = build_knowledge_context(
         latest_user_content
     )
@@ -1369,6 +1574,7 @@ async def generate_assistant_for_message(
                 response_language,
                 knowledge_context,
                 knowledge_source_ids,
+                context_summary=context_summary,
             )
             ai_lock.assert_owned()
         answer_content = generated_reply.content.strip()
@@ -1415,6 +1621,42 @@ async def generate_assistant_for_message(
 
 
 @app.post(
+    "/api/v1/conversations/{conversation_id}/messages/stop",
+    tags=["Conversations"],
+)
+async def stop_chat_generation(
+    request: Request,
+    conversation_id: int = Path(gt=0),
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> dict[str, bool]:
+    require_trusted_origin(request)
+    owned = db.scalar(
+        select(Conversation.id).where(
+            Conversation.id == conversation_id,
+            Conversation.user_id == user.id,
+        )
+    )
+    if owned is None:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+
+    key = (user.id, conversation_id)
+    with _active_generations_lock:
+        control = _active_generations.get(key)
+    if control is None:
+        return {"cancelled": False}
+    cancelled = control.cancel()
+    if cancelled:
+        finished = await asyncio.to_thread(control.done.wait, OLLAMA_TIMEOUT_SECONDS + 5)
+        if not finished:
+            raise HTTPException(
+                status_code=503,
+                detail="The generation is still shutting down. Please wait before sending another message.",
+            )
+    return {"cancelled": cancelled}
+
+
+@app.post(
     "/api/v1/conversations/{conversation_id}/messages/stream",
     tags=["Conversations"],
 )
@@ -1437,6 +1679,13 @@ def stream_chat_message(
         raise HTTPException(status_code=404, detail="Conversation not found.")
     db.rollback()
 
+    generation_key = (authenticated_user_id, conversation_id)
+    generation_control = GenerationControl()
+    with _active_generations_lock:
+        if generation_key in _active_generations:
+            raise HTTPException(status_code=409, detail="A response is already being generated.")
+        _active_generations[generation_key] = generation_control
+
     def event_stream():
         user_message_id: int | None = None
 
@@ -1456,15 +1705,6 @@ def stream_chat_message(
                     if conversation is None:
                         yield event("error", {"detail": "Conversation not found."})
                         return
-                    latest_message = message_db.scalar(
-                        select(Message)
-                        .where(Message.conversation_id == conversation_id)
-                        .order_by(Message.id.desc())
-                        .limit(1)
-                    )
-                    if latest_message is not None and latest_message.role == "USER":
-                        yield event("error", {"detail": "Retry the previous message before sending another."})
-                        return
                     now = datetime.now(timezone.utc).replace(tzinfo=None)
                     user_message = Message(
                         conversation_id=conversation_id,
@@ -1481,33 +1721,31 @@ def stream_chat_message(
                     user_message_id = user_message.id
                     user_message_payload = MessageResponse.model_validate(user_message).model_dump(mode="json")
 
-                    history = message_db.scalars(
-                        select(Message)
-                        .where(
-                            Message.conversation_id == conversation_id,
-                            Message.id <= user_message_id,
-                        )
-                        .order_by(Message.created_at.desc(), Message.id.desc())
-                        .limit(20)
-                    ).all()
-                    ollama_messages = [
-                        {"role": "user" if item.role == "USER" else "assistant", "content": item.content}
-                        for item in reversed(history)
-                    ]
+                    ollama_messages, effective_user_content = build_effective_chat_history(
+                        message_db, conversation_id, user_message_id
+                    )
                     response_language = conversation.response_language
+                    context_summary = conversation.context_summary
                     message_db.rollback()
 
                 yield event("user_message", {"message": user_message_payload})
+                if generation_control.cancelled.is_set():
+                    yield event("cancelled", {})
+                    return
                 chunks: list[str] = []
                 saved_language = response_language
                 ticket_recommended = False
                 validated_source_ids: list[str] = []
                 try:
+                    if generation_control.cancelled.is_set():
+                        raise GenerationCancelledError()
                     retrieved_knowledge, knowledge_context, knowledge_source_ids = build_knowledge_context(
-                        message_data.content
+                        effective_user_content
                     )
+                    if generation_control.cancelled.is_set():
+                        raise GenerationCancelledError()
                     recovery_guidance = password_recovery_guidance(
-                        message_data.content
+                        effective_user_content
                     )
                     if recovery_guidance is not None:
                         _, guidance_text = recovery_guidance
@@ -1522,7 +1760,13 @@ def stream_chat_message(
                     else:
                         with lock_ai_generation() as ai_lock:
                             for kind, value in generate_reply_stream(
-                                ollama_messages, response_language, knowledge_context, knowledge_source_ids
+                                ollama_messages,
+                                response_language,
+                                knowledge_context,
+                                knowledge_source_ids,
+                                cancel_event=generation_control.cancelled,
+                                on_response=generation_control.attach_response,
+                                context_summary=context_summary,
                             ):
                                 chat_lock.assert_owned()
                                 ai_lock.assert_owned()
@@ -1535,6 +1779,17 @@ def stream_chat_message(
                                 elif kind == "content":
                                     chunks.append(value)
                                     yield event("token", {"content": value})
+                                elif kind == "usage":
+                                    context_tokens = value["context_tokens"]
+                                    with SessionLocal() as usage_db:
+                                        usage_conversation = usage_db.get(Conversation, conversation_id)
+                                        if usage_conversation is not None and usage_conversation.user_id == authenticated_user_id:
+                                            usage_conversation.last_context_tokens = context_tokens
+                                            usage_db.commit()
+                                    yield event("context_usage", value)
+                except GenerationCancelledError:
+                    yield event("cancelled", {})
+                    return
                 except OllamaUnavailableError:
                     yield event("error", {
                         "detail": "AI assistant is temporarily unavailable. Your message was saved.",
@@ -1542,6 +1797,9 @@ def stream_chat_message(
                     })
                     return
 
+                if generation_control.cancelled.is_set():
+                    yield event("cancelled", {})
+                    return
                 full_content = "".join(chunks).strip()
                 if not full_content:
                     yield event("error", {
@@ -1552,6 +1810,9 @@ def stream_chat_message(
 
                 full_content += format_knowledge_sources(retrieved_knowledge, validated_source_ids)
                 chat_lock.assert_owned()
+                if not generation_control.mark_completed():
+                    yield event("cancelled", {})
+                    return
                 assistant_message = Message(
                     conversation_id=conversation_id,
                     role="ASSISTANT",
@@ -1600,6 +1861,11 @@ def stream_chat_message(
             if user_message_id is not None:
                 payload["saved_message_id"] = user_message_id
             yield event("error", payload)
+        finally:
+            with _active_generations_lock:
+                if _active_generations.get(generation_key) is generation_control:
+                    _active_generations.pop(generation_key, None)
+            generation_control.done.set()
 
     return StreamingResponse(
         event_stream(),
@@ -1643,18 +1909,6 @@ async def send_chat_message(
         )
         if conversation is None:
             raise HTTPException(status_code=404, detail="Conversation not found.")
-
-        latest_message = db.scalar(
-            select(Message)
-            .where(Message.conversation_id == conversation_id)
-            .order_by(Message.id.desc())
-            .limit(1)
-        )
-        if latest_message is not None and latest_message.role == "USER":
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Retry the previous message before sending another.",
-            )
 
         now = datetime.now(timezone.utc).replace(tzinfo=None)
         user_message = Message(
@@ -1804,6 +2058,37 @@ def search_knowledge_endpoint(
             for item in results
         ],
     )
+
+
+def get_running_model_context() -> int | None:
+    import json
+    from urllib.request import urlopen
+
+    try:
+        with urlopen(f"{OLLAMA_BASE_URL}/api/ps", timeout=OLLAMA_HEALTH_TIMEOUT_SECONDS) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except Exception:
+        logger.debug("Could not retrieve the running Ollama model context length.")
+        return None
+
+    models = payload.get("models", []) if isinstance(payload, dict) else []
+    for model in models:
+        if not isinstance(model, dict):
+            continue
+        name = model.get("name") or model.get("model")
+        if isinstance(name, str) and (name == OLLAMA_MODEL or name.startswith(f"{OLLAMA_MODEL}:")):
+            context_length = model.get("context_length")
+            if isinstance(context_length, int) and context_length > 0:
+                return context_length
+    return None
+
+
+@app.get("/api/v1/ai/context", tags=["AI"])
+async def get_ai_context_status(
+    _user: User = Depends(get_authenticated_user),
+) -> dict[str, int | str | None]:
+    context_length = await asyncio.to_thread(get_running_model_context)
+    return {"model": OLLAMA_MODEL, "context_length": context_length}
 
 
 @app.get("/api/v1/ai/health", tags=["AI"])

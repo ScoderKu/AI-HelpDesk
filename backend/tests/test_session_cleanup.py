@@ -112,7 +112,6 @@ class DataRetentionCleanupTests(TestCase):
         )
         self.assertEqual(db.commit.call_count, 2)
 
-
 if __name__ == "__main__":
     import unittest
 
