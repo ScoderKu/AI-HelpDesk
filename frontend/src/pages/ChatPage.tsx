@@ -190,6 +190,9 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
   const focusComposerAfterResponse = useRef(false)
   const activeConversationId = useRef<number | null>(null)
   const conversationRequest = useRef(0)
+  const activeStreamController = useRef<AbortController | null>(null)
+  const activeAssistantMessageId = useRef<number | null>(null)
+  const userStoppedStream = useRef(false)
 
   const fetchConversations = useCallback(
     () => api<Conversation[]>('/api/v1/conversations'),
@@ -326,6 +329,10 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     let streamedAssistantMessageId: number | null = null
     let rejectionDetail = ''
     const previousRetryMessageId = retryMessageId
+    const streamController = new AbortController()
+    activeStreamController.current = streamController
+    activeAssistantMessageId.current = null
+    userStoppedStream.current = false
     setSending(true)
     setTicketRecommendation(false)
     setError('')
@@ -358,6 +365,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ content }),
+          signal: streamController.signal,
         },
       )
       if (!response.ok || !response.body) {
@@ -375,13 +383,14 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
       let buffer = ''
       let assistantMessageId = -optimisticId
       streamedAssistantMessageId = assistantMessageId
+      activeAssistantMessageId.current = assistantMessageId
       let streamFailed = false
       let completed = false
 
       const processEvent = (line: string) => {
         if (!line.trim()) return
         const item = JSON.parse(line) as {
-          event: 'user_message' | 'token' | 'done' | 'error'
+          event: 'user_message' | 'token' | 'done' | 'error' | 'cancelled'
           message?: Message
           assistant_message?: Message
           content?: string
@@ -463,6 +472,12 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
         await loadConversations()
       }
     } catch {
+      if (userStoppedStream.current) {
+        if (conversationId !== null) {
+          try { await refreshMessages(conversationId, requestId) } catch { /* Keep the locally retained user message. */ }
+        }
+        return
+      }
       if (activeConversationId.current === conversationId && conversationRequest.current === requestId) {
         setMessages((current) => current.filter((message) =>
           message.id !== optimisticId && message.id !== streamedAssistantMessageId,
@@ -483,8 +498,41 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
         }
       }
     } finally {
+      if (activeStreamController.current === streamController) {
+        activeStreamController.current = null
+        activeAssistantMessageId.current = null
+      }
       setStreaming(false)
       setSending(false)
+    }
+  }
+
+  const handleStopGeneration = async () => {
+    const conversationId = activeConversationId.current
+    const controller = activeStreamController.current
+    if (conversationId === null || controller === null) return
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/conversations/${conversationId}/messages/stop`,
+        { method: 'POST', credentials: 'include' },
+      )
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const result = await response.json() as { cancelled: boolean }
+      if (!result.cancelled) return
+
+      userStoppedStream.current = true
+      controller.abort()
+      const partialAssistantId = activeAssistantMessageId.current
+      setMessages((current) => current.filter((message) => message.id !== partialAssistantId))
+      setStreaming(false)
+      setSending(false)
+      setRetryMessageId(null)
+      setTicketRecommendation(false)
+      setError('')
+      await refreshMessages(conversationId, conversationRequest.current)
+    } catch {
+      setError(t.chatStopError)
     }
   }
 
@@ -668,9 +716,15 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
               }}
               onKeyDown={handleComposerKeyDown}
               placeholder={t.chatPlaceholder} maxLength={12000} rows={3} disabled={sending || ticketDraft !== null} />
-            <button className="button button-primary" type="submit" disabled={sending || ticketDraft !== null || !draft.trim()}>
-              {t.chatSend}
-            </button>
+            {sending && activeStreamController.current !== null ? (
+              <button className="button button-secondary" type="button" onClick={() => void handleStopGeneration()}>
+                {t.chatStop}
+              </button>
+            ) : (
+              <button className="button button-primary" type="submit" disabled={sending || ticketDraft !== null || !draft.trim()}>
+                {t.chatSend}
+              </button>
+            )}
           </form>
         </div>
       </div>

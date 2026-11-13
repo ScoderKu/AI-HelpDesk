@@ -241,3 +241,10 @@
 .chat-ticket-field input, .chat-ticket-field textarea, .chat-ticket-field select { width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid #d9dee7; border-radius: 9px; padding: .65rem .75rem; background: #fff; color: inherit; font: inherit; }
 .chat-ticket-field textarea { resize: vertical; white-space: pre-wrap; }
 .chat-ticket-editor-actions { display: flex; justify-content: flex-end; gap: .6rem; flex-wrap: wrap; }
+
+
+.chat-composer .button-secondary {
+  width: auto;
+  min-width: 5.5rem;
+  margin-left: 0;
+}

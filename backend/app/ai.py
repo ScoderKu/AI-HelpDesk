@@ -160,6 +160,10 @@ class OllamaUnavailableError(Exception):
     """Ollama could not be reached or did not return a valid response."""
 
 
+class GenerationCancelledError(Exception):
+    """The user cancelled an in-progress generation."""
+
+
 def preload_model() -> None:
     payload = {"model": OLLAMA_MODEL, "keep_alive": OLLAMA_KEEP_ALIVE}
     request = Request(
@@ -178,18 +182,35 @@ def preload_model() -> None:
         raise OllamaUnavailableError("Invalid response from Ollama preload")
 
 
-def _request_chat(payload: dict[str, object]) -> str:
+def _request_chat(payload: dict[str, object], cancel_event=None, on_response=None) -> str:
     request = Request(
         f"{OLLAMA_BASE_URL}/api/chat",
         data=json.dumps(payload).encode("utf-8"),
         headers={"Content-Type": "application/json"},
         method="POST",
     )
+    if cancel_event is not None and cancel_event.is_set():
+        raise GenerationCancelledError()
+    response = None
     try:
-        with urlopen(request, timeout=OLLAMA_TIMEOUT_SECONDS) as response:
-            result = json.loads(response.read().decode("utf-8"))
+        response = urlopen(request, timeout=OLLAMA_TIMEOUT_SECONDS)
+        if on_response is not None:
+            on_response(response)
+        if cancel_event is not None and cancel_event.is_set():
+            response.close()
+            raise GenerationCancelledError()
+        result = json.loads(response.read().decode("utf-8"))
+    except GenerationCancelledError:
+        raise
     except (HTTPError, URLError, TimeoutError, OSError, ValueError) as error:
+        if cancel_event is not None and cancel_event.is_set():
+            raise GenerationCancelledError() from None
         raise OllamaUnavailableError(type(error).__name__) from None
+    finally:
+        if response is not None:
+            response.close()
+        if on_response is not None:
+            on_response(None)
 
     if not isinstance(result, dict):
         raise OllamaUnavailableError("Invalid response from Ollama")
@@ -441,8 +462,12 @@ def generate_reply_stream(
     response_language: str | None = None,
     knowledge_context: str | None = None,
     knowledge_source_ids: list[str] | None = None,
+    cancel_event=None,
+    on_response=None,
 ):
     """Yield reply chunks and Knowledge Base source IDs after language classification."""
+    if cancel_event is not None and cancel_event.is_set():
+        raise GenerationCancelledError()
     latest_user_message = next(
         (message for message in reversed(messages) if message.get("role") == "user"),
         None,
@@ -475,9 +500,13 @@ def generate_reply_stream(
                 ],
                 "options": {"temperature": 0},
                 "stream": False,
-            }
+            },
+            cancel_event,
+            on_response,
         )
     )
+    if cancel_event is not None and cancel_event.is_set():
+        raise GenerationCancelledError()
     input_language = classification.get("input_language")
     requested_language = classification.get("requested_language")
     if (
@@ -582,9 +611,20 @@ def generate_reply_stream(
         "[KB_SOURCES:",
         *SOURCE_LIST_MARKERS,
     )
+    response = None
     try:
-        with urlopen(request, timeout=OLLAMA_TIMEOUT_SECONDS) as response:
+        if cancel_event is not None and cancel_event.is_set():
+            raise GenerationCancelledError()
+        response = urlopen(request, timeout=OLLAMA_TIMEOUT_SECONDS)
+        if on_response is not None:
+            on_response(response)
+        if cancel_event is not None and cancel_event.is_set():
+            response.close()
+            raise GenerationCancelledError()
+        with response:
             for raw_line in response:
+                if cancel_event is not None and cancel_event.is_set():
+                    raise GenerationCancelledError()
                 if not raw_line.strip():
                     continue
                 try:
@@ -628,9 +668,20 @@ def generate_reply_stream(
                 if result.get("done") is True:
                     completed = True
                     break
+    except GenerationCancelledError:
+        raise
     except (HTTPError, URLError, TimeoutError, OSError, ValueError) as error:
+        if cancel_event is not None and cancel_event.is_set():
+            raise GenerationCancelledError() from None
         raise OllamaUnavailableError(type(error).__name__) from None
+    finally:
+        if response is not None:
+            response.close()
+        if on_response is not None:
+            on_response(None)
 
+    if cancel_event is not None and cancel_event.is_set():
+        raise GenerationCancelledError()
     if not completed or not received_content:
         raise OllamaUnavailableError("Incomplete streaming response from Ollama")
 
