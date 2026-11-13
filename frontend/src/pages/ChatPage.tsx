@@ -178,7 +178,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [contextCapacity, setContextCapacity] = useState<number | null>(null)
-  const [lastContextTokens, setLastPromptTokens] = useState<number | null>(null)
+  const [lastContextTokens, setLastContextTokens] = useState<number | null>(null)
   const [continuationPreview, setContinuationPreview] = useState<ContinuationPreview | null>(null)
   const [continuationLoading, setContinuationLoading] = useState(false)
   const [continuationSaving, setContinuationSaving] = useState(false)
@@ -212,7 +212,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
 
   useEffect(() => {
     const conversation = conversations.find((item) => item.id === activeId)
-    setLastPromptTokens(conversation?.last_context_tokens ?? null)
+    setLastContextTokens(conversation?.last_context_tokens ?? null)
   }, [activeId, conversations])
 
   const conversationTree = useMemo(() => {
@@ -577,7 +577,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
               : message)
           })
         } else if (item.event === 'context_usage' && typeof item.context_tokens === 'number') {
-          setLastPromptTokens(item.prompt_tokens)
+          setLastContextTokens(item.context_tokens)
           void api<{ model: string; context_length: number | null }>('/api/v1/ai/context')
             .then((result) => setContextCapacity(result.context_length))
             .catch(() => setContextCapacity(null))

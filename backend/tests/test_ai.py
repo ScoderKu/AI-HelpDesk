@@ -26,6 +26,19 @@ class OllamaResponseTests(unittest.TestCase):
             "input_language": "English",
             "requested_language": None,
         }))
+        class StreamResponse:
+            def __init__(self, lines):
+                self.lines = lines
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def __iter__(self):
+                return iter(self.lines)
+
         stream = StreamResponse([
             json.dumps({"message": {"content": "Hello."}, "done": False}).encode("utf-8"),
             json.dumps({

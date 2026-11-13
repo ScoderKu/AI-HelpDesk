@@ -1,4 +1,4 @@
-"""Persist the most recent measured prompt token count.
+"""Persist the most recent prompt plus generated-response token count.
 
 Revision ID: 0007_context_usage
 Revises: 0006_response_language
