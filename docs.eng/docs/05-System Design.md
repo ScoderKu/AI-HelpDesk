@@ -195,8 +195,9 @@ Contains an individual message associated with a conversation. The message role 
 | User – Conversation | User 1 → 0..N Conversation; Conversation 1 → 1 User | A user can have zero or more conversations; each conversation belongs to one user. |
 | Conversation – Ticket | Conversation 1 → 0..N Ticket; Ticket 0..1 → 1 Conversation | Multiple support tickets can be created from a conversation; a support ticket can be independent or associated with one conversation. |
 | Conversation – Message | Conversation 1 → 0..N Message; Message 1 → 1 Conversation | A conversation can contain zero or more messages; each message belongs to one conversation. |
+| Conversation – Conversation (parent/child) | Parent 1 → 0..N Child; Child 0..1 → 1 Parent | A conversation can be independent (no parent) or a child of one conversation. A parent may have multiple children; the foreign key is nullable and uses ON DELETE SET NULL. |
 
-The ER diagram describes the MVP data model and will be kept unchanged. The RAG MVP uses a file-based collection of Markdown and TXT documents for keyword search and does not add document or search tables to the database. The ER schema will be changed only if implementation creates a separately justified need for new persistent data.
+The ER diagram remains a high-level overview and does not draw the self-referencing Conversation parent/child relation. The cardinality table and the detailed field definitions below are authoritative for that relationship. The RAG MVP uses a file-based collection of Markdown and TXT documents for keyword search and does not add document or search tables to the database. The ER schema will be changed only if implementation creates a separately justified need for new persistent data.
 
 ---
 
