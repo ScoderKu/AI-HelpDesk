@@ -198,8 +198,9 @@ Sisältää keskusteluun liittyvän yksittäisen viestin. Viestin rooli kertoo, 
 | User – Conversation | User 1 → 0..N Conversation; Conversation 1 → 1 User | Käyttäjällä voi olla nolla tai useita keskusteluja; jokainen keskustelu kuuluu yhdelle käyttäjälle. |
 | Conversation – Ticket | Conversation 1 → 0..N Ticket; Ticket 0..1 → 1 Conversation | Keskustelusta voidaan luoda useita tukipyyntöjä; tukipyyntö voi olla itsenäinen tai liittyä yhteen keskusteluun. |
 | Conversation – Message | Conversation 1 → 0..N Message; Message 1 → 1 Conversation | Keskustelussa voi olla nolla tai useita viestejä; jokainen viesti kuuluu yhteen keskusteluun. |
+| Conversation – Conversation (emo/lapsi) | Parent 1 → 0..N Child; Child 0..1 → 1 Parent | Keskustelu voi olla itsenäinen (ei emokeskustelua) tai yhden keskustelun lapsi. Emokeskustelulla voi olla useita lapsia; vierasavain sallii NULL-arvon ja käyttää ON DELETE SET NULL -toimintoa. |
 
-ER-diagrammi kuvaa MVP-version tietomallin ja pidetään ennallaan. RAG MVP käyttää tiedostopohjaista Markdown- ja TXT-dokumenttikokoelmaa avainsanahakuun eikä lisää tietokantaan dokumentti- tai hakutauluja. ER-skeemaa muutetaan vain, jos toteutuksessa syntyy erikseen perusteltu pysyvän uuden datan tarve.
+ER-diagrammi säilyy yleiskuvana eikä esitä Conversation-taulun itseensä viittaavaa emo/lapsi-suhdetta. Kardinaliteettitaulukko ja alla olevat yksityiskohtaiset kenttämäärittelyt ovat tämän suhteen auktoritatiivinen kuvaus. RAG MVP käyttää tiedostopohjaista Markdown- ja TXT-dokumenttikokoelmaa avainsanahakuun eikä lisää tietokantaan dokumentti- tai hakutauluja. ER-skeemaa muutetaan vain, jos toteutuksessa syntyy erikseen perusteltu pysyvän uuden datan tarve.
 
 ---
 
