@@ -893,7 +893,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
             <div className="chat-context-monitor" aria-live="polite">
               {contextCapacity !== null && lastContextTokens !== null ? (() => {
                 const used = Math.min(lastContextTokens, contextCapacity)
-                const reserve = Math.floor(contextCapacity * 0.2)
+                const reserve = Math.floor(contextCapacity * 0.1)
                 const remaining = Math.max(0, contextCapacity - used - reserve)
                 const percentage = Math.min(100, (used / contextCapacity) * 100)
                 const displayedPercentage = Math.round(percentage)
