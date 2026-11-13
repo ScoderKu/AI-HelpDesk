@@ -328,3 +328,7 @@ Kehittäjä ilmoitti itsenäisen keskustelun ja jatkokeskustelun toimintojen toi
 |---|---|---|---|
 | 13.11.2026 | 0.8 | Kirjattu itsenäisen ja jatkokeskustelun päätökset, toteutustila ja dokumentaation synkronointikäytäntö | Projektin toteuttaja |
 
+## 14. Kaksikielisen teknisen dokumentaation ylläpitosääntö
+
+Jokaisen hyväksytyn muutoksen yhteydessä, joka vaikuttaa projektin rakenteeseen, arkkitehtuuriin, teknologiavalintoihin, tietokantaskeemaan/migraatioihin, API-sopimuksiin, tietoturvaan, tietovirtaan, käyttöönottoon tai käyttäjälle näkyvään tekniseen toimintaan, päivitetään kaikki muutoksen vaikutuspiirissä olevat englannin- ja suomenkieliset projektidokumentit saman dokumentaatiotehtävän aikana. Tarkista vaatimusten, käyttäjätarinoiden ja hyväksymiskriteerien, Product Backlogin, Sprint-suunnitelman, järjestelmän suunnittelun, UX/UI-suunnittelun sekä tämän dokumentin päätös- ja muutoslokien päivitystarve. Pidä kieliversiot sisällöllisesti yhdenmukaisina. Kirjaa toteutettu, vasta suunniteltu ja tosiasiallisesti varmennettu erillisinä tietoina. Lähdekoodi ja migraatiot ovat toteutuksen auktoriteetti; dokumentaatio täsmäytetään niitä vasten.
+
