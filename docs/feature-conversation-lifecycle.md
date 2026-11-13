@@ -25,12 +25,13 @@ Do not merge to `main` without explicit user approval. Keep database migrations 
 - Every user message remains a separate persisted row. The backend combines all unanswered user messages into one effective generation prompt without rewriting their stored contents.
 - Multiple supplements and repeated stop/retry cycles must be deterministic and must not duplicate or silently consume messages.
 - A successful assistant response marks the pending user-message set as answered.
+- The cancelled partial assistant text must not enter future conversation history or context prompts.
 
 ### Persistence and state
 
 - Replace the current "latest row is USER" heuristic with explicit generation/answer state or a reliable reply-to-message grouping.
 - Preserve an interrupted non-empty assistant partial response with an explicit `INTERRUPTED` state; never present it as a completed answer. If no content was generated, do not create an empty assistant row.
-- Retry and supplement behavior must distinguish an interrupted generation from a failed request and from a completed answer.
+- Retry and supplement behavior must distinguish a cancelled generation from a failed request and from a completed answer, without persisting cancelled assistant output.
 - Any new message status/turn relation must be migrated, indexed where needed, and covered by tests.
 
 ### Cancellation and concurrency
