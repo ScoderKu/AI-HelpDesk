@@ -4,7 +4,7 @@ import './ChatPage.css'
 import { API_BASE_URL } from '../api'
 import type { Copy } from '../i18n/copy'
 
-type Conversation = { id: number; title: string | null; created_at: string; updated_at: string; last_prompt_tokens?: number | null; parent_conversation_id?: number | null }
+type Conversation = { id: number; title: string | null; created_at: string; updated_at: string; last_context_tokens?: number | null; parent_conversation_id?: number | null }
 type ContinuationPreview = { parentId: number; title: string; contextSummary: string }
 type Message = { id: number; role: 'USER' | 'ASSISTANT'; content: string; created_at: string }
 type TicketDraft = { title: string; description: string; priority: 'LOW' | 'MEDIUM' | 'HIGH' }
@@ -178,7 +178,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [contextCapacity, setContextCapacity] = useState<number | null>(null)
-  const [lastPromptTokens, setLastPromptTokens] = useState<number | null>(null)
+  const [lastContextTokens, setLastPromptTokens] = useState<number | null>(null)
   const [continuationPreview, setContinuationPreview] = useState<ContinuationPreview | null>(null)
   const [continuationLoading, setContinuationLoading] = useState(false)
   const [continuationSaving, setContinuationSaving] = useState(false)
@@ -212,7 +212,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
 
   useEffect(() => {
     const conversation = conversations.find((item) => item.id === activeId)
-    setLastPromptTokens(conversation?.last_prompt_tokens ?? null)
+    setLastPromptTokens(conversation?.last_context_tokens ?? null)
   }, [activeId, conversations])
 
   const conversationTree = useMemo(() => {
@@ -550,6 +550,8 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
           saved_message_id?: number
           ticket_recommended?: boolean
           prompt_tokens?: number
+          response_tokens?: number
+          context_tokens?: number
         }
         if (activeConversationId.current !== conversationId || conversationRequest.current !== requestId) return
         if (item.event === 'user_message' && item.message) {
@@ -574,7 +576,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
               ? { ...message, content: message.content + item.content! }
               : message)
           })
-        } else if (item.event === 'context_usage' && typeof item.prompt_tokens === 'number') {
+        } else if (item.event === 'context_usage' && typeof item.context_tokens === 'number') {
           setLastPromptTokens(item.prompt_tokens)
           void api<{ model: string; context_length: number | null }>('/api/v1/ai/context')
             .then((result) => setContextCapacity(result.context_length))
@@ -888,8 +890,8 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
           )}
           {activeId !== null && (
             <div className="chat-context-monitor" aria-live="polite">
-              {contextCapacity !== null && lastPromptTokens !== null ? (() => {
-                const used = Math.min(lastPromptTokens, contextCapacity)
+              {contextCapacity !== null && lastContextTokens !== null ? (() => {
+                const used = Math.min(lastContextTokens, contextCapacity)
                 const reserve = Math.floor(contextCapacity * 0.2)
                 const remaining = Math.max(0, contextCapacity - used - reserve)
                 const percentage = Math.min(100, (used / contextCapacity) * 100)

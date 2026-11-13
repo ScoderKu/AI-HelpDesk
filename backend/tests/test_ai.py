@@ -21,6 +21,26 @@ def ollama_response(content: str) -> object:
 
 class OllamaResponseTests(unittest.TestCase):
 
+    def test_stream_reply_reports_prompt_and_generated_token_usage(self) -> None:
+        classification = ollama_response(json.dumps({
+            "input_language": "English",
+            "requested_language": None,
+        }))
+        stream = StreamResponse([
+            json.dumps({"message": {"content": "Hello."}, "done": False}).encode("utf-8"),
+            json.dumps({
+                "message": {"content": ""},
+                "done": True,
+                "prompt_eval_count": 321,
+                "eval_count": 17,
+            }).encode("utf-8"),
+        ])
+        with patch("app.ai.urlopen", side_effect=[classification, stream]):
+            events = list(generate_reply_stream([{"role": "user", "content": "Hello"}], "English"))
+        usage = next(value for kind, value in events if kind == "usage")
+        self.assertEqual(usage, {"prompt_tokens": 321, "response_tokens": 17, "context_tokens": 338})
+
+
     def test_conversation_summary_can_continue_from_an_inherited_summary_without_new_messages(self) -> None:
         response = json.dumps({
             "title": "Continue Windows troubleshooting",
