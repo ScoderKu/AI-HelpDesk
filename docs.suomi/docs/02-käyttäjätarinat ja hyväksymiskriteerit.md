@@ -581,3 +581,35 @@ US-16:n laajuuteen kuuluvat frontendin, backendin ja Ollaman Docker-konfiguraati
 Tässä dokumentissa on määritelty AI HelpDesk -sovelluksen käyttäjätarinat, hyväksymiskriteerit ja erillinen prioriteettitaulukko.
 
 Käyttäjätarinat ja hyväksymiskriteerit on yhdistetty Product Backlogiin ja sovittuun Sprint-suunnitelmaan. Toteutuksen ja testauksen edetessä hyväksymiskriteerien täyttyminen todennetaan jäljitettävyystaulukon mukaisesti.
+
+## 6. Keskustelun elinkaari – täydentävät hyväksymiskriteerit (2026-11-13)
+
+Seuraavat kriteerit täydentävät käyttäjätarinoita US-06 (Tekoälypohjainen keskustelu) ja US-08 (Keskusteluviestien tallentaminen). Ne kuvaavat toteutettua itsenäisen ja jatkokeskustelun työnkulkua ilman uuden käyttäjätarinatunnisteen luomista.
+
+**AC-06.5 – Itsenäisen keskustelun aloittaminen**
+- Oletetaan, että käyttäjä tarkastelee mitä tahansa olemassa olevaa keskustelua.
+- Kun käyttäjä valitsee keskusteluhistorian sivupalkista **Uusi keskustelu**.
+- Niin sovellus aloittaa erillisen keskustelun ilman viittausta emokeskusteluun ja ilman perittyä kontekstiyhteenvetoa. Aiempi keskustelu ja sen viestit säilyvät muuttumattomina.
+
+**AC-06.6 – Jatkokeskustelun esikatselun muodostaminen**
+- Oletetaan, että käyttäjällä on aktiivinen keskustelu ja sen mitattu kontekstin käyttöaste on riittävä.
+- Kun käyttäjä valitsee **Aloita jatkokeskustelu**.
+- Niin järjestelmä muodostaa tekoälyn tuottaman otsikon ja kontekstiyhteenvedon sisältävän esikatselun. Käyttäjä voi tarkistaa ja muokata molempia ennen vahvistamista; otsikko ja ei-tyhjä kontekstiyhteenveto ovat pakollisia.
+
+**AC-06.7 – Jatkokeskustelun luominen ja käyttäminen**
+- Oletetaan, että käyttäjä on tarkistanut jatkokeskustelun esikatselun.
+- Kun käyttäjä vahvistaa luomisen.
+- Niin järjestelmä luo uuden keskustelun, joka linkitetään lähdekeskusteluun parent_conversation_id-kentän kautta, tallentaa vahvistetun context_summary-arvon ja käyttää yhteenvetoa perittynä kontekstina myöhemmissä tekoälypyynnöissä. Lähdekeskustelua tai sen viestejä ei kopioida eikä muuteta.
+
+**AC-06.8 – Kontekstin käyttöasteen kynnysarvo**
+- Oletetaan, että keskustelulla on kelvollinen kontekstikapasiteetti ja viimeisimmän valmistuneen generoinnin mitattu käyttöaste.
+- Kun käyttöastetta arvioidaan.
+- Niin **Aloita jatkokeskustelu** näytetään vain, kun käyttöaste on tiukasti yli 70 %. Täsmälleen 70 %:n kohdalla, ilman aktiivista keskustelua tai käyttöaste-/kapasiteettitiedon puuttuessa tai ollessa virheellinen toiminto piilotetaan. Arvo ei ole keskeneräisen viestiluonnoksen reaaliaikainen arvio.
+
+**AC-08.4 – Jatkokeskustelun kontekstivedoksen tallentaminen**
+- Oletetaan, että jatkokeskustelu on luotu.
+- Kun käyttäjä avaa sen myöhemmin tai lähettää uuden viestin.
+- Niin tallennettu kontekstiyhteenveto on edelleen käytettävissä ja sisällytetään jatkokeskustelun tekoälykontekstiin; emokeskustelun koko viestihistoriaa ei toisteta jatkokeskustelun historiana.
+
+**Varmennushuomautus:** Kehittäjä on testannut itsenäisen keskustelun ja jatkokeskustelun työnkulut manuaalisesti ja ilmoittanut niiden toimivan odotetusti. Frontendin build onnistui Windowsissa ja lint Dockerissa. Raja-arvotestit (mukaan lukien täsmälleen 70 %) kirjataan erikseen, jos ja kun ne suoritetaan.
+
