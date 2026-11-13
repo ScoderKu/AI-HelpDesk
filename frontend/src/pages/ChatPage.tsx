@@ -455,8 +455,12 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
   }
 
   const handleNewConversation = () => {
-    if (activeId !== null && messages.length > 0) void openContinuationPreview()
-    else startConversation()
+    const activeConversation = conversations.find((item) => item.id === activeId)
+    if (activeId !== null && (messages.length > 0 || activeConversation?.parent_conversation_id != null)) {
+      void openContinuationPreview()
+    } else {
+      startConversation()
+    }
   }
 
   const sendMessage = async (event: FormEvent) => {
@@ -886,7 +890,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
             <div className="chat-context-monitor" aria-live="polite">
               {contextCapacity !== null && lastPromptTokens !== null ? (() => {
                 const used = Math.min(lastPromptTokens, contextCapacity)
-                const reserve = Math.min(2048, Math.max(256, Math.floor(contextCapacity * 0.2)))
+                const reserve = Math.floor(contextCapacity * 0.2)
                 const remaining = Math.max(0, contextCapacity - used - reserve)
                 const percentage = Math.min(100, Math.round((used / contextCapacity) * 100))
                 const level = percentage >= 90 ? 'danger' : percentage >= 70 ? 'warning' : 'normal'

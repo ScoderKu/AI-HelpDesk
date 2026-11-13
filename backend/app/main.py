@@ -1224,15 +1224,15 @@ async def preview_conversation_continuation(
                 .where(Message.conversation_id == conversation_id)
                 .order_by(Message.created_at.asc(), Message.id.asc())
             ).all()
-            if not any(message.role == "USER" for message in messages):
-                raise HTTPException(status_code=400, detail="The conversation has no user messages.")
+            response_language = conversation.response_language
+            context_summary = conversation.context_summary
+            if not any(message.role == "USER" for message in messages) and not context_summary:
+                raise HTTPException(status_code=400, detail="The conversation has no context to continue.")
 
             ollama_messages = [
                 {"role": "user" if message.role == "USER" else "assistant", "content": message.content}
                 for message in messages
             ]
-            response_language = conversation.response_language
-            context_summary = conversation.context_summary
             db.rollback()
 
             with lock_ai_generation() as ai_lock:

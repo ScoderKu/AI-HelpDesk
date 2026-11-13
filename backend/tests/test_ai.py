@@ -21,6 +21,21 @@ def ollama_response(content: str) -> object:
 
 class OllamaResponseTests(unittest.TestCase):
 
+    def test_conversation_summary_can_continue_from_an_inherited_summary_without_new_messages(self) -> None:
+        response = json.dumps({
+            "title": "Continue Windows troubleshooting",
+            "context_summary": "Windows 11 networking issue; next check the adapter driver.",
+        })
+        with patch("app.ai.urlopen", return_value=ollama_response(response)) as urlopen:
+            result = generate_conversation_summary(
+                [],
+                "English",
+                "The user is troubleshooting a Windows 11 network adapter.",
+            )
+        self.assertIn("Windows 11", json.loads(urlopen.call_args.args[0].data)["messages"][1]["content"])
+        self.assertEqual(result.title, "Continue Windows troubleshooting")
+
+
     def test_reply_prompt_includes_persisted_conversation_context(self) -> None:
         classification = json.dumps({"input_language": "English", "requested_language": None})
         reply = json.dumps({"reply": "Try restarting the adapter.", "source_ids": []})

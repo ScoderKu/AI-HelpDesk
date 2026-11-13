@@ -101,6 +101,23 @@ class ChatLockLeaseTests(unittest.TestCase):
 
 class ChatEndpointTests(unittest.TestCase):
 
+    def test_generation_control_cancels_and_closes_active_ollama_response(self) -> None:
+        control = main.GenerationControl()
+        response = MagicMock()
+        control.attach_response(response)
+
+        self.assertTrue(control.cancel())
+        self.assertTrue(control.cancelled.is_set())
+        response.close.assert_called_once()
+        self.assertFalse(control.mark_completed())
+
+    def test_generation_control_does_not_cancel_after_completion(self) -> None:
+        control = main.GenerationControl()
+        self.assertTrue(control.mark_completed())
+        self.assertFalse(control.cancel())
+        self.assertFalse(control.cancelled.is_set())
+
+
     def test_continuation_request_requires_parent_summary_and_title(self) -> None:
         with self.assertRaises(ValueError):
             main.ConversationCreateRequest(parent_conversation_id=12, title="Continuation")

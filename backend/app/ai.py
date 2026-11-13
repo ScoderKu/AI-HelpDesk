@@ -487,8 +487,8 @@ def generate_conversation_summary(
     context_summary: str | None = None,
 ) -> GeneratedConversationSummary:
     """Create a concise, reusable continuation summary and a short title."""
-    if not any(message.get("role") == "user" for message in messages):
-        raise OllamaUnavailableError("A conversation with user messages is required")
+    if not any(message.get("role") == "user" for message in messages) and not context_summary:
+        raise OllamaUnavailableError("A conversation with user messages or an inherited summary is required")
 
     selected = messages[-80:]
     transcript = "\n".join(
@@ -560,7 +560,13 @@ def generate_conversation_summary(
         or len(context_summary.strip()) > 10000
     ):
         raise OllamaUnavailableError("Invalid conversation summary returned by Ollama")
-    return GeneratedConversationSummary(title=title.strip(), context_summary=context_summary.strip())
+    safe_summary = re.sub(r"(?i)\\bBearer\\s+[A-Za-z0-9._~+/=-]+", "Bearer [REDACTED]", context_summary.strip())
+    safe_summary = re.sub(
+        r"(?im)\\b(password|passwd|token|api[_-]?key|secret|authorization)\\s*(?:[:=]|\\bis\\b)\\s*[^\\r\\n]+",
+        r"\\1=[REDACTED]",
+        safe_summary,
+    )
+    return GeneratedConversationSummary(title=title.strip(), context_summary=safe_summary)
 
 
 def generate_reply_stream(

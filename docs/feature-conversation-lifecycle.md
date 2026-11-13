@@ -104,3 +104,8 @@ Do not include secrets, passwords, tokens, session cookies, or unrelated persona
 - Test user isolation/IDOR, cancellation races, lock ownership, stream disconnects, persistence, retry, and conversation lineage.
 - Update documentation only after test results are known. User has already reported post-merge testing on the previous baseline; that documentation update is separate from this feature work.
 - Do not merge this branch without explicit user approval.
+
+
+## Runtime verification note — Ollama cancellation
+
+The backend cancels generation by closing the active HTTP response to Ollama and waits for the streaming worker to finish before releasing the Redis-backed generation/conversation locks. This follows Ollama's documented HTTP client-disconnect cancellation behavior, but the repository's Compose file currently uses the floating `ollama/ollama` image tag. Verify Stop Generation against the exact deployed Ollama image and confirm a second generation succeeds after cancellation. Upstream issue `ollama/ollama#17131` describes a streaming-handler goroutine/runner-slot leak on client disconnect; PR `#17135` was closed without being merged. Do not treat cancellation as fully runtime-verified until this integration check passes.
