@@ -604,6 +604,7 @@ def generate_reply_stream(
     )
     received_content = False
     completed = False
+    prompt_eval_count = None
     pending_content = ""
     markers = (
         TICKET_RECOMMENDED_MARKER,
@@ -667,6 +668,9 @@ def generate_reply_stream(
                                 pending_content = pending_content[emit_length:]
                 if result.get("done") is True:
                     completed = True
+                    count = result.get("prompt_eval_count")
+                    if isinstance(count, int) and count >= 0:
+                        prompt_eval_count = count
                     break
     except GenerationCancelledError:
         raise
@@ -707,5 +711,7 @@ def generate_reply_stream(
     pending_content = trimmed_content
     if pending_content:
         yield ("content", pending_content)
+    if prompt_eval_count is not None:
+        yield ("usage", prompt_eval_count)
     yield ("sources", source_ids)
     yield ("ticket_recommendation", ticket_recommended)

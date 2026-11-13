@@ -1646,6 +1646,13 @@ def stream_chat_message(
                                 elif kind == "content":
                                     chunks.append(value)
                                     yield event("token", {"content": value})
+                                elif kind == "usage":
+                                    with SessionLocal() as usage_db:
+                                        usage_conversation = usage_db.get(Conversation, conversation_id)
+                                        if usage_conversation is not None and usage_conversation.user_id == authenticated_user_id:
+                                            usage_conversation.last_prompt_tokens = value
+                                            usage_db.commit()
+                                    yield event("context_usage", {"prompt_tokens": value})
                 except GenerationCancelledError:
                     yield event("cancelled", {})
                     return
@@ -1923,6 +1930,37 @@ def search_knowledge_endpoint(
             for item in results
         ],
     )
+
+
+def get_running_model_context() -> int | None:
+    import json
+    from urllib.request import urlopen
+
+    try:
+        with urlopen(f"{OLLAMA_BASE_URL}/api/ps", timeout=OLLAMA_HEALTH_TIMEOUT_SECONDS) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except Exception:
+        logger.debug("Could not retrieve the running Ollama model context length.")
+        return None
+
+    models = payload.get("models", []) if isinstance(payload, dict) else []
+    for model in models:
+        if not isinstance(model, dict):
+            continue
+        name = model.get("name") or model.get("model")
+        if isinstance(name, str) and (name == OLLAMA_MODEL or name.startswith(f"{OLLAMA_MODEL}:")):
+            context_length = model.get("context_length")
+            if isinstance(context_length, int) and context_length > 0:
+                return context_length
+    return None
+
+
+@app.get("/api/v1/ai/context", tags=["AI"])
+async def get_ai_context_status(
+    _user: User = Depends(get_authenticated_user),
+) -> dict[str, int | str | None]:
+    context_length = await asyncio.to_thread(get_running_model_context)
+    return {"model": OLLAMA_MODEL, "context_length": context_length}
 
 
 @app.get("/api/v1/ai/health", tags=["AI"])

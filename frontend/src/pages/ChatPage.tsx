@@ -4,7 +4,7 @@ import './ChatPage.css'
 import { API_BASE_URL } from '../api'
 import type { Copy } from '../i18n/copy'
 
-type Conversation = { id: number; title: string | null; created_at: string; updated_at: string }
+type Conversation = { id: number; title: string | null; created_at: string; updated_at: string; last_prompt_tokens?: number | null; parent_conversation_id?: number | null }
 type Message = { id: number; role: 'USER' | 'ASSISTANT'; content: string; created_at: string }
 type TicketDraft = { title: string; description: string; priority: 'LOW' | 'MEDIUM' | 'HIGH' }
 type ChatPageProps = { text: Copy; initialConversationId: number | null; onConversationChange: (id: number | null) => void }
@@ -176,6 +176,8 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
   const draftRef = useRef('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const [contextCapacity, setContextCapacity] = useState<number | null>(null)
+  const [lastPromptTokens, setLastPromptTokens] = useState<number | null>(null)
   const [streaming, setStreaming] = useState(false)
   const [error, setError] = useState('')
   const [conversationListError, setConversationListError] = useState(false)
@@ -193,6 +195,19 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
   const activeStreamController = useRef<AbortController | null>(null)
   const activeAssistantMessageId = useRef<number | null>(null)
   const userStoppedStream = useRef(false)
+
+  useEffect(() => {
+    let active = true
+    void api<{ model: string; context_length: number | null }>('/api/v1/ai/context')
+      .then((result) => { if (active) setContextCapacity(result.context_length) })
+      .catch(() => { if (active) setContextCapacity(null) })
+    return () => { active = false }
+  }, [])
+
+  useEffect(() => {
+    const conversation = conversations.find((item) => item.id === activeId)
+    setLastPromptTokens(conversation?.last_prompt_tokens ?? null)
+  }, [activeId, conversations])
 
   const fetchConversations = useCallback(
     () => api<Conversation[]>('/api/v1/conversations'),
@@ -390,13 +405,14 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
       const processEvent = (line: string) => {
         if (!line.trim()) return
         const item = JSON.parse(line) as {
-          event: 'user_message' | 'token' | 'done' | 'error' | 'cancelled'
+          event: 'user_message' | 'token' | 'done' | 'error' | 'cancelled' | 'context_usage'
           message?: Message
           assistant_message?: Message
           content?: string
           detail?: string
           saved_message_id?: number
           ticket_recommended?: boolean
+          prompt_tokens?: number
         }
         if (activeConversationId.current !== conversationId || conversationRequest.current !== requestId) return
         if (item.event === 'user_message' && item.message) {
@@ -421,6 +437,11 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
               ? { ...message, content: message.content + item.content! }
               : message)
           })
+        } else if (item.event === 'context_usage' && typeof item.prompt_tokens === 'number') {
+          setLastPromptTokens(item.prompt_tokens)
+          void api<{ model: string; context_length: number | null }>('/api/v1/ai/context')
+            .then((result) => setContextCapacity(result.context_length))
+            .catch(() => setContextCapacity(null))
         } else if (item.event === 'done' && item.assistant_message) {
           completed = true
           setStreaming(false)
@@ -706,6 +727,32 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
             <button className="button button-secondary" type="button" onClick={() => void retryAnswer()} disabled={sending}>
               {t.chatRetry}
             </button>
+          )}
+          {activeId !== null && (
+            <div className="chat-context-monitor" aria-live="polite">
+              {contextCapacity !== null && lastPromptTokens !== null ? (() => {
+                const used = Math.min(lastPromptTokens, contextCapacity)
+                const reserve = Math.min(2048, Math.max(256, Math.floor(contextCapacity * 0.2)))
+                const remaining = Math.max(0, contextCapacity - used - reserve)
+                const percentage = Math.min(100, Math.round((used / contextCapacity) * 100))
+                const level = percentage >= 90 ? 'danger' : percentage >= 70 ? 'warning' : 'normal'
+                return (
+                  <>
+                    <div className="chat-context-summary">
+                      <strong className="chat-context-remaining">{remaining.toLocaleString()} {t.chatContextTokensLeft}</strong>
+                      <span>{used.toLocaleString()} / {contextCapacity.toLocaleString()} {t.chatContextTokens} · {percentage}%</span>
+                    </div>
+                    <div className="chat-context-track" role="progressbar" aria-label={t.chatContextUsage}
+                      aria-valuemin={0} aria-valuemax={100} aria-valuenow={percentage}>
+                      <div className={`chat-context-fill ${level}`} style={{ width: `${percentage}%` }} />
+                    </div>
+                    <small>{t.chatContextLatestPrompt}</small>
+                  </>
+                )
+              })() : (
+                <small>{contextCapacity === null ? t.chatContextUnavailable : t.chatContextWaiting}</small>
+              )}
+            </div>
           )}
           <form className="chat-composer" onSubmit={sendMessage}>
             <label className="sr-only" htmlFor="chat-composer-input">{t.chatComposerLabel}</label>

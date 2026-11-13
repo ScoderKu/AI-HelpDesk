@@ -201,6 +201,8 @@ class ConversationResponse(BaseModel):
     title: str | None
     created_at: datetime
     updated_at: datetime
+    last_prompt_tokens: int | None = None
+    parent_conversation_id: int | None = None
 
 
 class MessageRole(str, Enum):
