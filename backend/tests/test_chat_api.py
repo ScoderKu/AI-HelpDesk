@@ -65,6 +65,40 @@ class ChatLockLeaseTests(unittest.TestCase):
         self.assertEqual(raised.exception.status_code, 409)
 
 
+
+    def test_effective_history_combines_all_pending_user_messages(self) -> None:
+        answered_user = Message(
+            id=10, conversation_id=12, role="USER", content="Earlier question",
+            created_at=datetime(2026, 11, 3, 9, 0),
+        )
+        answered_assistant = Message(
+            id=11, conversation_id=12, role="ASSISTANT", content="Earlier answer",
+            created_at=datetime(2026, 11, 3, 9, 1),
+        )
+        pending_one = Message(
+            id=12, conversation_id=12, role="USER", content="The app crashes",
+            created_at=datetime(2026, 11, 3, 9, 2),
+        )
+        pending_two = Message(
+            id=13, conversation_id=12, role="USER", content="It happens after login",
+            created_at=datetime(2026, 11, 3, 9, 3),
+        )
+        db = MagicMock()
+        db.scalar.return_value = 11
+        db.scalars.side_effect = [
+            MagicMock(all=MagicMock(return_value=[pending_one, pending_two])),
+            MagicMock(all=MagicMock(return_value=[answered_assistant, answered_user])),
+        ]
+
+        messages, effective = main.build_effective_chat_history(db, 12, 13)
+
+        self.assertEqual(effective, "The app crashes\\n\\nIt happens after login")
+        self.assertEqual(messages, [
+            {"role": "user", "content": "Earlier question"},
+            {"role": "assistant", "content": "Earlier answer"},
+            {"role": "user", "content": "The app crashes\\n\\nIt happens after login"},
+        ])
+
 class ChatEndpointTests(unittest.TestCase):
     def setUp(self) -> None:
         self.user = User(id=7)
@@ -109,27 +143,37 @@ class ChatEndpointTests(unittest.TestCase):
         self.assertEqual(raised.exception.status_code, 409)
         db.scalar.assert_called_once()
 
-    def test_new_message_is_blocked_while_previous_message_is_unanswered(self) -> None:
-        db = MagicMock()
+    def test_new_message_can_supplement_an_unanswered_user_message(self) -> None:
         conversation = make_conversation()
-        db.scalar.side_effect = [conversation.id, conversation, make_user_message()]
+        previous_message = make_user_message(41)
+        assistant_message = main.MessageResponse(
+            id=43,
+            role="ASSISTANT",
+            content="Combined answer",
+            created_at=datetime(2026, 11, 3, 10, 1),
+        )
+        db = MagicMock()
+        db.scalar.side_effect = [conversation.id, conversation, previous_message]
+        db.refresh.side_effect = lambda item: setattr(item, "id", 42)
         with (
             patch.object(main.redis_client, "set", return_value=True),
             patch.object(main.redis_client, "eval", return_value=1),
+            patch.object(main, "generate_assistant_for_message", new=AsyncMock(return_value=assistant_message)) as generate,
         ):
-            with self.assertRaises(HTTPException) as raised:
-                asyncio.run(
-                    main.send_chat_message(
-                        main.ChatMessageRequest(content="Another question"),
-                        self.request,
-                        12,
-                        self.user,
-                        db,
-                    )
+            response = asyncio.run(
+                main.send_chat_message(
+                    main.ChatMessageRequest(content="And the router light is red."),
+                    self.request,
+                    12,
+                    self.user,
+                    db,
                 )
+            )
 
-        self.assertEqual(raised.exception.status_code, 409)
-        db.add.assert_not_called()
+        self.assertEqual(response.user_message.id, 42)
+        self.assertEqual(response.assistant_message.content, "Combined answer")
+        db.add.assert_called_once()
+        generate.assert_awaited_once()
 
     def test_db_transaction_is_ended_before_ai_and_assistant_uses_new_session(self) -> None:
         conversation = make_conversation()

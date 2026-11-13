@@ -1519,7 +1519,12 @@ async def stop_chat_generation(
         return {"cancelled": False}
     cancelled = control.cancel()
     if cancelled:
-        await asyncio.to_thread(control.done.wait, 5)
+        finished = await asyncio.to_thread(control.done.wait, OLLAMA_TIMEOUT_SECONDS + 5)
+        if not finished:
+            raise HTTPException(
+                status_code=503,
+                detail="The generation is still shutting down. Please wait before sending another message.",
+            )
     return {"cancelled": cancelled}
 
 
@@ -1550,8 +1555,6 @@ def stream_chat_message(
         user_message_id: int | None = None
         generation_key = (authenticated_user_id, conversation_id)
         generation_control = GenerationControl()
-        with _active_generations_lock:
-            _active_generations[generation_key] = generation_control
 
         def event(name: str, payload: dict[str, object]) -> str:
             import json
@@ -1559,6 +1562,8 @@ def stream_chat_message(
 
         try:
             with lock_conversation_chat(conversation_id) as chat_lock:
+                with _active_generations_lock:
+                    _active_generations[generation_key] = generation_control
                 with SessionLocal() as message_db:
                     conversation = message_db.scalar(
                         select(Conversation).where(
@@ -1605,6 +1610,8 @@ def stream_chat_message(
                     retrieved_knowledge, knowledge_context, knowledge_source_ids = build_knowledge_context(
                         effective_user_content
                     )
+                    if generation_control.cancelled.is_set():
+                        raise GenerationCancelledError()
                     recovery_guidance = password_recovery_guidance(
                         effective_user_content
                     )
