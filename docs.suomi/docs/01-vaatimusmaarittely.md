@@ -196,3 +196,11 @@ Nämä vaatimukset täydentävät keskustelua koskevia FR-06- ja FR-08-vaatimuks
 
 Kun hyväksytty muutos vaikuttaa projektin rakenteeseen, arkkitehtuuriin, teknologiaan, tietokantaskeemaan, API-sopimuksiin, tietoturvaan, tietovirtaan tai käyttäjälle näkyvään tekniseen toimintaan, päivitä vastaavat englannin- ja suomenkieliset dokumentit saman dokumentaatiomuutoksen yhteydessä. Pidä vaatimukset, hyväksymiskriteerit, backlog, Sprint-suunnitelma, järjestelmän suunnittelu ja UX/UI-suunnittelu keskenään yhdenmukaisina. Kirjaa toteutus- ja varmennustila erikseen; älä kuvaa suunniteltua tai varmentamatonta toimintaa toteutetuksi tai testatuksi.
 
+### Keskustelun elinkaaren jäljitettävyyslisäys
+
+| Vaatimus | Käyttäjätarina ja hyväksymiskriteerit | Todentaminen |
+|---|---|---|
+| FR-18 | US-06 (AC-06.5) | TEST-18: itsenäisen keskustelun luominen olemassa olevasta keskustelusta ja emokeskusteluviittauksen/perityn kontekstin puuttumisen tarkistus |
+| FR-19 | US-06 (AC-06.6–AC-06.7), US-08 (AC-08.4) | TEST-19: lapsikeskustelun esikatselu, muokkaus ja vahvistus, saman omistajan emokeskusteluviittaus, tallennettu yhteenveto, emokeskustelun muuttumattomuus ja lapsen kontekstin käyttö |
+| FR-20 | US-06 (AC-06.8) | TEST-20: jatkokeskustelutoiminto näkyy yli 70 %:ssa, piiloutuu täsmälleen 70 %:ssa sekä puuttuvien/virheellisten mittausten tai aktiivisen keskustelun puuttuessa |
+
