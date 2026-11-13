@@ -100,6 +100,19 @@ class ChatLockLeaseTests(unittest.TestCase):
         ])
 
 class ChatEndpointTests(unittest.TestCase):
+
+    def test_continuation_request_requires_parent_summary_and_title(self) -> None:
+        with self.assertRaises(ValueError):
+            main.ConversationCreateRequest(parent_conversation_id=12, title="Continuation")
+        with self.assertRaises(ValueError):
+            main.ConversationCreateRequest(context_summary="Summary without a parent")
+        request = main.ConversationCreateRequest(
+            parent_conversation_id=12,
+            title="Continuation",
+            context_summary="  Keep the verified technical context.  ",
+        )
+        self.assertEqual(request.context_summary, "Keep the verified technical context.")
+
     def setUp(self) -> None:
         self.user = User(id=7)
         self.request = make_request(main.FRONTEND_ORIGINS[0])

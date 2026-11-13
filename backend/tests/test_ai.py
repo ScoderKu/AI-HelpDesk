@@ -2,7 +2,7 @@ import json
 import unittest
 from unittest.mock import patch
 
-from app.ai import GeneratedReply, GeneratedTicketDraft, OllamaUnavailableError, generate_reply, generate_reply_stream, generate_ticket_draft, preload_model
+from app.ai import GeneratedConversationSummary, GeneratedReply, GeneratedTicketDraft, OllamaUnavailableError, generate_conversation_summary, generate_reply, generate_reply_stream, generate_ticket_draft, preload_model
 
 
 def ollama_response(content: str) -> object:
@@ -20,6 +20,41 @@ def ollama_response(content: str) -> object:
 
 
 class OllamaResponseTests(unittest.TestCase):
+
+    def test_conversation_summary_generates_title_and_redacts_secrets(self) -> None:
+        response = json.dumps({
+            "title": "Wi-Fi drops after login",
+            "context_summary": "Wi-Fi disconnects after login; router restart did not help.",
+        })
+        messages = [
+            {"role": "user", "content": "Wi-Fi drops after login. password: hunter2"},
+            {"role": "assistant", "content": "Try restarting the router."},
+        ]
+        with patch("app.ai.urlopen", return_value=ollama_response(response)) as urlopen:
+            result = generate_conversation_summary(messages, "English")
+
+        self.assertEqual(result, GeneratedConversationSummary(
+            "Wi-Fi drops after login",
+            "Wi-Fi disconnects after login; router restart did not help.",
+        ))
+        payload = json.loads(urlopen.call_args.args[0].data)
+        self.assertIn("[REDACTED]", payload["messages"][1]["content"])
+        self.assertNotIn("hunter2", payload["messages"][1]["content"])
+
+    def test_ticket_draft_includes_persisted_context_summary(self) -> None:
+        response = json.dumps({
+            "title": "Wi-Fi disconnects after login",
+            "description": "Wi-Fi disconnects after login; restarting the router did not help.",
+        })
+        with patch("app.ai.urlopen", return_value=ollama_response(response)) as urlopen:
+            generate_ticket_draft(
+                [{"role": "user", "content": "It still disconnects."}],
+                "English",
+                "The user uses Windows 11.",
+            )
+        payload = json.loads(urlopen.call_args.args[0].data)
+        self.assertIn("The user uses Windows 11.", payload["messages"][0]["content"])
+
     def test_preload_requests_model_without_generation_and_keeps_it_loaded(self) -> None:
         class FakeResponse:
             def __enter__(self):

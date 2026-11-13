@@ -1219,6 +1219,7 @@ async def preview_conversation_continuation(
         for message in messages
     ]
     response_language = conversation.response_language
+    context_summary = conversation.context_summary
     db.rollback()
 
     try:
@@ -1228,6 +1229,7 @@ async def preview_conversation_continuation(
                     generate_conversation_summary,
                     ollama_messages,
                     response_language,
+                    context_summary,
                 )
                 chat_lock.assert_owned()
                 ai_lock.assert_owned()
@@ -1372,6 +1374,7 @@ async def create_conversation_ticket_draft(
         for message in messages
     ]
     response_language = conversation.response_language
+    context_summary = conversation.context_summary
     db.rollback()
     try:
         with lock_ai_generation() as ai_lock:
@@ -1379,6 +1382,7 @@ async def create_conversation_ticket_draft(
                 generate_ticket_draft,
                 ollama_messages,
                 response_language,
+                context_summary,
             )
             ai_lock.assert_owned()
     except OllamaUnavailableError as error:

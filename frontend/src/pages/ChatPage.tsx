@@ -369,7 +369,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     setError('')
     try {
       const preview = await api<{ title: string; context_summary: string }>(
-        \`/api/v1/conversations/\${parentId}/continuation-preview\`,
+        `/api/v1/conversations/${parentId}/continuation-preview`,
         { method: 'POST' },
       )
       if (activeConversationId.current !== parentId) return
@@ -386,7 +386,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     setContinuationLoading(true)
     try {
       const preview = await api<{ title: string; context_summary: string }>(
-        \`/api/v1/conversations/\${continuationPreview.parentId}/continuation-preview\`,
+        `/api/v1/conversations/${continuationPreview.parentId}/continuation-preview`,
         { method: 'POST' },
       )
       setContinuationPreview({ ...continuationPreview, title: preview.title, contextSummary: preview.context_summary })
@@ -442,7 +442,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     const title = conversationTitleDraft.trim()
     if (id === null || !title) return
     try {
-      const updated = await api<Conversation>(\`/api/v1/conversations/\${id}/title\`, {
+      const updated = await api<Conversation>(`/api/v1/conversations/${id}/title`, {
         method: 'PATCH',
         body: JSON.stringify({ title }),
       })
@@ -789,7 +789,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
             {loading ? <p role="status">{t.chatLoadingHistory}</p> : conversations.length === 0 ? (
               <p className="chat-history-empty">{t.chatHistoryEmpty}</p>
             ) : conversationTree.map(({ conversation: item, depth }) => (
-              <div className="chat-history-row" key={item.id} style={{ marginLeft: \`\${depth * 12}px\` }}>
+              <div className="chat-history-row" key={item.id} style={{ marginLeft: `${depth * 12}px` }}>
                 {editingConversationId === item.id ? (
                   <form className="chat-history-rename" onSubmit={(event) => void saveConversationTitle(event)}>
                     <input aria-label={t.chatRename} value={conversationTitleDraft}
@@ -800,7 +800,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
                 ) : (
                   <>
                     <button type="button"
-                      className={\`chat-history-item \${activeId === item.id ? 'active' : ''}\`}
+                      className={`chat-history-item ${activeId === item.id ? 'active' : ''}`}
                       aria-current={activeId === item.id ? 'true' : undefined}
                       onClick={() => void openConversation(item.id)}>
                       {depth > 0 ? '↳ ' : ''}{item.title || t.chatNew}
