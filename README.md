@@ -10,6 +10,7 @@ AI HelpDesk on kehitteillä oleva verkkopohjainen tukipalvelusovellus. Käyttäj
 
 - Käyttäjätilin luominen, kirjautuminen ja uloskirjautuminen; profiilissa etu- ja sukunimi sekä sähköpostiosoite ovat vain luettavia, käyttäjänimi on muokattavissa.
 - Ollama-pohjainen tekoälychat, tallennettu keskusteluhistoria ja epäonnistuneen AI-vastauksen erillinen uudelleenyritys.
+- Itsenäiset keskustelut ja jatkokeskustelut: tekoälyn ehdottama otsikko ja kontekstiyhteenveto tarkistetaan ennen lapsikeskustelun luomista; keskustelujen sukulaisuussuhteet näkyvät historiassa.
 - Tukipyyntöjen luominen, tarkastelu ja sulkeminen.
 - Tukipyyntöjen prioriteetit LOW, MEDIUM ja HIGH erotetaan visuaalisesti toisistaan.
 - Etusivun rajattu yhteenveto käyttäjän omista tukipyynnöistä: kokonaismäärä sekä `OPEN`- ja `CLOSED`-määrät.
@@ -98,7 +99,7 @@ LAN-käytössä lisää `FRONTEND_ORIGINS`-asetukseen sovelluksen tarkka alkuper
 
 1. Avaa Compose-käynnistyksen jälkeen `http://localhost:8088` ja luo käyttäjätili tai kirjaudu sisään.
 2. Tukipyynnöt-näkymässä voit luoda pyynnön, valita prioriteetin, muokata avointa pyyntöä ja sulkea sen. Suljetun pyynnön tietoja ei voi enää muokata.
-3. AI-keskustelu-näkymässä voit luoda keskustelun, lähettää viestejä ja palata aiempiin keskusteluihin. Jos AI-palvelu ei vastaa, jo tallennettu käyttäjän viesti säilyy historiassa; käytä kyseisen viestin **Yritä uudelleen** -toimintoa sen sijaan, että lähettäisit saman viestin uudestaan uutena viestinä.
+3. AI-keskustelu-näkymässä **Uusi keskustelu** aloittaa aina itsenäisen keskustelun. Voit palata aiempiin keskusteluihin historiasta. Kun viimeisimmän valmistuneen generoinnin mitattu kontekstin käyttö ylittää 70 %, kirjoituskentän **Aloita jatkokeskustelu** -toiminto avaa esikatselun, jossa voit muokata tekoälyn ehdottamaa otsikkoa ja kontekstiyhteenvetoa ennen lapsikeskustelun vahvistamista. Jos AI-palvelu ei vastaa, jo tallennettu käyttäjän viesti säilyy historiassa; käytä kyseisen viestin **Yritä uudelleen** -toimintoa sen sijaan, että lähettäisit saman viestin uudestaan uutena viestinä.
 4. AI-keskustelusta voi luoda tukipyynnön: järjestelmä ehdottaa otsikon ja kuvauksen, käyttäjä voi tarkastaa ja vahvistaa luomisen ennen tallennusta. Peruutus tai hylkäys ei luo pyyntöä.
 5. Profiilissa voit vaihtaa käyttäjänimen. Etunimi, sukunimi ja sähköpostiosoite näkyvät vain luettavina tietoina.
 6. Vaihda käyttöliittymän kieltä FI/EN-valinnalla. Valinta tallentuu samaan selaimeen.
@@ -175,6 +176,7 @@ AI HelpDesk is a web-based support application under development. Users can disc
 
 - User registration, sign-in, and sign-out; first name, last name, and email are read-only on the profile, while username can be changed.
 - Ollama-backed AI chat, saved conversation history, and a separate retry for a failed AI response.
+- Independent and child conversations: review the AI-proposed title and context summary before creating a child; parent/child lineage is shown in conversation history.
 - Creating, viewing, and closing support tickets.
 - Support-ticket priorities LOW, MEDIUM, and HIGH are visually distinguished.
 - A limited dashboard for the signed-in user's tickets: total count and `OPEN`/`CLOSED` counts.
@@ -260,7 +262,7 @@ For LAN access, add the exact application origin to `FRONTEND_ORIGINS`, for exam
 
 1. After starting Compose, open `http://localhost:8088` and create an account or sign in.
 2. In **Support tickets**, create a ticket, select a priority, edit an open ticket, or close it. Closed tickets cannot be edited.
-3. In **AI chat**, create a conversation, send messages, and return to saved conversations. If the AI service fails, the user message remains in history; use **Retry** for that message rather than sending the same text as a new message.
+3. In **AI chat**, **New Conversation** always starts an independent conversation. Return to saved conversations from the history list. When the measured context usage from the latest completed generation is greater than 70%, **New Child Conversation** appears beside the composer actions. It opens a preview where you can edit the AI-proposed title and context summary before confirming the child conversation. If the AI service fails, the user message remains in history; use **Retry** for that message rather than sending the same text as a new message.
 4. From an AI conversation, generate a support-ticket draft, review or edit its title and description, and confirm to save it. Cancelling does not create a ticket.
 5. In **Profile**, change the username. First name, last name, and email are read-only.
 6. Switch the interface language with the FI/EN control. The selection is stored in the same browser.
