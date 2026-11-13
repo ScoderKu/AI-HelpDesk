@@ -19,8 +19,8 @@ def upgrade() -> None:
         column["name"]
         for column in inspect(op.get_bind()).get_columns("conversations")
     }
-    if "last_prompt_tokens" not in columns:
-        op.add_column("conversations", sa.Column("last_prompt_tokens", sa.Integer(), nullable=True))
+    if "last_context_tokens" not in columns:
+        op.add_column("conversations", sa.Column("last_context_tokens", sa.Integer(), nullable=True))
 
 
 def downgrade() -> None:
@@ -28,5 +28,5 @@ def downgrade() -> None:
         column["name"]
         for column in inspect(op.get_bind()).get_columns("conversations")
     }
-    if "last_prompt_tokens" in columns:
-        op.drop_column("conversations", "last_prompt_tokens")
+    if "last_context_tokens" in columns:
+        op.drop_column("conversations", "last_context_tokens")

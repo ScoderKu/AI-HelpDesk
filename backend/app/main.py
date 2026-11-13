@@ -1777,12 +1777,13 @@ def stream_chat_message(
                                     chunks.append(value)
                                     yield event("token", {"content": value})
                                 elif kind == "usage":
+                                    context_tokens = value["context_tokens"]
                                     with SessionLocal() as usage_db:
                                         usage_conversation = usage_db.get(Conversation, conversation_id)
                                         if usage_conversation is not None and usage_conversation.user_id == authenticated_user_id:
-                                            usage_conversation.last_prompt_tokens = value
+                                            usage_conversation.last_context_tokens = context_tokens
                                             usage_db.commit()
-                                    yield event("context_usage", {"prompt_tokens": value})
+                                    yield event("context_usage", value)
                 except GenerationCancelledError:
                     yield event("cancelled", {})
                     return

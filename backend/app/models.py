@@ -53,7 +53,7 @@ class Conversation(Base):
     )
     title: Mapped[str | None] = mapped_column(String(200), nullable=True)
     response_language: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    last_prompt_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    last_context_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
     parent_conversation_id: Mapped[int | None] = mapped_column(
         BigInteger,
         ForeignKey("conversations.id", ondelete="SET NULL"),
