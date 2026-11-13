@@ -133,3 +133,15 @@ Käyttäjätarina on valmis valittavaksi Sprintiin, kun:
 AI HelpDesk -sovelluksen Product Backlog sisältää 17 käyttäjätarinaa ja niiden arviot ovat yhteensä 88 Story Pointia. US-09 ja US-14 ovat virallisia toimitussitoumuksia. US-14 on rajattu käyttäjän omien tukipyyntöjen kokonaismäärään ja `OPEN`/`CLOSED`-tilajakaumaan. US-15:n RAG MVP käyttää Markdown- ja TXT-dokumentteja avainsanahaulla; semanttista hakua harkitaan vain testinäytön perusteella. US-16:n 5 Story Pointin arvio kattaa dokumentoidun yhden komennon Compose-käynnistyksen frontendille, backendille, MySQL:lle ja Ollamalle valittu malli mukaan lukien. Tuotantokäyttöönotto ja orkestrointi eivät sisälly arvioon.
 
 Backlogin ensimmäinen tavoite on rakentaa toimiva tekninen perusta, toteuttaa käyttäjien tunnistaminen ja tukipyyntöjen hallinta sekä mahdollistaa tekoälypohjainen keskustelu.
+
+## 9. Keskustelun elinkaaren toteutuksen päivitys (2026-11-13)
+
+US-06 ja US-08 sisältävät nyt hyväksymiskriteeridokumentissa kuvatun itsenäisen keskustelun ja jatkokeskustelun elinkaaren:
+
+- **Itsenäinen keskustelu:** sivupalkin **Uusi keskustelu** aloittaa keskustelun ilman emokeskusteluviittausta tai perittyä yhteenvetoa.
+- **Jatkokeskustelu:** kirjoituskentän **Aloita jatkokeskustelu** avaa jatkamisen esikatselun. Tekoäly ehdottaa otsikkoa ja kontekstiyhteenvetoa; käyttäjä voi muokata molempia ja hänen on vahvistettava luominen.
+- **Tallennus ja sukulaisuussuhteet:** jatkokeskusteluun tallennetaan parent_conversation_id ja context_summary; samalla emokeskustelulla voi olla useita lapsikeskusteluja. Emokeskustelun viestihistoriaa ei kopioida lapsikeskusteluun.
+- **Kontekstikynnys:** jatkokeskustelutoiminto näytetään vain, kun viimeisimmän valmistuneen generoinnin käyttöastetieto on kelvollinen ja ylittää määritetyn kontekstikapasiteetin tiukasti 70 prosentilla.
+
+**Nykyinen varmennus:** kehittäjä testasi itsenäisen keskustelun ja jatkokeskustelun työnkulut manuaalisesti ja ilmoitti niiden toimivan. Frontendin build onnistui Windowsissa ja lint Dockerissa. Tästä ei pidä päätellä, että kaikki raja-arvo- tai virhetilannetestit olisi suoritettu.
+
