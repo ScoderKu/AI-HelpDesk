@@ -528,3 +528,30 @@ If a conflict is found between this document and the requirements specification,
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | 26.10.2026 | First UX/UI design specification |
+
+## 16. Conversation Lifecycle UI Update (2026-11-13)
+
+### Independent conversation
+
+The **New Conversation** button is located in the conversation-history sidebar. It always starts an independent/root conversation, clears the active chat view, and does not inherit the currently selected conversation's messages or context summary.
+
+### Child conversation
+
+A separate **New Child Conversation** action appears in the composer action area beside Send/Stop when the context threshold is met. Selecting it opens a continuation preview. The preview presents an AI-generated title and context summary; both fields are editable. The user must confirm creation, and a non-empty summary and title are required. Cancelling or closing the preview does not create a conversation.
+
+### Visibility rule
+
+Show the child action only when a conversation is active and the latest completed generation has valid context-usage and context-capacity values whose exact ratio is greater than 70%. Hide it at exactly 70%, with missing/invalid usage data, or without an active conversation. This is not a live estimate of the unsent message.
+
+### History hierarchy
+
+The conversation history visually distinguishes child conversations through indentation/tree hierarchy. Parent and child relationships are derived from the stored parent reference. Multiple children can belong to one parent; the list is arranged chronologically while preserving the hierarchy.
+
+**Verification note:** the developer reported successful manual functional tests of the independent and child flows on 2026-11-13. Boundary and error-path checks remain separate unless explicitly recorded.
+
+### Change History addition
+
+| Version | Date | Change |
+|---|---|---|
+| 1.1 | 13.11.2026 | Added independent/child conversation actions, editable continuation preview, strict greater-than-70% visibility rule, and hierarchical history behavior |
+
