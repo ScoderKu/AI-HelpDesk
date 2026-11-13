@@ -311,3 +311,20 @@ Merkittävät tekniset ja projektinhallinnalliset päätökset kirjataan tähän
 - [README](../../README.md)
 
 > **Ylläpitokäytäntö:** päivitä tätä dokumenttia projektin edetessä, erityisesti aikataulun, riskien, merkittävien päätösten ja laajuusmuutosten osalta. Älä kopioi tänne muiden dokumenttien yksityiskohtaisia vaatimuksia tai käyttäjätarinoita; linkitä niiden lähteisiin.
+
+## 13. Keskustelun elinkaaren päätösloki (2026-11-13)
+
+| ID | Päiväys | Päätös / muutos | Perustelu | Toteutus / tila |
+|---|---|---|---|---|
+| D-13 | 13.11.2026 | Sivupalkin Uusi keskustelu luo aina itsenäisen keskustelun; jatkaminen on erillinen lapsikeskustelutoiminto | Uuden keskustelun aloittaminen ei saa huomaamatta muuttua jatkamiseksi | Toteutettu branchissa feature/conversation-lifecycle |
+| D-14 | 13.11.2026 | Lapsikeskustelu edellyttää käyttäjän tarkistamaa otsikkoa ja ei-tyhjää kontekstiyhteenvetoa; siihen tallennetaan emokeskusteluviittaus ja yhteenvetovedos | Säilytetään käyttäjän päätösvalta ja rajattu peritty konteksti kopioimatta emokeskustelun viestihistoriaa | Toteutettu; migraatio 0008_conversation_tree.py |
+| D-15 | 13.11.2026 | Aloita jatkokeskustelu näytetään vain, kun viimeisimmän valmistuneen generoinnin kontekstikäyttö ylittää tiukasti 70 % | Jatkokeskustelu tarjotaan kontekstin lähestyessä kapasiteettia ilman, että keskeneräisen luonnoksen arviota käsitellään mitattuna arvona | Toteutettu frontendissä; tarkan raja-arvon erillinen testinäyttö vielä tarvitaan |
+
+Kehittäjä ilmoitti itsenäisen keskustelun ja jatkokeskustelun toimintojen toimivan manuaalisessa toimintatestauksessa. Frontendin build ja Dockerissa suoritettu lint onnistuivat. Dokumentaatio kirjaa tämän ilmoituksen eikä väitä suorittamattomia raja-arvo- tai virhetilannetestejä tehdyiksi.
+
+### Lisäys muutoslokiin
+
+| Päivämäärä | Versio | Muutos | Tekijä |
+|---|---|---|---|
+| 13.11.2026 | 0.8 | Kirjattu itsenäisen ja jatkokeskustelun päätökset, toteutustila ja dokumentaation synkronointikäytäntö | Projektin toteuttaja |
+
