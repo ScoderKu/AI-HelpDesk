@@ -777,38 +777,6 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     }
   }
 
-      {continuationPreview !== null && (
-        <div className="chat-continuation-backdrop">
-          <section className="chat-continuation-dialog" role="dialog" aria-modal="true" aria-labelledby="chat-continuation-title">
-            <h2 id="chat-continuation-title">{t.chatContinueTitle}</h2>
-            <p>{t.chatContinueDescription}</p>
-            <form onSubmit={(event) => void createContinuation(event)}>
-              <label className="chat-continuation-field">
-                <span>{t.chatConversationTitle}</span>
-                <input value={continuationPreview.title} maxLength={80}
-                  onChange={(event) => setContinuationPreview({ ...continuationPreview, title: event.target.value })} />
-              </label>
-              <label className="chat-continuation-field">
-                <span>{t.chatContextSummary}</span>
-                <textarea rows={12} maxLength={10000} value={continuationPreview.contextSummary}
-                  onChange={(event) => setContinuationPreview({ ...continuationPreview, contextSummary: event.target.value })} />
-              </label>
-              <div className="chat-continuation-actions">
-                <button className="button button-secondary" type="button" disabled={continuationLoading || continuationSaving}
-                  onClick={() => void regenerateContinuationPreview()}>
-                  {continuationLoading ? t.chatSummaryLoading : t.chatSummaryRegenerate}
-                </button>
-                <button className="button button-secondary" type="button" disabled={continuationSaving}
-                  onClick={() => setContinuationPreview(null)}>{t.chatCancelTitle}</button>
-                <button className="button button-primary" type="submit"
-                  disabled={continuationSaving || !continuationPreview.title.trim() || !continuationPreview.contextSummary.trim()}>
-                  {continuationSaving ? t.chatCreatingContinuation : t.chatCreateContinuation}
-                </button>
-              </div>
-            </form>
-          </section>
-        </div>
-      )}
   return (
     <section className="chat-page" aria-label={t.chatTitle}>
       <div className="chat-layout">
@@ -956,6 +924,38 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
           </form>
         </div>
       </div>
+      {continuationPreview !== null && (
+        <div className="chat-continuation-backdrop">
+          <section className="chat-continuation-dialog" role="dialog" aria-modal="true" aria-labelledby="chat-continuation-title">
+            <h2 id="chat-continuation-title">{t.chatContinueTitle}</h2>
+            <p>{t.chatContinueDescription}</p>
+            <form onSubmit={(event) => void createContinuation(event)}>
+              <label className="chat-continuation-field">
+                <span>{t.chatConversationTitle}</span>
+                <input value={continuationPreview.title} maxLength={80}
+                  onChange={(event) => setContinuationPreview({ ...continuationPreview, title: event.target.value })} />
+              </label>
+              <label className="chat-continuation-field">
+                <span>{t.chatContextSummary}</span>
+                <textarea rows={12} maxLength={10000} value={continuationPreview.contextSummary}
+                  onChange={(event) => setContinuationPreview({ ...continuationPreview, contextSummary: event.target.value })} />
+              </label>
+              <div className="chat-continuation-actions">
+                <button className="button button-secondary" type="button" disabled={continuationLoading || continuationSaving}
+                  onClick={() => void regenerateContinuationPreview()}>
+                  {continuationLoading ? t.chatSummaryLoading : t.chatSummaryRegenerate}
+                </button>
+                <button className="button button-secondary" type="button" disabled={continuationSaving}
+                  onClick={() => setContinuationPreview(null)}>{t.chatCancelTitle}</button>
+                <button className="button button-primary" type="submit"
+                  disabled={continuationSaving || !continuationPreview.title.trim() || !continuationPreview.contextSummary.trim()}>
+                  {continuationSaving ? t.chatCreatingContinuation : t.chatCreateContinuation}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
     </section>
   )
 }
