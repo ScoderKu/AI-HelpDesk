@@ -504,7 +504,7 @@ def generate_conversation_summary(
         )
     transcript = re.sub(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]+", "Bearer [REDACTED]", transcript)
     transcript = re.sub(
-        r"(?im)\b(password|passwd|token|api[_-]?key|secret|authorization)\s*(?:[:=]|\bis\b)\s*[^\r\n]+",
+        r"(?im)\b(password|passwd|token|api[_-]?key|secret|authorization|otp|one[-_ ]time[-_ ]code|session[_-]?cookie|private[_-]?key|cookie)\s*(?:[:=]|\bis\b)\s*[^\r\n]+",
         r"\1=[REDACTED]",
         transcript,
     )

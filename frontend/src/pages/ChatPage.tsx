@@ -892,16 +892,17 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
                 const used = Math.min(lastPromptTokens, contextCapacity)
                 const reserve = Math.floor(contextCapacity * 0.2)
                 const remaining = Math.max(0, contextCapacity - used - reserve)
-                const percentage = Math.min(100, Math.round((used / contextCapacity) * 100))
+                const percentage = Math.min(100, (used / contextCapacity) * 100)
+                const displayedPercentage = Math.round(percentage)
                 const level = percentage >= 90 ? 'danger' : percentage >= 70 ? 'warning' : 'normal'
                 return (
                   <>
                     <div className="chat-context-summary">
                       <strong className="chat-context-remaining">{remaining.toLocaleString()} {t.chatContextTokensLeft}</strong>
-                      <span>{used.toLocaleString()} / {contextCapacity.toLocaleString()} {t.chatContextTokens} · {percentage}%</span>
+                      <span>{used.toLocaleString()} / {contextCapacity.toLocaleString()} {t.chatContextTokens} · {displayedPercentage}%</span>
                     </div>
                     <div className="chat-context-track" role="progressbar" aria-label={t.chatContextUsage}
-                      aria-valuemin={0} aria-valuemax={100} aria-valuenow={percentage}>
+                      aria-valuemin={0} aria-valuemax={100} aria-valuenow={displayedPercentage}>
                       <div className={`chat-context-fill ${level}`} style={{ width: `${percentage}%` }} />
                     </div>
                     <small>{t.chatContextLatestPrompt}</small>
