@@ -508,6 +508,12 @@ def generate_conversation_summary(
             + "\n\nSOURCE CONVERSATION:\n"
             + transcript
         )
+    transcript = re.sub(
+        r"(?i)\b(password|passwd|token|api[_-]?key|secret|authorization)\s*[:=]\s*[^\s,;]+",
+        r"\1=[REDACTED]",
+        transcript,
+    )
+    transcript = re.sub(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]+", "Bearer [REDACTED]", transcript)
     language = response_language or "the language used in the conversation"
     prompt = (
         "Create a continuation summary for a technical support conversation. "
@@ -795,7 +801,9 @@ def generate_reply_stream(
         raise OllamaUnavailableError(type(error).__name__) from None
     finally:
         if response is not None:
-            response.close()
+            close_response = getattr(response, "close", None)
+            if callable(close_response):
+                close_response()
         if on_response is not None:
             on_response(None)
 

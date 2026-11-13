@@ -1193,37 +1193,39 @@ def list_conversations(
     tags=["Conversations"],
 )
 async def preview_conversation_continuation(
+    request: Request,
     conversation_id: int = Path(gt=0),
     user: User = Depends(get_authenticated_user),
     db: Session = Depends(get_db),
 ) -> ConversationContinuationPreviewResponse:
-    conversation = db.scalar(
-        select(Conversation).where(
-            Conversation.id == conversation_id,
-            Conversation.user_id == user.id,
-        )
-    )
-    if conversation is None:
-        raise HTTPException(status_code=404, detail="Conversation not found.")
-
-    messages = db.scalars(
-        select(Message)
-        .where(Message.conversation_id == conversation_id)
-        .order_by(Message.created_at.asc(), Message.id.asc())
-    ).all()
-    if not any(message.role == "USER" for message in messages):
-        raise HTTPException(status_code=400, detail="The conversation has no user messages.")
-
-    ollama_messages = [
-        {"role": "user" if message.role == "USER" else "assistant", "content": message.content}
-        for message in messages
-    ]
-    response_language = conversation.response_language
-    context_summary = conversation.context_summary
-    db.rollback()
-
+    require_trusted_origin(request)
     try:
         with lock_conversation_chat(conversation_id) as chat_lock:
+            conversation = db.scalar(
+                select(Conversation).where(
+                    Conversation.id == conversation_id,
+                    Conversation.user_id == user.id,
+                )
+            )
+            if conversation is None:
+                raise HTTPException(status_code=404, detail="Conversation not found.")
+
+            messages = db.scalars(
+                select(Message)
+                .where(Message.conversation_id == conversation_id)
+                .order_by(Message.created_at.asc(), Message.id.asc())
+            ).all()
+            if not any(message.role == "USER" for message in messages):
+                raise HTTPException(status_code=400, detail="The conversation has no user messages.")
+
+            ollama_messages = [
+                {"role": "user" if message.role == "USER" else "assistant", "content": message.content}
+                for message in messages
+            ]
+            response_language = conversation.response_language
+            context_summary = conversation.context_summary
+            db.rollback()
+
             with lock_ai_generation() as ai_lock:
                 summary = await asyncio.to_thread(
                     generate_conversation_summary,
@@ -1243,7 +1245,6 @@ async def preview_conversation_continuation(
         title=summary.title,
         context_summary=summary.context_summary,
     )
-
 
 @app.post(
     "/api/v1/conversations",
@@ -1662,10 +1663,15 @@ def stream_chat_message(
         raise HTTPException(status_code=404, detail="Conversation not found.")
     db.rollback()
 
+    generation_key = (authenticated_user_id, conversation_id)
+    generation_control = GenerationControl()
+    with _active_generations_lock:
+        if generation_key in _active_generations:
+            raise HTTPException(status_code=409, detail="A response is already being generated.")
+        _active_generations[generation_key] = generation_control
+
     def event_stream():
         user_message_id: int | None = None
-        generation_key = (authenticated_user_id, conversation_id)
-        generation_control = GenerationControl()
 
         def event(name: str, payload: dict[str, object]) -> str:
             import json
@@ -1673,8 +1679,6 @@ def stream_chat_message(
 
         try:
             with lock_conversation_chat(conversation_id) as chat_lock:
-                with _active_generations_lock:
-                    _active_generations[generation_key] = generation_control
                 with SessionLocal() as message_db:
                     conversation = message_db.scalar(
                         select(Conversation).where(
