@@ -583,3 +583,41 @@ POST /api/v1/conversations/25/messages
 9. API keys and other secrets are not stored in source code.
 10. Passwords, authentication tokens, or unnecessary personal data are not stored in error logs.
 11. Only information necessary to process the request is sent to the AI service.
+
+## 6. Conversation Lifecycle and Context Continuation (implemented 2026-11-13)
+
+### 6.1 Data model
+
+The existing conversations table represents both independent conversations and child conversations. The Conversation model includes:
+
+| Field | Type | Nullability | Purpose |
+|---|---|---|---|
+| parent_conversation_id | BIGINT | Nullable | Self-reference to the parent conversation; NULL identifies an independent/root conversation |
+| context_summary | TEXT | Nullable | User-confirmed context snapshot inherited by a child conversation |
+| last_context_tokens | INTEGER | Nullable | Token usage recorded for the latest completed generation |
+
+A self-referencing foreign key uses ON DELETE SET NULL, and an index supports parent lookup. The Alembic migration is 0008_conversation_tree.py. No separate summary table is used. The parent reference is a lineage link; child prompts use the persisted summary rather than replaying the entire parent transcript.
+
+### 6.2 API contract
+
+- POST /api/v1/conversations/{conversation_id}/continuation-preview generates a proposed title and context summary for a conversation the authenticated user owns.
+- POST /api/v1/conversations creates an independent conversation when parent_conversation_id and context_summary are omitted.
+- Creating a child requires a valid same-owner parent_conversation_id, a non-empty context_summary, and a title. A summary without a parent is invalid.
+- The conversation creation schema rejects unexpected fields and validates/normalizes title and summary values.
+- The parent transcript is not modified by preview or child creation.
+
+### 6.3 Prompt construction and lineage
+
+The backend reads context_summary from the selected conversation and supplies it to AI generation functions as inherited context. A child keeps its own message history; the parent messages are not copied into it. The conversation history UI builds a parent/child tree from parent_conversation_id, orders conversations chronologically, and supports multiple children under one parent.
+
+### 6.4 Frontend behavior and context threshold
+
+- The sidebar **New Conversation** action always starts an independent conversation and clears the active conversation view; it does not invoke continuation preview.
+- **New Child Conversation** is a separate composer action. It opens the continuation preview, where the user can review/edit the generated title and summary before confirming.
+- The child action is shown only for an active conversation when both context capacity and last_context_tokens are valid and the exact usage ratio is greater than 70%. Exactly 70% does not qualify. Missing or invalid measurements hide the action.
+- Usage is based on the latest completed generation, not a live estimate of the unsent draft. The displayed action threshold uses the raw ratio rather than a rounded display percentage.
+
+### 6.5 Verification status
+
+As of 2026-11-13, the developer reported successful manual functional testing of independent and child conversation flows. Frontend production build passed on Windows and Oxlint passed inside Docker. Do not mark the exact 70% boundary or every failure-path scenario as tested unless separately executed and recorded.
+
