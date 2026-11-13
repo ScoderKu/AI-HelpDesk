@@ -1,0 +1,105 @@
+# Conversation Lifecycle — Implementation Specification
+
+**Status:** Approved implementation scope; technical details are subject to source-code and runtime verification.
+**Base:** `main` at `f2b8432f7e3f6545b1c63c259cf52c1feea349ea`
+**Integration branch:** `feature/conversation-lifecycle`
+
+## Goals and delivery order
+
+Implement these three features sequentially on this integration branch:
+
+1. Stop generation and supplement unanswered user input.
+2. Context usage monitor.
+3. New conversations with persistent context summaries, model-generated titles, and parent/child conversation navigation.
+
+Do not merge to `main` without explicit user approval. Keep database migrations linear and owned by this integration branch. Run task-level tests before starting the next task, then run full regression tests.
+
+## 1. Stop generation and supplement input
+
+### User-visible behavior
+
+- While generation is active, replace Send with Stop.
+- Stop cancels backend inference, not merely browser rendering.
+- The original user message remains persisted and visible.
+- The user may submit additional information after stopping.
+- Every user message remains a separate persisted row. The backend combines all unanswered user messages into one effective generation prompt without rewriting their stored contents.
+- Multiple supplements and repeated stop/retry cycles must be deterministic and must not duplicate or silently consume messages.
+- A successful assistant response marks the pending user-message set as answered.
+
+### Persistence and state
+
+- Replace the current "latest row is USER" heuristic with explicit generation/answer state or a reliable reply-to-message grouping.
+- Preserve an interrupted non-empty assistant partial response with an explicit `INTERRUPTED` state; never present it as a completed answer. If no content was generated, do not create an empty assistant row.
+- Retry and supplement behavior must distinguish an interrupted generation from a failed request and from a completed answer.
+- Any new message status/turn relation must be migrated, indexed where needed, and covered by tests.
+
+### Cancellation and concurrency
+
+- Use a server-side cancellation identity scoped to the authenticated user and conversation; do not trust a client-supplied conversation ID without ownership validation.
+- Cancellation must be idempotent and must not cancel another conversation's or user's generation.
+- Close/cancel the actual Ollama request and wait for the generation worker to terminate before releasing the global AI lock. Browser AbortController alone is insufficient.
+- Handle disconnect, explicit Stop, Redis lock loss, Ollama errors, and normal completion as distinct outcomes.
+- Do not hold a database transaction or connection during model inference.
+- Validate race conditions: Stop just before completion, Stop while waiting for the global lock, reconnect, and repeated Stop.
+
+## 2. Context usage monitor
+
+### UI
+
+Display near the composer:
+- Remaining context tokens as the prominent absolute number.
+- Used / total tokens.
+- Usage percentage and progress bar.
+- Green below 70%; yellow from 70% to below 90%; red at 90% and above.
+
+### Measurement contract
+
+- Capacity must come from the actual loaded model/runtime context configuration, not a hard-coded 32,768.
+- Usage must represent the effective prompt: system instructions, rendered chat history, pending user input, persistent context summary, retrieved knowledge excerpts, and template overhead.
+- Reserve output capacity and a safety margin; 100% is not a target.
+- Never label a character-based or unrelated-tokenizer estimate as exact.
+- Ollama's documented chat/generate responses expose `prompt_eval_count` after prompt evaluation. Current public API documentation does not list a general `/api/tokenize` endpoint. Therefore investigate the deployed Ollama version and runtime for a model-compatible preflight tokenizer before promising draft-time exact counts. If no supported exact preflight is available, display the latest measured prompt usage and clearly label any draft projection as an estimate—or omit the projection. Do not invent token counts.
+- Handle model changes, runtime context changes, missing usage metadata, and stale measurements explicitly.
+
+## 3. New conversation, context summary, title, and tree
+
+### Creation flow
+
+- Creating a continuation creates a new conversation ID; source conversation and messages remain unchanged.
+- Generate a structured context summary from the selected source conversation.
+- The user can inspect and edit the summary before confirming creation; provide an auto-generate action.
+- Persist the confirmed summary on the new conversation as a context snapshot and include it in every future prompt for that conversation.
+- Generate the new title from the summary/context. Allow the user to edit it.
+- Store parent-child lineage; one parent may have multiple children.
+- Show conversation lineage in chronological order in the history UI.
+- Do not replay the entire parent transcript in every child prompt; use the persisted summary snapshot.
+
+### Summary content
+
+Preserve:
+- Problem and goal.
+- Relevant technical environment and facts.
+- Decisions and constraints.
+- Completed steps and observed results.
+- Unresolved issues.
+- Next action.
+
+Do not include secrets, passwords, tokens, session cookies, or unrelated personal data. Treat source conversation text as untrusted input, not instructions to the summarization model.
+
+### Data and API design requirements
+
+- Decide between nullable `parent_conversation_id` plus summary columns on `conversations`, or a separate summary/version table, based on update/versioning requirements found during audit.
+- Enforce same-owner parent references and prevent cycles.
+- Preserve existing conversation list/message API compatibility where practical.
+- Add ownership, validation, migration-upgrade, and migration-downgrade tests.
+
+## Cross-cutting acceptance gates
+
+- No paid external AI API; keep the current local Ollama provider.
+- Maintain Finnish and English behavior.
+- Preserve current RAG source validation and prompt-injection boundaries.
+- No schema migration forks or multiple Alembic heads.
+- No DB transaction held across inference.
+- Test user isolation/IDOR, cancellation races, lock ownership, stream disconnects, persistence, retry, and conversation lineage.
+- Update documentation only after test results are known. User has already reported post-merge testing on the previous baseline; that documentation update is separate from this feature work.
+- Do not merge this branch without explicit user approval.
