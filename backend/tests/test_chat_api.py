@@ -101,6 +101,23 @@ class ChatLockLeaseTests(unittest.TestCase):
 
 class ChatEndpointTests(unittest.TestCase):
 
+    def test_running_model_context_reads_actual_ollama_context_length(self) -> None:
+        response = MagicMock()
+        response.__enter__.return_value = response
+        response.read.return_value = json.dumps({
+            "models": [{"name": main.OLLAMA_MODEL, "context_length": 32768}],
+        }).encode("utf-8")
+        with patch("urllib.request.urlopen", return_value=response):
+            self.assertEqual(main.get_running_model_context(), 32768)
+
+    def test_running_model_context_is_unknown_when_model_is_not_loaded(self) -> None:
+        response = MagicMock()
+        response.__enter__.return_value = response
+        response.read.return_value = json.dumps({"models": []}).encode("utf-8")
+        with patch("urllib.request.urlopen", return_value=response):
+            self.assertIsNone(main.get_running_model_context())
+
+
     def test_generation_control_cancels_and_closes_active_ollama_response(self) -> None:
         control = main.GenerationControl()
         response = MagicMock()
