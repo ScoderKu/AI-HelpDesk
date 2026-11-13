@@ -282,7 +282,16 @@ class ChatEndpointTests(unittest.TestCase):
         release_calls = [
             call for call in release_lock.call_args_list if call.args[0] == main.RELEASE_CHAT_LOCK_SCRIPT
         ]
-        self.assertEqual(len(release_calls), 1)
+        self.assertEqual(len(release_calls), 2)
+
+        released_keys = {call.args[2] for call in release_calls}
+        self.assertEqual(
+            released_keys,
+            {
+                "chat:conversation:12",
+                "ai:generation:global",
+            },
+        )
 
     def test_failed_ai_response_identifies_saved_message_for_retry(self) -> None:
         conversation = make_conversation()
