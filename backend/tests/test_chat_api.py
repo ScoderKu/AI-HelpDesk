@@ -237,7 +237,7 @@ class ChatEndpointTests(unittest.TestCase):
         persistence_db.scalar.return_value = user_message
         persistence_db.refresh.side_effect = lambda item: setattr(item, "id", 42)
 
-        async def generate_after_db_release(*_args):
+        async def generate_after_db_release(*_args, **_kwargs):
             self.assertEqual(db.rollback.call_count, 2)
             return GeneratedReply("Restart the router.", "Finnish")
 
@@ -322,6 +322,7 @@ class ChatEndpointTests(unittest.TestCase):
             conversation,
             user_message,
             user_message,
+            None,  # No previous assistant message exists before this unanswered user message.
         ]
         db.get.return_value = conversation
         db.scalars.return_value.all.return_value = [user_message]
