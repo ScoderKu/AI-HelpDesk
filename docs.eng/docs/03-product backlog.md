@@ -133,3 +133,15 @@ A user story is ready to be selected for a Sprint when:
 The AI HelpDesk Product Backlog contains 17 user stories, with a total estimate of 88 Story Points. US-17 is a Sprint 2 administrator-assisted password reset that uses a protected backend maintenance command; it is sequenced after US-04, US-05, and US-03. US-09 and US-14 are official delivery commitments. US-14 is limited to the total number of the user's own support requests and the `OPEN`/`CLOSED` status breakdown. The US-15 RAG MVP uses Markdown and TXT documents with keyword search; semantic search is considered only based on test evidence. The 5 Story Point estimate for US-16 covers documented one-command Compose startup for the frontend, backend, MySQL, and Ollama, including the selected model. Production deployment and orchestration are not included in the estimate.
 
 The Backlog's first objective is to build a working technical foundation, implement user authentication and support request management, and enable AI-powered conversation.
+
+## 9. Conversation Lifecycle Implementation Update (2026-11-13)
+
+US-06 and US-08 now include the independent/child conversation lifecycle described in the acceptance-criteria document:
+
+- **Independent conversation:** the sidebar's **New Conversation** action starts a conversation without a parent reference or inherited summary.
+- **Child conversation:** the composer action **New Child Conversation** opens the continuation-preview workflow. The AI proposes a title and context summary; the user can edit both and must confirm creation.
+- **Persistence and lineage:** the child stores parent_conversation_id and context_summary; multiple children may refer to the same parent. The parent transcript is not copied into the child.
+- **Context threshold:** the child action is shown only when the latest completed-generation usage is valid and strictly greater than 70% of the configured context capacity.
+
+**Current verification:** the developer manually tested the independent and child conversation flows and reported successful behavior. Frontend build passed on Windows; frontend lint passed in Docker. Do not infer that every boundary or failure-path test has been completed from this report.
+
