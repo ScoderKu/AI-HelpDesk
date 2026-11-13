@@ -109,3 +109,29 @@ Do not include secrets, passwords, tokens, session cookies, or unrelated persona
 ## Runtime verification note — Ollama cancellation
 
 The backend cancels generation by closing the active HTTP response to Ollama and waits for the streaming worker to finish before releasing the Redis-backed generation/conversation locks. This follows Ollama's documented HTTP client-disconnect cancellation behavior, but the repository's Compose file currently uses the floating `ollama/ollama` image tag. Verify Stop Generation against the exact deployed Ollama image and confirm a second generation succeeds after cancellation. Upstream issue `ollama/ollama#17131` describes a streaming-handler goroutine/runner-slot leak on client disconnect; PR `#17135` was closed without being merged. Do not treat cancellation as fully runtime-verified until this integration check passes.\n\nThe cancellation registry is process-local. The current backend Dockerfile starts one Uvicorn worker; if the service is later scaled to multiple workers or replicas, replace the in-process registry with a distributed cancellation signal (for example Redis Pub/Sub) before scaling.
+
+---
+
+## 7. Implemented Conversation Lifecycle — Source-of-Truth Update (2026-11-13)
+
+This section supersedes the earlier open design alternatives in Sections 3 and 4 where they conflict with the implementation recorded below. The current integration branch is feature/conversation-lifecycle at the time this update was prepared.
+
+### Confirmed implementation
+
+- Independent conversations are created by the sidebar New Conversation action without a parent reference or inherited context summary.
+- Child conversations are created through a separate New Child Conversation composer action and a continuation-preview workflow.
+- The preview returns an AI-generated title and context summary. The user can edit both before confirming creation.
+- A child persists parent_conversation_id and context_summary on the conversations row. The database migration is backend/migrations/versions/0008_conversation_tree.py; the parent reference is a nullable self-referencing foreign key with ON DELETE SET NULL and an index.
+- Child creation requires a title, a non-empty context summary, and an existing parent conversation owned by the same authenticated user. A summary without a parent is rejected by request validation.
+- The saved summary is passed into later AI generation for the child. The parent's messages are not copied into the child transcript.
+- The conversation list builds a hierarchical view and supports multiple children per parent.
+- The New Child Conversation action is shown only when a conversation is active and the last completed generation has valid usage/capacity data with an exact usage ratio greater than 70%. Exactly 70% is hidden. This is not a live unsent-draft estimate.
+
+### Verification status
+
+The developer reported successful manual functional testing of independent and child conversation flows. Frontend build passed on Windows; frontend lint passed in Docker. Do not infer from this report that exact 70% boundary tests, all error paths, or all migration upgrade/downgrade scenarios have been independently verified.
+
+### Documentation maintenance
+
+For future approved structural or technical changes, update both docs.eng/docs/ and docs.suomi/docs/ in the same documentation change. Update only the documents affected by the change, but check requirements, user stories/acceptance criteria, backlog, Sprint plan, system design, UX/UI design, and project-management decision/change logs for consistency. Treat source code and migrations as the implementation authority; treat these documents as the synchronized project specification and history.
+
