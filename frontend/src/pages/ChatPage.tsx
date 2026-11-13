@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
 import './ChatPage.css'
 import { API_BASE_URL } from '../api'
 import type { Copy } from '../i18n/copy'
 
 type Conversation = { id: number; title: string | null; created_at: string; updated_at: string; last_prompt_tokens?: number | null; parent_conversation_id?: number | null }
+type ContinuationPreview = { parentId: number; title: string; contextSummary: string }
 type Message = { id: number; role: 'USER' | 'ASSISTANT'; content: string; created_at: string }
 type TicketDraft = { title: string; description: string; priority: 'LOW' | 'MEDIUM' | 'HIGH' }
 type ChatPageProps = { text: Copy; initialConversationId: number | null; onConversationChange: (id: number | null) => void }
@@ -178,6 +179,11 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
   const [sending, setSending] = useState(false)
   const [contextCapacity, setContextCapacity] = useState<number | null>(null)
   const [lastPromptTokens, setLastPromptTokens] = useState<number | null>(null)
+  const [continuationPreview, setContinuationPreview] = useState<ContinuationPreview | null>(null)
+  const [continuationLoading, setContinuationLoading] = useState(false)
+  const [continuationSaving, setContinuationSaving] = useState(false)
+  const [editingConversationId, setEditingConversationId] = useState<number | null>(null)
+  const [conversationTitleDraft, setConversationTitleDraft] = useState('')
   const [streaming, setStreaming] = useState(false)
   const [error, setError] = useState('')
   const [conversationListError, setConversationListError] = useState(false)
@@ -208,6 +214,33 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     const conversation = conversations.find((item) => item.id === activeId)
     setLastPromptTokens(conversation?.last_prompt_tokens ?? null)
   }, [activeId, conversations])
+
+  const conversationTree = useMemo(() => {
+    const sorted = [...conversations].sort((a, b) =>
+      a.created_at.localeCompare(b.created_at) || a.id - b.id,
+    )
+    const ids = new Set(sorted.map((item) => item.id))
+    const children = new Map<number, Conversation[]>()
+    for (const item of sorted) {
+      if (item.parent_conversation_id == null) continue
+      const siblings = children.get(item.parent_conversation_id) ?? []
+      siblings.push(item)
+      children.set(item.parent_conversation_id, siblings)
+    }
+    const visited = new Set<number>()
+    const ordered: { conversation: Conversation; depth: number }[] = []
+    const visit = (item: Conversation, depth: number) => {
+      if (visited.has(item.id)) return
+      visited.add(item.id)
+      ordered.push({ conversation: item, depth })
+      for (const child of children.get(item.id) ?? []) visit(child, depth + 1)
+    }
+    for (const root of sorted.filter((item) =>
+      item.parent_conversation_id == null || !ids.has(item.parent_conversation_id),
+    )) visit(root, 0)
+    for (const item of sorted) visit(item, 0)
+    return ordered
+  }, [conversations])
 
   const fetchConversations = useCallback(
     () => api<Conversation[]>('/api/v1/conversations'),
@@ -324,6 +357,106 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     setTicketFeedback('')
     setMessageLoadError(false)
     setError('')
+  }
+
+  const openContinuationPreview = async () => {
+    const parentId = activeConversationId.current
+    if (parentId === null) {
+      startConversation()
+      return
+    }
+    setContinuationLoading(true)
+    setError('')
+    try {
+      const preview = await api<{ title: string; context_summary: string }>(
+        \`/api/v1/conversations/\${parentId}/continuation-preview\`,
+        { method: 'POST' },
+      )
+      if (activeConversationId.current !== parentId) return
+      setContinuationPreview({ parentId, title: preview.title, contextSummary: preview.context_summary })
+    } catch {
+      setError(t.chatSummaryError)
+    } finally {
+      setContinuationLoading(false)
+    }
+  }
+
+  const regenerateContinuationPreview = async () => {
+    if (continuationPreview === null) return
+    setContinuationLoading(true)
+    try {
+      const preview = await api<{ title: string; context_summary: string }>(
+        \`/api/v1/conversations/\${continuationPreview.parentId}/continuation-preview\`,
+        { method: 'POST' },
+      )
+      setContinuationPreview({ ...continuationPreview, title: preview.title, contextSummary: preview.context_summary })
+    } catch {
+      setError(t.chatSummaryError)
+    } finally {
+      setContinuationLoading(false)
+    }
+  }
+
+  const createContinuation = async (event: FormEvent) => {
+    event.preventDefault()
+    if (continuationPreview === null || !continuationPreview.title.trim() || !continuationPreview.contextSummary.trim()) return
+    setContinuationSaving(true)
+    try {
+      const created = await api<Conversation>('/api/v1/conversations', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: continuationPreview.title.trim(),
+          parent_conversation_id: continuationPreview.parentId,
+          context_summary: continuationPreview.contextSummary.trim(),
+        }),
+      })
+      ++conversationRequest.current
+      activeConversationId.current = created.id
+      setActiveId(created.id)
+      onConversationChange(created.id)
+      setMessages([])
+      setDraft('')
+      draftRef.current = ''
+      setRetryMessageId(null)
+      setTicketDraft(null)
+      setTicketRecommendation(false)
+      setTicketFeedback('')
+      setError('')
+      setContinuationPreview(null)
+      setConversations((current) => [created, ...current])
+    } catch {
+      setError(t.chatCreateError)
+    } finally {
+      setContinuationSaving(false)
+    }
+  }
+
+  const renameConversation = (conversation: Conversation) => {
+    setEditingConversationId(conversation.id)
+    setConversationTitleDraft(conversation.title ?? '')
+  }
+
+  const saveConversationTitle = async (event: FormEvent) => {
+    event.preventDefault()
+    const id = editingConversationId
+    const title = conversationTitleDraft.trim()
+    if (id === null || !title) return
+    try {
+      const updated = await api<Conversation>(\`/api/v1/conversations/\${id}/title\`, {
+        method: 'PATCH',
+        body: JSON.stringify({ title }),
+      })
+      setConversations((current) => current.map((item) => item.id === id ? updated : item))
+      setEditingConversationId(null)
+      setConversationTitleDraft('')
+    } catch {
+      setError(t.chatRenameError)
+    }
+  }
+
+  const handleNewConversation = () => {
+    if (activeId !== null && messages.length > 0) void openContinuationPreview()
+    else startConversation()
   }
 
   const sendMessage = async (event: FormEvent) => {
@@ -644,24 +777,72 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     }
   }
 
+      {continuationPreview !== null && (
+        <div className="chat-continuation-backdrop">
+          <section className="chat-continuation-dialog" role="dialog" aria-modal="true" aria-labelledby="chat-continuation-title">
+            <h2 id="chat-continuation-title">{t.chatContinueTitle}</h2>
+            <p>{t.chatContinueDescription}</p>
+            <form onSubmit={(event) => void createContinuation(event)}>
+              <label className="chat-continuation-field">
+                <span>{t.chatConversationTitle}</span>
+                <input value={continuationPreview.title} maxLength={80}
+                  onChange={(event) => setContinuationPreview({ ...continuationPreview, title: event.target.value })} />
+              </label>
+              <label className="chat-continuation-field">
+                <span>{t.chatContextSummary}</span>
+                <textarea rows={12} maxLength={10000} value={continuationPreview.contextSummary}
+                  onChange={(event) => setContinuationPreview({ ...continuationPreview, contextSummary: event.target.value })} />
+              </label>
+              <div className="chat-continuation-actions">
+                <button className="button button-secondary" type="button" disabled={continuationLoading || continuationSaving}
+                  onClick={() => void regenerateContinuationPreview()}>
+                  {continuationLoading ? t.chatSummaryLoading : t.chatSummaryRegenerate}
+                </button>
+                <button className="button button-secondary" type="button" disabled={continuationSaving}
+                  onClick={() => setContinuationPreview(null)}>{t.chatCancelTitle}</button>
+                <button className="button button-primary" type="submit"
+                  disabled={continuationSaving || !continuationPreview.title.trim() || !continuationPreview.contextSummary.trim()}>
+                  {continuationSaving ? t.chatCreatingContinuation : t.chatCreateContinuation}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
   return (
     <section className="chat-page" aria-label={t.chatTitle}>
       <div className="chat-layout">
         <aside className="chat-history" aria-label={t.chatHistory}>
           <div className="chat-history-heading">
             <h2>{t.chatHistory}</h2>
-            <button className="button button-primary" type="button" onClick={startConversation}>{t.chatNew}</button>
+            <button className="button button-primary" type="button" onClick={handleNewConversation} disabled={continuationLoading}>{continuationLoading ? t.chatSummaryLoading : t.chatNew}</button>
           </div>
           <div className="chat-history-list" aria-busy={loading}>
             {loading ? <p role="status">{t.chatLoadingHistory}</p> : conversations.length === 0 ? (
               <p className="chat-history-empty">{t.chatHistoryEmpty}</p>
-            ) : conversations.map((item) => (
-              <button key={item.id} type="button"
-                className={`chat-history-item ${activeId === item.id ? 'active' : ''}`}
-                aria-current={activeId === item.id ? 'true' : undefined}
-                onClick={() => void openConversation(item.id)}>
-                {item.title || t.chatNew}
-              </button>
+            ) : conversationTree.map(({ conversation: item, depth }) => (
+              <div className="chat-history-row" key={item.id} style={{ marginLeft: \`\${depth * 12}px\` }}>
+                {editingConversationId === item.id ? (
+                  <form className="chat-history-rename" onSubmit={(event) => void saveConversationTitle(event)}>
+                    <input aria-label={t.chatRename} value={conversationTitleDraft}
+                      onChange={(event) => setConversationTitleDraft(event.target.value)} maxLength={200} autoFocus />
+                    <button className="text-link" type="submit" disabled={!conversationTitleDraft.trim()}>{t.chatSaveTitle}</button>
+                    <button className="text-link" type="button" onClick={() => setEditingConversationId(null)}>{t.chatCancelTitle}</button>
+                  </form>
+                ) : (
+                  <>
+                    <button type="button"
+                      className={\`chat-history-item \${activeId === item.id ? 'active' : ''}\`}
+                      aria-current={activeId === item.id ? 'true' : undefined}
+                      onClick={() => void openConversation(item.id)}>
+                      {depth > 0 ? '↳ ' : ''}{item.title || t.chatNew}
+                    </button>
+                    <button className="chat-history-rename-trigger" type="button"
+                      aria-label={t.chatRename} title={t.chatRename}
+                      onClick={() => renameConversation(item)}>✎</button>
+                  </>
+                )}
+              </div>
             ))}
           </div>
           {conversationListError && (
