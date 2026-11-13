@@ -181,3 +181,26 @@ Seuraava taulukko yhdistää toiminnalliset vaatimukset käyttäjätarinoihin, h
 | FR-15 | US-16 (AC-16.1–AC-16.4) | TEST-15: frontendin, backendin, MySQL:n, Ollaman ja mallin käynnistys README:n yhdellä Docker Compose -komennolla sekä backendin Ollama-yhteys |
 | FR-16 | US-14 (AC-14.1–AC-14.4) | TEST-16: kirjautuneen käyttäjän kokonaismäärä ja OPEN/CLOSED-määrät tyhjässä ja täydessä tilanteessa sekä omistajuuden tarkistus |
 | FR-17 | US-17 (AC-17.1–AC-17.5) | TEST-17: ADMIN-reset, väliaikainen salasana, pakotettu vaihto, istuntojen mitätöinti ja tavallisen käyttäjän pääsyn esto |
+
+### Keskustelun elinkaarta koskevat lisävaatimukset (2026-11-13)
+
+| Tunnus | Vaatimus |
+|---|---|
+| FR-18 | Käyttäjä voi aloittaa itsenäisen keskustelun, jolla ei ole emokeskusteluviittausta ja joka ei peri toisen keskustelun viestejä tai kontekstiyhteenvetoa. |
+| FR-19 | Käyttäjä voi luoda omasta keskustelustaan lapsikeskustelun tarkistettuaan ja vahvistettuaan tekoälyn ehdottaman, muokattavan otsikon ja ei-tyhjän kontekstiyhteenvedon. Lapsikeskusteluun tallennetaan emokeskustelusuhde ja yhteenvetovedos; emokeskustelu säilyy muuttumattomana. |
+| FR-20 | Jatkokeskustelutoiminto on käytettävissä vain, kun aktiivisen keskustelun viimeisimmän valmistuneen generoinnin kontekstikäyttö on kelvollinen ja ylittää tiukasti kelvollisen kontekstikapasiteetin 70 prosentilla. Puuttuva tai virheellinen mittaustieto ja täsmälleen 70 % eivät täytä ehtoa. |
+
+Nämä vaatimukset täydentävät keskustelua koskevia FR-06- ja FR-08-vaatimuksia. Yksityiskohtaiset hyväksymiskriteerit ovat käyttäjätarinat ja hyväksymiskriteerit -dokumentin AC-06.5–AC-06.8 ja AC-08.4.
+
+### Dokumentaation synkronointisääntö
+
+Kun hyväksytty muutos vaikuttaa projektin rakenteeseen, arkkitehtuuriin, teknologiaan, tietokantaskeemaan, API-sopimuksiin, tietoturvaan, tietovirtaan tai käyttäjälle näkyvään tekniseen toimintaan, päivitä vastaavat englannin- ja suomenkieliset dokumentit saman dokumentaatiomuutoksen yhteydessä. Pidä vaatimukset, hyväksymiskriteerit, backlog, Sprint-suunnitelma, järjestelmän suunnittelu ja UX/UI-suunnittelu keskenään yhdenmukaisina. Kirjaa toteutus- ja varmennustila erikseen; älä kuvaa suunniteltua tai varmentamatonta toimintaa toteutetuksi tai testatuksi.
+
+### Keskustelun elinkaaren jäljitettävyyslisäys
+
+| Vaatimus | Käyttäjätarina ja hyväksymiskriteerit | Todentaminen |
+|---|---|---|
+| FR-18 | US-06 (AC-06.5) | TEST-18: itsenäisen keskustelun luominen olemassa olevasta keskustelusta ja emokeskusteluviittauksen/perityn kontekstin puuttumisen tarkistus |
+| FR-19 | US-06 (AC-06.6–AC-06.7), US-08 (AC-08.4) | TEST-19: lapsikeskustelun esikatselu, muokkaus ja vahvistus, saman omistajan emokeskusteluviittaus, tallennettu yhteenveto, emokeskustelun muuttumattomuus ja lapsen kontekstin käyttö |
+| FR-20 | US-06 (AC-06.8) | TEST-20: jatkokeskustelutoiminto näkyy yli 70 %:ssa, piiloutuu täsmälleen 70 %:ssa sekä puuttuvien/virheellisten mittausten tai aktiivisen keskustelun puuttuessa |
+

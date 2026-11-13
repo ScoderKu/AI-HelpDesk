@@ -335,3 +335,8 @@ The preliminary Sprint Plan for the AI HelpDesk application consists of five Spr
 5. Sprint 5 extends AI advice using technical documentation.
 
 The plan is preliminary. The exact contents, duration, and workload of the Sprints will be confirmed based on developer capacity, technical dependencies, and project requirements.
+
+## 12. Implementation Status Update — Conversation Lifecycle (2026-11-13)
+
+The independent/child conversation workflow was implemented on the integration branch after the original Sprint plan was drafted. It extends the existing US-06 and US-08 scope rather than adding a separately estimated user story. The developer reported successful manual functional testing of both flows. Frontend build passed on Windows and lint passed in Docker. Exact threshold-boundary and all failure-path checks are not claimed as complete. This implementation update does not retroactively change the original 88 Story Point estimate or the five-Sprint planning baseline.
+

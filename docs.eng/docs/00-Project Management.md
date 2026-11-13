@@ -305,3 +305,24 @@ Significant technical and project management decisions are recorded in this tabl
 - [README](../../README.md)
 
 > **Maintenance practice:** update this document as the project progresses, especially regarding the schedule, risks, significant decisions, and scope changes. Do not copy detailed requirements or user stories from other documents here; link to their sources.
+
+## 13. Conversation Lifecycle Change Record (2026-11-13)
+
+| ID | Date | Decision / Change | Rationale | Implementation / Status |
+|---|---|---|---|---|
+| D-13 | 13.11.2026 | Sidebar New Conversation always creates an independent conversation; continuation is a separate child-conversation action | Avoid implicitly turning a user's request for a new chat into a continuation | Implemented on feature/conversation-lifecycle |
+| D-14 | 13.11.2026 | Child conversation requires a user-reviewed title and non-empty context summary; it stores a parent reference and summary snapshot | Preserve explicit user control and bounded inherited context without copying the parent transcript | Implemented; migration 0008_conversation_tree.py |
+| D-15 | 13.11.2026 | Show New Child Conversation only when last completed-generation context usage is strictly greater than 70% | Make continuation available near context capacity without treating an unsent draft estimate as measured usage | Implemented in frontend; exact threshold boundary still requires separate test evidence |
+
+The developer reported that the independent and child conversation flows work in manual functional testing. Frontend build and Docker lint passed. The documentation records this report and does not claim unperformed boundary or failure-path tests.
+
+### Change Log addition
+
+| Date | Version | Change | Author |
+|---|---|---|---|
+| 13.11.2026 | 0.8 | Recorded independent/child conversation lifecycle decisions, implementation status, and documentation synchronization policy | Project implementer |
+
+## 14. Bilingual Technical Documentation Maintenance Rule
+
+For every approved change that affects project structure, architecture, technology choices, database schema/migrations, API contracts, security, data flow, deployment, or user-visible technical behavior, update all affected English and Finnish project documents in the same documentation task. Review the requirements, user stories and acceptance criteria, Product Backlog, Sprint Plan, System Design, UX/UI Design, and this document's decision/change logs for impact. Keep the two language versions semantically aligned. Record what is implemented, what is merely planned, and what has actually been verified as separate facts. The source code and migrations are authoritative for implementation; documentation must be reconciled against them.
+

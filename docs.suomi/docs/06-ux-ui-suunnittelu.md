@@ -541,3 +541,30 @@ Jos tämän dokumentin ja vaatimusmäärittelyn välillä havaitaan ristiriita, 
 | Versio | Päiväys | Muutos |
 |---|---|---|
 | 1.0 | 26.10.2026 | Ensimmäinen UX/UI-suunnittelun määrittely |
+
+## 16. Keskustelun elinkaaren käyttöliittymäpäivitys (2026-11-13)
+
+### Itsenäinen keskustelu
+
+**Uusi keskustelu** -painike sijaitsee keskusteluhistorian sivupalkissa. Se aloittaa aina itsenäisen/juurikeskustelun, tyhjentää aktiivisen keskustelunäkymän eikä peri valitun keskustelun viestejä tai kontekstiyhteenvetoa.
+
+### Jatkokeskustelu
+
+Erillinen **Aloita jatkokeskustelu** -toiminto näytetään kirjoituskentän toimintojen yhteydessä Lähetä/Pysäytä-painikkeen vieressä, kun kontekstikynnys täyttyy. Valinta avaa jatkamisen esikatselun. Esikatselussa näytetään tekoälyn tuottama otsikko ja kontekstiyhteenveto; molempia voi muokata. Käyttäjän on vahvistettava luominen, ja otsikko sekä ei-tyhjä yhteenveto ovat pakollisia. Esikatselun peruuttaminen tai sulkeminen ei luo keskustelua.
+
+### Näkyvyysehto
+
+Jatkokeskustelutoiminto näytetään vain, kun keskustelu on aktiivinen ja viimeisimmän valmistuneen generoinnin kontekstikäyttö- ja kapasiteettiarvot ovat kelvollisia ja niiden tarkka suhde ylittää 70 %. Toiminto piilotetaan täsmälleen 70 %:n kohdalla, puuttuvien tai virheellisten mittaustietojen yhteydessä sekä ilman aktiivista keskustelua. Kyse ei ole lähettämättömän viestin reaaliaikaisesta arviosta.
+
+### Keskusteluhistorian hierarkia
+
+Keskusteluhistoria erottaa lapsikeskustelut visuaalisesti sisennyksen/puurakenteen avulla. Emokeskustelun ja lapsikeskustelun suhde muodostetaan tallennetusta emokeskusteluviittauksesta. Yhdellä emokeskustelulla voi olla useita lapsikeskusteluja; lista järjestetään aikajärjestyksessä hierarkia säilyttäen.
+
+**Varmennushuomautus:** kehittäjä ilmoitti itsenäisen keskustelun ja jatkokeskustelun manuaalisten toimintatestien onnistuneen 13.11.2026. Raja-arvo- ja virhetilannetarkistukset ovat erillisiä, ellei niitä ole erikseen kirjattu.
+
+### Lisäys muutoshistoriaan
+
+| Versio | Päiväys | Muutos |
+|---|---|---|
+| 1.1 | 13.11.2026 | Lisätty itsenäisen ja jatkokeskustelun toiminnot, muokattava jatkamisen esikatselu, tiukka yli 70 %:n näyttämisehto ja keskusteluhistorian hierarkia |
+

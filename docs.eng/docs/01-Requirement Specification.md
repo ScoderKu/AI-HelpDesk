@@ -178,3 +178,28 @@ The following table maps functional requirements to user stories, acceptance cri
 | FR-14 | US-13 (AC-13.1–AC-13.3) | TEST-14: Finnish- and English-language user interface and retention of language selection |
 | FR-15 | US-16 (AC-16.1–AC-16.4) | TEST-15: starting the frontend, backend, MySQL, Ollama, and model with the README's one-command Docker Compose instruction, and backend–Ollama connection |
 | FR-16 | US-14 (AC-14.1–AC-14.4) | TEST-16: signed-in user's total and OPEN/CLOSED counts in empty and populated cases, and ownership check |
+
+### Additional Conversation Lifecycle Requirements (2026-11-13)
+
+| ID | Requirement |
+|---|---|
+| FR-17 | An authorized administrator can reset a user's forgotten password using a protected backend maintenance command; the user must change the temporary password before accessing other protected features. |
+| FR-18 | A user can start an independent conversation that has no parent reference and does not inherit another conversation's messages or context summary. |
+| FR-19 | A user can create a child conversation from an owned conversation after reviewing and confirming an AI-generated, editable title and non-empty context summary. The child stores its parent relationship and summary snapshot; the parent conversation remains unchanged. |
+| FR-20 | The child-conversation action is available only when the active conversation's latest completed-generation context usage is valid and strictly greater than 70% of its valid context capacity. Missing or invalid measurements and exactly 70% do not satisfy the condition. |
+
+These requirements extend the conversation capability in FR-06 and FR-08. Their detailed acceptance criteria are AC-06.5–AC-06.8 and AC-08.4 in the User Stories and Acceptance Criteria document.
+
+### Documentation synchronization rule
+
+When an approved change affects project structure, architecture, technology, database schema, API contracts, security, data flow, or user-visible technical behavior, update the corresponding English and Finnish documents in the same documentation change. Keep requirements, acceptance criteria, backlog, Sprint plan, system design, and UX/UI design consistent. Record implementation and verification status separately; never describe a planned or unverified behavior as implemented or tested.
+
+### Conversation Lifecycle Traceability Addendum
+
+| Requirement | User story and acceptance criteria | Verification |
+|---|---|---|
+| FR-17 | US-17 (AC-17.1–AC-17.5) | TEST-17: protected administrator password reset, temporary password, mandatory change, session invalidation, and denial of ordinary-user access |
+| FR-18 | US-06 (AC-06.5) | TEST-18: create an independent conversation from an existing conversation and verify no parent reference or inherited context |
+| FR-19 | US-06 (AC-06.6–AC-06.7), US-08 (AC-08.4) | TEST-19: preview/edit/confirm child creation, same-owner parent link, persisted summary, parent immutability, and child context reuse |
+| FR-20 | US-06 (AC-06.8) | TEST-20: child action visibility above 70%, hidden at exactly 70%, and hidden for missing/invalid measurements or no active conversation |
+
