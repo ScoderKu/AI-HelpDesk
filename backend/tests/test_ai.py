@@ -91,7 +91,7 @@ class OllamaResponseTests(unittest.TestCase):
     def test_conversation_summary_generates_title_and_redacts_secrets(self) -> None:
         response = json.dumps({
             "title": "Wi-Fi drops after login",
-            "context_summary": "Wi-Fi disconnects after login; router restart did not help.",
+            "context_summary": "Wi-Fi disconnects after login; password: model-leaked-secret.",
         })
         messages = [
             {"role": "user", "content": "Wi-Fi drops after login. password: hunter2"},
@@ -102,7 +102,7 @@ class OllamaResponseTests(unittest.TestCase):
 
         self.assertEqual(result, GeneratedConversationSummary(
             "Wi-Fi drops after login",
-            "Wi-Fi disconnects after login; router restart did not help.",
+            "Wi-Fi disconnects after login; password=[REDACTED]",
         ))
         payload = json.loads(urlopen.call_args.args[0].data)
         self.assertIn("[REDACTED]", payload["messages"][1]["content"])

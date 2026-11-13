@@ -567,10 +567,10 @@ def generate_conversation_summary(
         or len(context_summary.strip()) > 10000
     ):
         raise OllamaUnavailableError("Invalid conversation summary returned by Ollama")
-    safe_summary = re.sub(r"(?i)\\bBearer\\s+[A-Za-z0-9._~+/=-]+", "Bearer [REDACTED]", context_summary.strip())
+    safe_summary = re.sub(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]+", "Bearer [REDACTED]", context_summary.strip())
     safe_summary = re.sub(
-        r"(?im)\\b(password|passwd|token|api[_-]?key|secret|authorization)\\s*(?:[:=]|\\bis\\b)\\s*[^\\r\\n]+",
-        r"\\1=[REDACTED]",
+        r"(?im)\b(password|passwd|token|api[_-]?key|secret|authorization|otp|one[-_ ]time[-_ ]code|session[_-]?cookie|private[_-]?key|cookie)\s*(?:[:=]|\bis\b)\s*[^\r\n]+",
+        r"\1=[REDACTED]",
         safe_summary,
     )
     return GeneratedConversationSummary(title=title.strip(), context_summary=safe_summary)
