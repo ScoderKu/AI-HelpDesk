@@ -579,3 +579,35 @@ The scope of US-16 includes Docker configurations for the frontend, backend, and
 This document defines the AI HelpDesk application's user stories, acceptance criteria, and a separate priority table.
 
 The user stories and acceptance criteria have been linked to the Product Backlog and the agreed Sprint plan. As implementation and testing progress, fulfilment of the acceptance criteria will be verified in accordance with the traceability table.
+
+## 6. Conversation Lifecycle — Additional Acceptance Criteria (2026-11-13)
+
+The following criteria extend US-06 (AI-Powered Conversation) and US-08 (Saving Conversation Messages). They describe the implemented independent/child conversation workflow without creating a new user-story ID.
+
+**AC-06.5 — Starting an Independent Conversation**
+- Given that the user is viewing any existing conversation.
+- When the user selects **New Conversation** in the conversation history sidebar.
+- Then the application starts a separate conversation with no parent conversation reference and no inherited context summary. The existing conversation and its messages remain unchanged.
+
+**AC-06.6 — Preparing a Child Conversation**
+- Given that the user has an active conversation with sufficient measured context usage.
+- When the user selects **New Child Conversation**.
+- Then the system generates a continuation preview containing an AI-generated title and context summary. The user can review and edit both fields before confirming creation; a non-empty context summary and title are required.
+
+**AC-06.7 — Creating and Using a Child Conversation**
+- Given that the user has reviewed the continuation preview.
+- When the user confirms creation.
+- Then the system creates a new conversation linked to the source through parent_conversation_id, persists the confirmed context_summary, and uses that summary as inherited context for subsequent AI prompts. The source conversation and its messages are not copied or modified.
+
+**AC-06.8 — Context-Usage Threshold**
+- Given that a conversation has a valid context-capacity value and a measured usage value from the last completed generation.
+- When the usage is evaluated.
+- Then **New Child Conversation** is shown only when usage is strictly greater than 70%. At exactly 70%, when no active conversation exists, or when usage/capacity metadata is missing or invalid, the action is hidden. The value is not a live estimate of the unsent draft.
+
+**AC-08.4 — Persisting the Continuation Snapshot**
+- Given that a child conversation has been created.
+- When the user opens it again or sends a later message.
+- Then its saved context summary remains available and is included in the child conversation's AI context; the parent transcript is not replayed as the child's full history.
+
+**Verification note:** The developer has manually exercised the independent-conversation and child-conversation flows and reported that they work as expected. Frontend build passed on Windows and frontend lint passed in Docker. Boundary-condition checks (including exactly 70%) should be recorded separately if/when executed.
+
