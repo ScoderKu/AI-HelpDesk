@@ -361,10 +361,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
 
   const openContinuationPreview = async () => {
     const parentId = activeConversationId.current
-    if (parentId === null) {
-      startConversation()
-      return
-    }
+    if (parentId === null) return
     setContinuationLoading(true)
     setError('')
     try {
@@ -451,15 +448,6 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
       setConversationTitleDraft('')
     } catch {
       setError(t.chatRenameError)
-    }
-  }
-
-  const handleNewConversation = () => {
-    const activeConversation = conversations.find((item) => item.id === activeId)
-    if (activeId !== null && (messages.length > 0 || activeConversation?.parent_conversation_id != null)) {
-      void openContinuationPreview()
-    } else {
-      startConversation()
     }
   }
 
@@ -789,13 +777,20 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
     }
   }
 
+  const contextUsagePercentage =
+    contextCapacity !== null && contextCapacity > 0 && lastContextTokens !== null
+      ? (Math.min(lastContextTokens, contextCapacity) / contextCapacity) * 100
+      : null
+  const showChildConversationButton =
+    activeId !== null && contextUsagePercentage !== null && contextUsagePercentage > 70
+
   return (
     <section className="chat-page" aria-label={t.chatTitle}>
       <div className="chat-layout">
         <aside className="chat-history" aria-label={t.chatHistory}>
           <div className="chat-history-heading">
             <h2>{t.chatHistory}</h2>
-            <button className="button button-primary" type="button" onClick={handleNewConversation} disabled={continuationLoading}>{continuationLoading ? t.chatSummaryLoading : t.chatNew}</button>
+            <button className="button button-primary" type="button" onClick={startConversation}>{t.chatNew}</button>
           </div>
           <div className="chat-history-list" aria-busy={loading}>
             {loading ? <p role="status">{t.chatLoadingHistory}</p> : conversations.length === 0 ? (
@@ -925,15 +920,24 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
               }}
               onKeyDown={handleComposerKeyDown}
               placeholder={t.chatPlaceholder} maxLength={12000} rows={3} disabled={sending || ticketDraft !== null} />
-            {sending && activeStreamController.current !== null ? (
-              <button className="button button-secondary" type="button" onClick={() => void handleStopGeneration()}>
-                {t.chatStop}
-              </button>
-            ) : (
-              <button className="button button-primary" type="submit" disabled={sending || ticketDraft !== null || !draft.trim()}>
-                {t.chatSend}
-              </button>
-            )}
+            <div className="chat-composer-actions">
+              {showChildConversationButton && (
+                <button className="button button-secondary" type="button"
+                  onClick={() => void openContinuationPreview()}
+                  disabled={sending || continuationLoading || continuationSaving}>
+                  {continuationLoading ? t.chatSummaryLoading : t.chatNewChild}
+                </button>
+              )}
+              {sending && activeStreamController.current !== null ? (
+                <button className="button button-secondary" type="button" onClick={() => void handleStopGeneration()}>
+                  {t.chatStop}
+                </button>
+              ) : (
+                <button className="button button-primary" type="submit" disabled={sending || ticketDraft !== null || !draft.trim()}>
+                  {t.chatSend}
+                </button>
+              )}
+            </div>
           </form>
         </div>
       </div>
