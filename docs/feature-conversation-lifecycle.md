@@ -56,10 +56,10 @@ Display near the composer:
 ### Measurement contract
 
 - Capacity must come from the actual loaded model/runtime context configuration, not a hard-coded 32,768.
-- Usage must represent the effective prompt: system instructions, rendered chat history, pending user input, persistent context summary, retrieved knowledge excerpts, and template overhead.
+- The measured usage is the completed generation's actual prompt tokens plus generated response tokens. The prompt count includes system instructions, rendered chat history, pending user input, persistent context summary, retrieved knowledge excerpts, and template overhead.
 - Reserve output capacity and a safety margin; 100% is not a target.
 - Never label a character-based or unrelated-tokenizer estimate as exact.
-- Ollama's documented chat/generate responses expose `prompt_eval_count` after prompt evaluation. Current public API documentation does not list a general `/api/tokenize` endpoint. Therefore investigate the deployed Ollama version and runtime for a model-compatible preflight tokenizer before promising draft-time exact counts. If no supported exact preflight is available, display the latest measured prompt plus generated-response token usage and clearly label any draft projection as an estimate—or omit the projection. Do not invent token counts.
+- Ollama's documented chat/generate responses expose `prompt_eval_count` after prompt evaluation and `eval_count` for generated response tokens. Current public API documentation does not list a general `/api/tokenize` endpoint. Therefore investigate the deployed Ollama version and runtime for a model-compatible preflight tokenizer before promising draft-time exact counts. If no supported exact preflight is available, display the latest measured prompt plus generated-response token usage and clearly label any draft projection as an estimate—or omit the projection. Do not invent token counts.
 - Handle model changes, runtime context changes, missing usage metadata, and stale measurements explicitly.
 
 ## 3. New conversation, context summary, title, and tree
