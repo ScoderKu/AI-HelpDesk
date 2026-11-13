@@ -193,3 +193,12 @@ These requirements extend the conversation capability in FR-06 and FR-08. Their 
 
 When an approved change affects project structure, architecture, technology, database schema, API contracts, security, data flow, or user-visible technical behavior, update the corresponding English and Finnish documents in the same documentation change. Keep requirements, acceptance criteria, backlog, Sprint plan, system design, and UX/UI design consistent. Record implementation and verification status separately; never describe a planned or unverified behavior as implemented or tested.
 
+### Conversation Lifecycle Traceability Addendum
+
+| Requirement | User story and acceptance criteria | Verification |
+|---|---|---|
+| FR-17 | US-17 (AC-17.1–AC-17.5) | TEST-17: protected administrator password reset, temporary password, mandatory change, session invalidation, and denial of ordinary-user access |
+| FR-18 | US-06 (AC-06.5) | TEST-18: create an independent conversation from an existing conversation and verify no parent reference or inherited context |
+| FR-19 | US-06 (AC-06.6–AC-06.7), US-08 (AC-08.4) | TEST-19: preview/edit/confirm child creation, same-owner parent link, persisted summary, parent immutability, and child context reuse |
+| FR-20 | US-06 (AC-06.8) | TEST-20: child action visibility above 70%, hidden at exactly 70%, and hidden for missing/invalid measurements or no active conversation |
+
