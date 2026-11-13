@@ -29,6 +29,7 @@ from app.ai import (
     OllamaUnavailableError,
     GenerationCancelledError,
     generate_reply,
+    generate_conversation_summary,
     generate_reply_stream,
     generate_ticket_draft,
     password_recovery_guidance,
@@ -40,6 +41,8 @@ from app.models import AuthSession, Conversation, Message, Ticket, User
 from app.schemas import (
     ConversationCreateRequest,
     ConversationResponse,
+    ConversationTitleUpdateRequest,
+    ConversationContinuationPreviewResponse,
     MessageResponse,
     ChatMessageRequest,
     ChatMessageResponse,
@@ -1184,17 +1187,119 @@ def list_conversations(
     return [ConversationResponse.model_validate(item) for item in items]
 
 
-@app.post("/api/v1/conversations", response_model=ConversationResponse,
-          status_code=status.HTTP_201_CREATED, tags=["Conversations"])
+@app.post(
+    "/api/v1/conversations/{conversation_id}/continuation-preview",
+    response_model=ConversationContinuationPreviewResponse,
+    tags=["Conversations"],
+)
+async def preview_conversation_continuation(
+    conversation_id: int = Path(gt=0),
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> ConversationContinuationPreviewResponse:
+    conversation = db.scalar(
+        select(Conversation).where(
+            Conversation.id == conversation_id,
+            Conversation.user_id == user.id,
+        )
+    )
+    if conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+
+    messages = db.scalars(
+        select(Message)
+        .where(Message.conversation_id == conversation_id)
+        .order_by(Message.created_at.asc(), Message.id.asc())
+    ).all()
+    if not any(message.role == "USER" for message in messages):
+        raise HTTPException(status_code=400, detail="The conversation has no user messages.")
+
+    ollama_messages = [
+        {"role": "user" if message.role == "USER" else "assistant", "content": message.content}
+        for message in messages
+    ]
+    response_language = conversation.response_language
+    db.rollback()
+
+    try:
+        with lock_conversation_chat(conversation_id) as chat_lock:
+            with lock_ai_generation() as ai_lock:
+                summary = await asyncio.to_thread(
+                    generate_conversation_summary,
+                    ollama_messages,
+                    response_language,
+                )
+                chat_lock.assert_owned()
+                ai_lock.assert_owned()
+    except OllamaUnavailableError:
+        raise HTTPException(
+            status_code=503,
+            detail="The AI could not prepare a conversation summary. Please try again.",
+        ) from None
+
+    return ConversationContinuationPreviewResponse(
+        title=summary.title,
+        context_summary=summary.context_summary,
+    )
+
+
+@app.post(
+    "/api/v1/conversations",
+    response_model=ConversationResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Conversations"],
+)
 def create_conversation(
     conversation_data: ConversationCreateRequest,
     user: User = Depends(get_authenticated_user),
     db: Session = Depends(get_db),
 ) -> ConversationResponse:
+    parent_id = conversation_data.parent_conversation_id
+    if parent_id is not None:
+        parent = db.scalar(
+            select(Conversation.id).where(
+                Conversation.id == parent_id,
+                Conversation.user_id == user.id,
+            )
+        )
+        if parent is None:
+            raise HTTPException(status_code=404, detail="Parent conversation not found.")
     now = datetime.now(timezone.utc).replace(tzinfo=None)
-    item = Conversation(user_id=user.id, title=conversation_data.title,
-                        created_at=now, updated_at=now)
+    item = Conversation(
+        user_id=user.id,
+        title=conversation_data.title,
+        parent_conversation_id=parent_id,
+        context_summary=conversation_data.context_summary,
+        created_at=now,
+        updated_at=now,
+    )
     db.add(item)
+    db.commit()
+    db.refresh(item)
+    return ConversationResponse.model_validate(item)
+
+
+@app.patch(
+    "/api/v1/conversations/{conversation_id}/title",
+    response_model=ConversationResponse,
+    tags=["Conversations"],
+)
+def update_conversation_title(
+    title_data: ConversationTitleUpdateRequest,
+    conversation_id: int = Path(gt=0),
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> ConversationResponse:
+    item = db.scalar(
+        select(Conversation).where(
+            Conversation.id == conversation_id,
+            Conversation.user_id == user.id,
+        )
+    )
+    if item is None:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+    item.title = title_data.title
+    item.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
     db.commit()
     db.refresh(item)
     return ConversationResponse.model_validate(item)
@@ -1426,6 +1531,7 @@ async def generate_assistant_for_message(
             detail="Conversation not found.",
         )
     response_language = conversation.response_language
+    context_summary = conversation.context_summary
     db.rollback()
     retrieved_knowledge, knowledge_context, knowledge_source_ids = build_knowledge_context(
         latest_user_content
@@ -1447,6 +1553,7 @@ async def generate_assistant_for_message(
                 response_language,
                 knowledge_context,
                 knowledge_source_ids,
+                context_summary=context_summary,
             )
             ai_lock.assert_owned()
         answer_content = generated_reply.content.strip()
@@ -1594,6 +1701,7 @@ def stream_chat_message(
                         message_db, conversation_id, user_message_id
                     )
                     response_language = conversation.response_language
+                    context_summary = conversation.context_summary
                     message_db.rollback()
 
                 yield event("user_message", {"message": user_message_payload})
@@ -1634,6 +1742,7 @@ def stream_chat_message(
                                 knowledge_source_ids,
                                 cancel_event=generation_control.cancelled,
                                 on_response=generation_control.attach_response,
+                                context_summary=context_summary,
                             ):
                                 chat_lock.assert_owned()
                                 ai_lock.assert_owned()

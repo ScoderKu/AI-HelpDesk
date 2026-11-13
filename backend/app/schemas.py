@@ -184,6 +184,26 @@ class ConversationCreateRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     title: str | None = Field(default=None, max_length=200)
+    parent_conversation_id: int | None = Field(default=None, gt=0)
+    context_summary: str | None = Field(default=None, max_length=10000)
+
+    @field_validator("context_summary")
+    @classmethod
+    def normalize_context_summary(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        return value or None
+
+    @model_validator(mode="after")
+    def validate_continuation(self) -> Self:
+        if self.parent_conversation_id is not None and not self.context_summary:
+            raise ValueError("A continuation requires a context summary.")
+        if self.parent_conversation_id is None and self.context_summary is not None:
+            raise ValueError("A context summary requires a parent conversation.")
+        if self.parent_conversation_id is not None and not self.title:
+            raise ValueError("A continuation requires a title.")
+        return self
 
     @field_validator("title")
     @classmethod
@@ -203,6 +223,17 @@ class ConversationResponse(BaseModel):
     updated_at: datetime
     last_prompt_tokens: int | None = None
     parent_conversation_id: int | None = None
+
+
+class ConversationTitleUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    title: str = Field(min_length=1, max_length=200)
+
+
+class ConversationContinuationPreviewResponse(BaseModel):
+    title: str = Field(min_length=1, max_length=80)
+    context_summary: str = Field(min_length=1, max_length=10000)
 
 
 class MessageRole(str, Enum):

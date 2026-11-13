@@ -40,6 +40,7 @@ class Conversation(Base):
     __tablename__ = "conversations"
     __table_args__ = (
         Index("ix_conversations_updated_at", "updated_at"),
+        Index("ix_conversations_parent_id", "parent_conversation_id"),
     )
 
     id: Mapped[int] = mapped_column(
@@ -53,6 +54,12 @@ class Conversation(Base):
     title: Mapped[str | None] = mapped_column(String(200), nullable=True)
     response_language: Mapped[str | None] = mapped_column(String(100), nullable=True)
     last_prompt_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    parent_conversation_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("conversations.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    context_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
