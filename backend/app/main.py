@@ -206,7 +206,10 @@ class GenerationControl:
             self._response = response
             should_close = response is not None and self.cancelled.is_set()
         if should_close:
-            response.close()
+            try:
+                response.close()
+            except Exception:
+                logger.debug("Ollama response was already closed during cancellation.")
 
     def cancel(self) -> bool:
         with self._lock:

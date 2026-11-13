@@ -212,11 +212,18 @@ def _request_chat(payload: dict[str, object], cancel_event=None, on_response=Non
         if cancel_event is not None and cancel_event.is_set():
             raise GenerationCancelledError() from None
         raise OllamaUnavailableError(type(error).__name__) from None
+    except Exception:
+        if cancel_event is not None and cancel_event.is_set():
+            raise GenerationCancelledError() from None
+        raise
     finally:
         if response is not None:
             close_response = getattr(response, "close", None)
             if callable(close_response):
-                close_response()
+                try:
+                    close_response()
+                except Exception:
+                    pass
         if on_response is not None:
             on_response(None)
 
@@ -803,11 +810,18 @@ def generate_reply_stream(
         if cancel_event is not None and cancel_event.is_set():
             raise GenerationCancelledError() from None
         raise OllamaUnavailableError(type(error).__name__) from None
+    except Exception:
+        if cancel_event is not None and cancel_event.is_set():
+            raise GenerationCancelledError() from None
+        raise
     finally:
         if response is not None:
             close_response = getattr(response, "close", None)
             if callable(close_response):
-                close_response()
+                try:
+                    close_response()
+                except Exception:
+                    pass
         if on_response is not None:
             on_response(None)
 
