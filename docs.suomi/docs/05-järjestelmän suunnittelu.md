@@ -582,3 +582,41 @@ POST /api/v1/conversations/25/messages
 10. API-avaimia ja muita salaisuuksia ei tallenneta lähdekoodiin.
 11. Virhelokeihin ei tallenneta salasanoja, autentikointitunnuksia tai tarpeettomia henkilötietoja.
 12. Tekoälypalvelulle lähetetään vain pyynnön käsittelyn kannalta tarpeelliset tiedot.
+
+## 6. Keskustelun elinkaari ja kontekstin jatkaminen (toteutettu 2026-11-13)
+
+### 6.1 Tietomalli
+
+Olemassa oleva conversations-taulu edustaa sekä itsenäisiä että lapsikeskusteluja. Conversation-mallissa ovat seuraavat kentät:
+
+| Kenttä | Tyyppi | Null-arvo sallittu | Tarkoitus |
+|---|---|---|---|
+| parent_conversation_id | BIGINT | Kyllä | Viittaus emokeskusteluun; NULL tarkoittaa itsenäistä/juurikeskustelua |
+| context_summary | TEXT | Kyllä | Käyttäjän vahvistama kontekstivedos, jonka lapsikeskustelu perii |
+| last_context_tokens | INTEGER | Kyllä | Viimeisimmän valmistuneen generoinnin token-käyttö |
+
+Itseensä viittaava vierasavain käyttää ON DELETE SET NULL -toimintoa, ja emokeskusteluhakua varten on indeksi. Alembic-migraatio on 0008_conversation_tree.py. Erillistä yhteenvetotaulua ei käytetä. Emokeskusteluviittaus kuvaa keskustelujen sukulaisuussuhdetta; lapsikeskustelun prompt käyttää tallennettua yhteenvetoa eikä koko emokeskustelun viestihistoriaa.
+
+### 6.2 API-sopimus
+
+- POST /api/v1/conversations/{conversation_id}/continuation-preview muodostaa ehdotetun otsikon ja kontekstiyhteenvedon keskustelulle, jonka omistaja on kirjautunut käyttäjä.
+- POST /api/v1/conversations luo itsenäisen keskustelun, kun parent_conversation_id ja context_summary jätetään pois.
+- Lapsikeskustelun luominen edellyttää kelvollista saman käyttäjän emokeskustelun parent_conversation_id-arvoa, ei-tyhjää context_summary-arvoa ja otsikkoa. Yhteenveto ilman emokeskustelua on virheellinen.
+- Keskustelun luontiskeema hylkää odottamattomat kentät ja validoi sekä normalisoi otsikon ja yhteenvedon.
+- Esikatselu tai lapsikeskustelun luominen ei muuta emokeskustelun viestejä.
+
+### 6.3 Promptin muodostaminen ja keskustelujen sukulaisuussuhteet
+
+Backend lukee valitun keskustelun context_summary-arvon ja välittää sen tekoälyn generointifunktioille perittynä kontekstina. Lapsikeskustelulla on oma viestihistoriansa; emokeskustelun viestejä ei kopioida siihen. Keskusteluhistorian käyttöliittymä muodostaa parent_conversation_id-arvoista keskustelupuun, järjestää keskustelut aikajärjestykseen ja tukee useita lapsikeskusteluja saman emokeskustelun alla.
+
+### 6.4 Frontendin toiminta ja kontekstin kynnysarvo
+
+- Sivupalkin **Uusi keskustelu** aloittaa aina itsenäisen keskustelun ja tyhjentää aktiivisen keskustelunäkymän; se ei avaa jatkamisen esikatselua.
+- **Aloita jatkokeskustelu** on erillinen kirjoituskentän toiminto. Se avaa jatkamisen esikatselun, jossa käyttäjä voi tarkistaa ja muokata tekoälyn ehdottamaa otsikkoa ja yhteenvetoa ennen vahvistamista.
+- Jatkokeskustelutoiminto näytetään vain aktiivisessa keskustelussa, kun sekä kontekstikapasiteetti että last_context_tokens ovat kelvollisia ja tarkka käyttöastesuhde ylittää 70 %. Täsmälleen 70 % ei riitä. Puuttuva tai virheellinen mittaustieto piilottaa toiminnon.
+- Käyttöaste perustuu viimeisimpään valmistuneeseen generointiin, ei keskeneräisen viestiluonnoksen reaaliaikaiseen arvioon. Näyttämisehto käyttää pyöristämätöntä suhdetta.
+
+### 6.5 Varmennuksen tila
+
+13.11.2026 kehittäjä ilmoitti itsenäisen keskustelun ja jatkokeskustelun työnkulkujen manuaalisen toimintatestauksen onnistuneen. Frontendin tuotantobuild onnistui Windowsissa ja Oxlint Docker-kontissa. Täsmälleen 70 prosentin raja-arvoa tai kaikkia virhetilanteita ei pidä merkitä testatuiksi, ellei niitä ole erikseen suoritettu ja kirjattu.
+
