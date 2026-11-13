@@ -696,6 +696,7 @@ export function ChatPage({ text: t, initialConversationId, onConversationChange 
       setTicketRecommendation(false)
       setError('')
       await refreshMessages(conversationId, conversationRequest.current)
+      await loadConversations()
     } catch {
       setError(t.chatStopError)
     }
