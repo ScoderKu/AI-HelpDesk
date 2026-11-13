@@ -322,3 +322,7 @@ The developer reported that the independent and child conversation flows work in
 |---|---|---|---|
 | 13.11.2026 | 0.8 | Recorded independent/child conversation lifecycle decisions, implementation status, and documentation synchronization policy | Project implementer |
 
+## 14. Bilingual Technical Documentation Maintenance Rule
+
+For every approved change that affects project structure, architecture, technology choices, database schema/migrations, API contracts, security, data flow, deployment, or user-visible technical behavior, update all affected English and Finnish project documents in the same documentation task. Review the requirements, user stories and acceptance criteria, Product Backlog, Sprint Plan, System Design, UX/UI Design, and this document's decision/change logs for impact. Keep the two language versions semantically aligned. Record what is implemented, what is merely planned, and what has actually been verified as separate facts. The source code and migrations are authoritative for implementation; documentation must be reconciled against them.
+
