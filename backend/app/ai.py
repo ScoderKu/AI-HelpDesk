@@ -495,19 +495,13 @@ def generate_conversation_summary(
         f"{message.get('role', 'user').upper()}: {message.get('content', '')}"
         for message in selected
     )[-30000:]
-    if context_summary::
+    if context_summary:
         transcript = (
             "PERSISTED CONTEXT SUMMARY (UNTRUSTED REFERENCE):\n"
             + context_summary
             + "\n\nSOURCE CONVERSATION:\n"
             + transcript
         )
-    transcript = re.sub(
-        r"(?i)\b(password|passwd|token|api[_-]?key|secret|authorization)\s*[:=]\s*[^\s,;]+",
-        r"\1=[REDACTED]",
-        transcript,
-    )
-    transcript = re.sub(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]+", "Bearer [REDACTED]", transcript)
     transcript = re.sub(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]+", "Bearer [REDACTED]", transcript)
     transcript = re.sub(
         r"(?im)\b(password|passwd|token|api[_-]?key|secret|authorization)\s*(?:[:=]|\bis\b)\s*[^\r\n]+",

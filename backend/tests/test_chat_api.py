@@ -92,11 +92,11 @@ class ChatLockLeaseTests(unittest.TestCase):
 
         messages, effective = main.build_effective_chat_history(db, 12, 13)
 
-        self.assertEqual(effective, "The app crashes\\n\\nIt happens after login")
+        self.assertEqual(effective, "The app crashes\n\nIt happens after login")
         self.assertEqual(messages, [
             {"role": "user", "content": "Earlier question"},
             {"role": "assistant", "content": "Earlier answer"},
-            {"role": "user", "content": "The app crashes\\n\\nIt happens after login"},
+            {"role": "user", "content": "The app crashes\n\nIt happens after login"},
         ])
 
 class ChatEndpointTests(unittest.TestCase):
