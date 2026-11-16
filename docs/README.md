@@ -42,12 +42,15 @@ Tämä hakemisto sisältää projektin ylläpidettävän suomenkielisen dokument
 - [Tekoälyavustajan kuvaus](fi/agents/agentin-kuvaus.md)
 - [Projektin hyväksyntä- ja testausraportti](../reports/PROJECT_ACCEPTANCE_REPORT.md) – päivätty testausnäyttö, rajoitteet ja avoimet varmennukset
 
-## Documentation authority and maintenance / Dokumentaation auktoriteetti ja ylläpito
+## Documentation authority and maintenance
 
 - Source code, database migrations, configuration and automated tests define the implemented behavior. Documents describe the agreed product and must be reconciled against the implementation.
 - Requirements and acceptance criteria define expected behavior. System Design and UX/UI Design explain the solution. Backlog and Sprint Plan organize the work.
 - Test results and verification status have one canonical location: the Project Acceptance and Verification Report. Do not copy detailed test logs into every document.
-- When a technical or structural change affects the agreed behavior, update the affected English and Finnish documents together in the same change.
+- When a technical or structural change affects the agreed behavior, update all affected English and Finnish documents together in the same change.
+
+## Dokumentaation auktoriteetti ja ylläpito
+
 - Lähdekoodi, tietokantamigraatiot, konfiguraatiot ja automaattiset testit määrittävät toteutetun toiminnan. Dokumentaatio kuvaa sovitun tuotteen, ja se on sovitettava toteutukseen.
 - Vaatimukset ja hyväksymiskriteerit määrittävät odotetun toiminnan. Järjestelmän suunnittelu ja UX/UI-suunnittelu kuvaavat ratkaisun. Backlog ja Sprint-suunnitelma ohjaavat työn toteutusta.
 - Testituloksilla ja varmennuksen tilalla on yksi ensisijainen sijainti: projektin hyväksyntä- ja testausraportti. Yksityiskohtaisia testilokeja ei kopioida jokaiseen dokumenttiin.
