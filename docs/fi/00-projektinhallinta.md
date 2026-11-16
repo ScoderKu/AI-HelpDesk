@@ -279,7 +279,7 @@ Merkittävät tekniset ja projektinhallinnalliset päätökset kirjataan tähän
 | 31.10.2026 | 0.5 | Pakotettu frontendin backend-reititys luotetun proxy-verkon kautta ja siirretty vanhentuneiden istuntojen siivous kirjautumistransaktion ulkopuolelle | Projektin toteuttaja |
 | 01.11.2026 | 0.6 | Korjattu Ollaman mallin alustuskomennon Compose-käsittely; varmennettu tyhjän mallivolyymin alustus, Sprint 1:n testitulokset ja avoimet tarkistukset; korjattu Modelfile-polut ja HomePage-focus-käsittely | Projektin toteuttaja |
 | 03.11.2026 | 0.7 | Päivitetty Sprinttien 1–5 tilanne, backendin chat- ja retention-ratkaisut, profiilin muokkausrajaus sekä testauksen ja käyttöönoton avoimet tarkistukset | Projektin toteuttaja |
-| 16.11.2026 | 0.9 | Yhdistetty keskustelun elinkaaren päätökset päätöslokiin ja yhtenäistetty dokumentaation rakenne | Projektin toteuttaja |
+| 16.11.2026 | 0.8 | Yhdistetty keskustelun elinkaaren päätökset päätöslokiin ja yhtenäistetty dokumentaation rakenne | Projektin toteuttaja |
 
 ## 12. Linkit projektin muihin dokumentteihin
 
