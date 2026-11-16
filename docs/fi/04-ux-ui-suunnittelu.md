@@ -2,9 +2,9 @@
 
 **Projekt:** AI HelpDesk – Opiskelijaprojekti  
 **Dokumentti:** UX/UI-suunnittelun määrittely  
-**Versio:** 1.0  
-**Päivitetty:** 26.10.2026  
-**Tila:** Suunnitteludokumentti – toteutus ja käytettävyystestaus tarkentuvat projektin aikana
+**Versio:** 1.2  
+**Päivitetty:** 16.11.2026  
+**Tila:** Ylläpidettävä UX/UI-määrittely – kuvaa toteutetut käyttöpolut ja yksilöi käytettävyysasiat, joita ei ole muodollisesti arvioitu
 
 ---
 
