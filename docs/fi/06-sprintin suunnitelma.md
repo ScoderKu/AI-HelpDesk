@@ -337,7 +337,6 @@ AI HelpDesk -sovelluksen alustava Sprint Plan koostuu viidestä Sprintistä ja 1
 
 Suunnitelma on alustava. Sprinttien tarkka sisältö, kesto ja työmäärä vahvistetaan kehittäjän kapasiteetin, teknisten riippuvuuksien ja projektin vaatimusten perusteella.
 
-## 12. Toteutustilan päivitys – keskustelun elinkaari (2026-11-13)
+## 12. Alkuperäisen suunnitelman jälkeiset muutokset
 
-Itsenäisen keskustelun ja jatkokeskustelun työnkulku toteutettiin integraatiohaarassa alkuperäisen Sprint-suunnitelman laatimisen jälkeen. Se täydentää olemassa olevien US-06- ja US-08-käyttäjätarinoiden laajuutta eikä lisää erikseen arvioitua käyttäjätarinaa. Kehittäjä ilmoitti molempien työnkulkujen manuaalisen toimintatestauksen onnistuneen. Frontendin build onnistui Windowsissa ja lint Dockerissa. Tarkan raja-arvon ja kaikkien virhetilanteiden testauksen ei väitetä olevan valmis. Tämä toteutuspäivitys ei muuta jälkikäteen alkuperäistä 88 Story Pointin arviota eikä viiden Sprintin suunnittelun lähtökohtaa.
-
+Itsenäisen keskustelun ja jatkokeskustelun työnkulku lisättiin alkuperäisen viiden Sprintin suunnitelman laatimisen jälkeen. Se täydentää US-06- ja US-08-tarinoita muuttamatta alkuperäistä 88 Story Pointin suunnittelupohjaa. Nykyiset vaatimukset, toteutuksen tekniset tiedot ja testausnäyttö ylläpidetään niitä vastaavissa ensisijaisissa dokumenteissa; katso [dokumentaatiohakemisto](../README.md) ja [hyväksyntäraportti](../../reports/PROJECT_ACCEPTANCE_REPORT.md).
