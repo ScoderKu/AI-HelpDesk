@@ -210,20 +210,9 @@ Laajentaa sovelluksen toiminnallisuuksia ja parantaa käyttökokemusta. Käyttä
 
 Sprintti voidaan hyväksyä, kun lisäominaisuudet täyttävät niille määritellyt hyväksymiskriteerit ja toimivat yhdessä aiemmin toteutettujen toimintojen kanssa.
 
-### Hyväksyntäpäivitys (05.11.2026)
+### Sprint 4:n ja toimituksen hyväksyntätilanne (05.11.2026)
 
-Projektin toteuttaja on vahvistanut Sprint 4:n käyttäjätarinoiden ja myöhemmin kaikkien käyttäjätarinoiden US-01–US-17 käytännön hyväksymisen, mukaan lukien US-07 ja US-15. Toteuttaja vahvisti myös koko Compose-pinon käynnistyksen tyhjillä MySQL- ja Ollama-volyymeilla. Rekisteröityminen ja kahdeksan samanaikaista MySQL-kirjautumista läpäisivät paikallisessa Compose-ympäristössä 05.11.2026. Kolmansien osapuolten lisensseistä on tehty alustava inventointi; projektin oman lisenssin valinta ja jakelukohtaiset lisenssitoimet ovat yhä avoinna. Todellista LAN-välitystä ei ole voitu tarkistaa henkilökohtaisessa kehitysympäristössä. Nämä ovat toimitus-/ympäristötarkistuksia, eivät avoimia käyttäjätarinoiden hyväksymiskriteerejä. Mallin ja RAG:n tunnetut laatuhavainnot on kirjattu projektinhallintaan.
-
-Aiempi Sprint 4:n regressio- ja demotarkistuslista kuvaa 04.11.2026 vallinnutta tilannetta, ja tämän päivityksen myöhemmät varmennukset korvaavat sen avoimina olleet hyväksymistestit.
-- regressiotestaus demo-ympäristössä ennen virallista esittelyä
-
-Tämä arvio kuvaa aiempaa 04.11.2026 tilannetta; 05.11.2026 hyväksyntäpäivitys edellä korvaa sen.
-
----
-
-### Hyväksyntäpäivitys (05.11.2026)
-
-Projektin toteuttaja on vahvistanut Sprint 4:n kaikkien tarinoiden käytännön hyväksynnän ja myöhemmin US-01–US-17:n hyväksynnän, mukaan lukien US-07 ja US-15. Toteuttaja vahvisti myös koko Compose-pinon käynnistyksen tyhjillä MySQL- ja Ollama-volyymeilla. Rekisteröityminen ja kahdeksan rinnakkaista MySQL-kirjautumista testattiin paikallisessa Compose-ympäristössä 05.11.2026, ja testi läpäisi. Kolmansien osapuolten lisensseistä on tehty alustava inventointi; projektin oman lisenssin valinta ja jakelukohtaiset lisenssitoimet ovat yhä avoinna. Todellisen LAN-välityksen tarkistus vaatii kohdeympäristön, eikä sitä voitu tehdä henkilökohtaisessa kehitysympäristössä. Nämä ovat toimitus-/ympäristötarkistuksia, eivät avoimia käyttäjätarinoiden hyväksymiskriteerejä. Mallin ja RAG:n tunnetut laatuhavainnot on kirjattu projektinhallintaan.
+Projektin toteuttaja vahvisti Sprint 4:n käyttäjätarinoiden ja myöhemmin kaikkien käyttäjätarinoiden US-01–US-17 käytännön hyväksymisen, mukaan lukien US-07 ja US-15. Koko Compose-pino käynnistyi tyhjillä MySQL- ja Ollama-volyymeilla. Rekisteröitymisen ja kahdeksan samanaikaisen MySQL-kirjautumisen integraatiotesti läpäisi paikallisessa Compose-ympäristössä 05.11.2026. Kolmansien osapuolten lisensseistä on tehty alustava inventointi, mutta projektin oma lisenssi ja jakeluun liittyvät toimet ovat avoinna. Todellista LAN-välitystä ei ole varmennettu. Testinäyttö ja myöhemmät keskustelun elinkaaren testit on koottu [hyväksyntä- ja testausraporttiin](../../reports/PROJECT_ACCEPTANCE_REPORT.md).
 
 # 7. Sprint 5 – Tietopohjainen tekoälyneuvonta (RAG)
 
