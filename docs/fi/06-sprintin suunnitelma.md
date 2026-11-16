@@ -147,7 +147,7 @@ Toteuttaa AI HelpDesk -sovelluksen keskeinen tekoälyominaisuus. Käyttäjän on
 
 ## 5.3 Keskeiset kehitystehtävät
 
-1. Konfiguroidaan Docker Compose -ympäristössä toimiva Ollama sekä `Modelfile`-tiedostosta automaattisesti luotava `poro-helpdesk`-malli valitulla GGUF-mallitiedostolla.
+1. Konfiguroidaan Docker Compose -ympäristössä toimiva Ollama sekä `Modelfile`-tiedostosta alustusasetuksilla luotava `poro`-malli valitulla GGUF-mallitiedostolla.
 2. Toteutetaan backendin ja Ollama-palvelun välinen integraatio Compose-verkon kautta.
 3. Toteutetaan keskustelunäkymä ja viestin lähettäminen.
 4. Näytetään tekoälyn vastaukset käyttöliittymässä.
@@ -160,7 +160,7 @@ Toteuttaa AI HelpDesk -sovelluksen keskeinen tekoälyominaisuus. Käyttäjän on
 
 ## 5.4 Odotetut tulokset
 
-1. Ensimmäisellä Docker Compose -käynnistyksellä puuttuva `poro-helpdesk`-malli luodaan Ollama-konttiin `Modelfile`-tiedostosta ja paikallisesta GGUF-tiedostosta; malli säilyy pysyvässä Ollama-volyymissa ja backend lataa sen käyttövalmiiksi käynnistyessään.
+1. Ensimmäisellä Docker Compose -käynnistyksellä puuttuva `poro`-malli luodaan Ollama-konttiin `Modelfile`-tiedostosta ja paikallisesta GGUF-tiedostosta; malli säilyy pysyvässä Ollama-volyymissa ja backend lataa sen käyttövalmiiksi käynnistyessään.
 2. Käyttäjä voi lähettää teknistä ongelmaa koskevan viestin Dockerissa toimivalle Ollama-palvelulle.
 3. Tekoälyn vastaus näytetään keskustelunäkymässä.
 4. Keskustelua voidaan jatkaa aiemman kontekstin perusteella.
