@@ -134,14 +134,6 @@ AI HelpDesk -sovelluksen Product Backlog sisältää 17 käyttäjätarinaa ja ni
 
 Backlogin ensimmäinen tavoite on rakentaa toimiva tekninen perusta, toteuttaa käyttäjien tunnistaminen ja tukipyyntöjen hallinta sekä mahdollistaa tekoälypohjainen keskustelu.
 
-## 9. Keskustelun elinkaaren toteutuksen päivitys (2026-11-13)
+## 9. Keskustelun elinkaaren laajuus
 
-US-06 ja US-08 sisältävät nyt hyväksymiskriteeridokumentissa kuvatun itsenäisen keskustelun ja jatkokeskustelun elinkaaren:
-
-- **Itsenäinen keskustelu:** sivupalkin **Uusi keskustelu** aloittaa keskustelun ilman emokeskusteluviittausta tai perittyä yhteenvetoa.
-- **Jatkokeskustelu:** kirjoituskentän **Aloita jatkokeskustelu** avaa jatkamisen esikatselun. Tekoäly ehdottaa otsikkoa ja kontekstiyhteenvetoa; käyttäjä voi muokata molempia ja hänen on vahvistettava luominen.
-- **Tallennus ja sukulaisuussuhteet:** jatkokeskusteluun tallennetaan parent_conversation_id ja context_summary; samalla emokeskustelulla voi olla useita lapsikeskusteluja. Emokeskustelun viestihistoriaa ei kopioida lapsikeskusteluun.
-- **Kontekstikynnys:** jatkokeskustelutoiminto näytetään vain, kun viimeisimmän valmistuneen generoinnin käyttöastetieto on kelvollinen ja ylittää määritetyn kontekstikapasiteetin tiukasti 70 prosentilla.
-
-**Nykyinen varmennus:** kehittäjä testasi itsenäisen keskustelun ja jatkokeskustelun työnkulut manuaalisesti ja ilmoitti niiden toimivan. Frontendin build onnistui Windowsissa ja lint Dockerissa. Tästä ei pidä päätellä, että kaikki raja-arvo- tai virhetilannetestit olisi suoritettu.
-
+Itsenäisen keskustelun ja jatkokeskustelun työnkulku täydentää US-06- ja US-08-käyttäjätarinoita muuttamatta alkuperäistä Story Point -arviota. Vaatimukset ja hyväksymiskriteerit ylläpidetään [käyttäjätarinat ja hyväksymiskriteerit](02-käyttäjätarinat%20ja%20hyväksymiskriteerit.md) -dokumentissa; toteutuksen tekniset tiedot kuuluvat [järjestelmän suunnitteluun](03-järjestelmän%20suunnittelu.md) ja testausnäyttö [hyväksyntäraporttiin](../../reports/PROJECT_ACCEPTANCE_REPORT.md).
