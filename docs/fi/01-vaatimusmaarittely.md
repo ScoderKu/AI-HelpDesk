@@ -94,6 +94,9 @@ Sovelluksen on täytettävä seuraavat toiminnalliset vaatimukset.
 | FR-15 | Frontend, backend, MySQL-tietokanta, Ollama-palvelu ja valittu tekoälymalli voidaan ottaa käyttöön Docker Composella yhdellä README:ssä dokumentoidulla komennolla. Backend käyttää Ollamaa Compose-verkon kautta. |
 | FR-16 | Kirjautunut käyttäjä voi tarkastella omien tukipyyntöjensä kokonaismäärää sekä `OPEN`- ja `CLOSED`-tiloissa olevien pyyntöjen määriä; muilta käyttäjiltä ei palauteta tietoja. |
 | FR-17 | ADMIN voi palauttaa unohtuneen salasanan vain backendin hallintakomennolla. Backend luo satunnaisen väliaikaisen salasanan, vaatii sen vaihtamisen seuraavassa kirjautumisessa ja mitätöi käyttäjän aiemmat istunnot. Käyttäjälle ei toteuteta reset-käyttöliittymää. |
+| FR-18 | Käyttäjä voi aloittaa itsenäisen keskustelun, jolla ei ole emokeskusteluviittausta eikä perittyjä viestejä tai kontekstiyhteenvetoa. |
+| FR-19 | Käyttäjä voi luoda omasta keskustelustaan lapsikeskustelun tarkistettuaan ja vahvistettuaan muokattavan tekoälyn ehdottaman otsikon ja ei-tyhjän kontekstiyhteenvedon. Lapsikeskusteluun tallennetaan emokeskusteluviittaus ja vahvistettu yhteenveto; emokeskustelu säilyy muuttumattomana. |
+| FR-20 | Jatkokeskustelutoiminto näytetään vain, kun aktiivisen keskustelun viimeisimmän valmistuneen generoinnin käyttöastetieto on kelvollinen ja ylittää tiukasti kelvollisen kontekstikapasiteetin 70 %. Täsmälleen 70 %, puuttuva/virheellinen mittaustieto tai aktiivisen keskustelun puuttuminen eivät täytä ehtoa. |
 
 ## 7. Ei-toiminnalliset vaatimukset
 
@@ -160,4 +163,27 @@ Projekti katsotaan onnistuneeksi, kun:
 
 ## 12. Vaatimusten jäljitettävyys
 
-Seuraava taulukko yhdistää toiminnalliset vaatimukset käyttäjätarinoihin, hyväksymiskriteereihin ja todennustapaan. Testitunnukset ovat suunniteltuja tunnisteita, jotka täsmennetään testitapauksiksi toteutuksen yhteydessä.
+Taulukko yhdistää jokaisen toiminnallisen vaatimuksen käyttäjätarinaan, hyväksymiskriteereihin ja todentamistapaan. Todentamisen tila ja päivätty testausnäyttö ylläpidetään [projektin hyväksyntä- ja testausraportissa](../../reports/PROJECT_ACCEPTANCE_REPORT.md). Todentamistapa ei itsessään ole näyttö testin suorittamisesta.
+
+| Vaatimus | Käyttäjätarina ja hyväksymiskriteerit | Todentamistapa |
+|---|---|---|
+| FR-01 | US-01 (AC-01.1–AC-01.4), US-02 (AC-02.1–AC-02.3) | Rekisteröityminen, kirjautuminen ja käyttöoikeustarkistukset |
+| FR-02 | US-03 (AC-03.1–AC-03.5) | Oman profiilin haku ja sallittujen kenttien päivitys |
+| FR-03 | US-04 (AC-04.1–AC-04.3) | Tukipyynnön luonti ja kenttien validointi |
+| FR-04 | US-05 (AC-05.1–AC-05.4) | Omien tukipyyntöjen listaus/sulkeminen ja omistajuus |
+| FR-05 | US-04 (AC-04.2) | Tukipyynnön kentät, oletusarvot ja aikaleimat |
+| FR-06 | US-06 (AC-06.1–AC-06.4) | Viestin lähetys ja AI-vastaus |
+| FR-07 | US-07 (AC-07.1–AC-07.3) | Tarkentavan kysymyksen ja ratkaisuehdotuksen työnkulku |
+| FR-08 | US-08 (AC-08.1–AC-08.3) | Viestien tallennus ja historian järjestys |
+| FR-09 | US-09 (AC-09.1–AC-09.4) | Tarkistus, vahvistus, hylkäys/peruutus ja keskustelun omistajuus |
+| FR-10 | US-10 (AC-10.1–AC-10.4) | Onnistuneet, virheelliset ja luvattomat API-pyynnöt |
+| FR-11 | US-11 (AC-11.1–AC-11.3) | Pysyvä tallennus, haku ja viite-eheys |
+| FR-12 | Projektikäytäntö; ei käyttäjätarinaa | Repositorion, haarojen ja Pull Request -historian tarkistus |
+| FR-13 | US-15 (AC-15.1–AC-15.4) | Markdown/TXT-avainsanahaku, lähteen näyttö ja tyhjä hakutulos |
+| FR-14 | US-13 (AC-13.1–AC-13.3) | FI/EN-käyttöliittymä ja kieliasetuksen säilyminen |
+| FR-15 | US-16 (AC-16.1–AC-16.4) | Puhdas Compose-käynnistys ja backendin Ollama-yhteys |
+| FR-16 | US-14 (AC-14.1–AC-14.4) | Omien tukipyyntöjen kokonaismäärä ja OPEN/CLOSED-määrät, myös tyhjä tila ja omistajuus |
+| FR-17 | US-17 (AC-17.1–AC-17.5) | Suojattu palautus, väliaikainen salasana, pakotettu vaihto, istuntojen mitätöinti ja tavallisen käyttäjän pääsyn esto |
+| FR-18 | US-06 (AC-06.5) | Itsenäisen keskustelun luonti; emokeskusteluviittauksen ja perityn kontekstin puuttuminen |
+| FR-19 | US-06 (AC-06.6–AC-06.7), US-08 (AC-08.4) | Lapsikeskustelun esikatselu/muokkaus/vahvistus; saman omistajan emoviittaus, yhteenveto, emokeskustelun muuttumattomuus ja yhteenvedon käyttö |
+| FR-20 | US-06 (AC-06.8) | Toiminto näkyy yli 70 %:ssa, piiloutuu täsmälleen 70 %:ssa, virheellisillä/puuttuvilla arvoilla ja ilman aktiivista keskustelua |
