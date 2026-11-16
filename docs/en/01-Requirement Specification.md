@@ -92,6 +92,9 @@ The application must meet the following functional requirements.
 | FR-15 | The frontend, backend, MySQL database, Ollama service, and selected AI model can be deployed with Docker Compose using one command documented in the README. The backend uses Ollama over the Compose network. |
 | FR-16 | A signed-in user can view the total number of their own support requests and the number in `OPEN` and `CLOSED` states; no data from other users is returned. |
 | FR-17 | An authorized administrator can reset a user's forgotten password using a protected backend maintenance command. The user must change the temporary password before accessing other protected features. |
+| FR-18 | A user can start an independent conversation with no parent reference and no inherited messages or context summary. |
+| FR-19 | A user can create a child conversation from an owned conversation after reviewing and confirming an editable AI-generated title and non-empty context summary. The child stores its parent reference and confirmed summary; the parent remains unchanged. |
+| FR-20 | The child-conversation action is shown only when the active conversation's latest completed-generation usage is valid and strictly greater than 70% of valid context capacity. Exactly 70%, missing/invalid measurements, or no active conversation do not qualify. |
 
 ## 7. Non-Functional Requirements
 
@@ -158,4 +161,27 @@ The project is considered successful when:
 
 ## 12. Requirements Traceability
 
-The following table maps functional requirements to user stories, acceptance criteria, and verification methods. Test IDs are planned identifiers that will be specified as test cases during implementation.
+The table maps each functional requirement to its user story, acceptance criteria and verification method. Verification status and dated evidence are maintained in the [Project Acceptance and Verification Report](../../reports/PROJECT_ACCEPTANCE_REPORT.md). A verification method is not evidence that a test has been executed.
+
+| Requirement | User story and acceptance criteria | Verification method |
+|---|---|---|
+| FR-01 | US-01 (AC-01.1–AC-01.4), US-02 (AC-02.1–AC-02.3) | Registration, sign-in and authorization tests |
+| FR-02 | US-03 (AC-03.1–AC-03.5) | Retrieve own profile and update permitted fields |
+| FR-03 | US-04 (AC-04.1–AC-04.3) | Create ticket and validate fields |
+| FR-04 | US-05 (AC-05.1–AC-05.4) | List/close own tickets and verify ownership |
+| FR-05 | US-04 (AC-04.2) | Ticket fields, defaults and timestamps |
+| FR-06 | US-06 (AC-06.1–AC-06.4) | Submit message and receive AI response |
+| FR-07 | US-07 (AC-07.1–AC-07.3) | Clarifying question and solution flow |
+| FR-08 | US-08 (AC-08.1–AC-08.3) | Persist messages and order history |
+| FR-09 | US-09 (AC-09.1–AC-09.4) | Review, confirm, reject/cancel ticket creation; verify conversation ownership |
+| FR-10 | US-10 (AC-10.1–AC-10.4) | Successful, invalid and unauthorized API requests |
+| FR-11 | US-11 (AC-11.1–AC-11.3) | Persistence, retrieval and referential integrity |
+| FR-12 | Project practice; no user story | Inspect repository, branches and Pull Request history |
+| FR-13 | US-15 (AC-15.1–AC-15.4) | Markdown/TXT keyword retrieval, source display and empty-result handling |
+| FR-14 | US-13 (AC-13.1–AC-13.3) | Finnish/English UI and language preference persistence |
+| FR-15 | US-16 (AC-16.1–AC-16.4) | Clean Compose startup and backend–Ollama communication |
+| FR-16 | US-14 (AC-14.1–AC-14.4) | Own ticket totals and OPEN/CLOSED counts, including empty state and ownership |
+| FR-17 | US-17 (AC-17.1–AC-17.5) | Protected reset, temporary password, forced change, session invalidation and ordinary-user denial |
+| FR-18 | US-06 (AC-06.5) | Create independent conversation; verify no parent reference or inherited context |
+| FR-19 | US-06 (AC-06.6–AC-06.7), US-08 (AC-08.4) | Preview/edit/confirm child; verify same-owner parent link, saved summary, parent immutability and child context reuse |
+| FR-20 | US-06 (AC-06.8) | Verify action visibility above 70%, hidden at exactly 70%, with invalid/missing usage and without an active conversation |
