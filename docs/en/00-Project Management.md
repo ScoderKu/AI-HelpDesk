@@ -282,6 +282,9 @@ Significant technical and project management decisions are recorded in this tabl
 | D-08 | 31.10.2026 | The backend trusts only the frontend proxy defined on the Compose network and uses the first untrusted hop in the trusted proxy's forwarded address chain as the login IP-rate-limit key | Prevent shared-proxy IPs from cross-limiting users and prevent misuse of forwarded headers | The frontend address is `172.30.0.2`, the trusted network is configured through `TRUSTED_PROXY_IPS`, and the logic is tested automatically; actual LAN forwarding will be verified later |
 | D-11 | 03.11.2026 | Closed support tickets and inactive conversations are permanently deleted after three calendar months | Limit database growth under the agreed retention policy | A daily batch task uses `closed_at` and `updated_at`; conversations linked to an open or not-yet-expired ticket are retained |
 | D-12 | 03.11.2026 | Users cannot change their first or last name from their profile; username is the only editable profile field | User-confirmed profile and access policy | Names are displayed as read-only, and the backend PATCH schema rejects name updates |
+| D-13 | 13.11.2026 | Sidebar New Conversation always creates an independent conversation; continuation is a separate child-conversation action | Avoid implicit context inheritance | Implemented and merged to main in PR #30 (commit `f4b7478`) |
+| D-14 | 13.11.2026 | Child conversation requires a user-confirmed title and non-empty context summary; it stores a parent reference and summary snapshot | Preserve user control and bounded inherited context without copying the parent transcript | Implemented; migration `0008_conversation_tree.py` |
+| D-15 | 13.11.2026 | Show New Child Conversation only when the latest completed-generation usage is valid and strictly greater than 70% of context capacity | Offer continuation near context capacity without treating an unsent draft estimate as measured usage | Implemented in frontend; exact threshold boundary evidence remains incomplete |
 
 ## 11. Change Log
 
@@ -295,34 +298,20 @@ Significant technical and project management decisions are recorded in this tabl
 | 01.11.2026 | 0.6 | Fixed Compose handling for Ollama model initialization; verified empty model-volume initialization, Sprint 1 test results, and remaining checks; corrected Modelfile paths and HomePage focus handling | Project implementer |
 | 03.11.2026 | 0.7 | Updated Sprint 1–5 status, backend chat and retention design, profile editing policy, and remaining verification items | Project implementer |
 
+| 16.11.2026 | 0.9 | Consolidated conversation lifecycle decisions into the Decision Log and synchronized the current documentation structure | Project implementer |
+
 ## 12. Links to Other Project Documents
 
 - [Requirements Specification](<01-Requirement%20Specification.md>)
 - [User Stories and Acceptance Criteria](<02-User%20Stories%20and%20Acceptance%20Criteria.md>)
-- [Product Backlog](<03-product%20backlog.md>)
-- [Sprint Plan](<04-Sprint%20Plan.md>)
-- [System Design](<05-System%20Design.md>)
+- [Product Backlog](<05-product%20backlog.md>)
+- [Sprint Plan](<06-Sprint%20Plan.md>)
+- [System Design](<03-System%20Design.md>)
 - [README](../../README.md)
 
 > **Maintenance practice:** update this document as the project progresses, especially regarding the schedule, risks, significant decisions, and scope changes. Do not copy detailed requirements or user stories from other documents here; link to their sources.
 
-## 13. Conversation Lifecycle Change Record (2026-11-13)
-
-| ID | Date | Decision / Change | Rationale | Implementation / Status |
-|---|---|---|---|---|
-| D-13 | 13.11.2026 | Sidebar New Conversation always creates an independent conversation; continuation is a separate child-conversation action | Avoid implicitly turning a user's request for a new chat into a continuation | Implemented on feature/conversation-lifecycle |
-| D-14 | 13.11.2026 | Child conversation requires a user-reviewed title and non-empty context summary; it stores a parent reference and summary snapshot | Preserve explicit user control and bounded inherited context without copying the parent transcript | Implemented; migration 0008_conversation_tree.py |
-| D-15 | 13.11.2026 | Show New Child Conversation only when last completed-generation context usage is strictly greater than 70% | Make continuation available near context capacity without treating an unsent draft estimate as measured usage | Implemented in frontend; exact threshold boundary still requires separate test evidence |
-
-The developer reported that the independent and child conversation flows work in manual functional testing. Frontend build and Docker lint passed. The documentation records this report and does not claim unperformed boundary or failure-path tests.
-
-### Change Log addition
-
-| Date | Version | Change | Author |
-|---|---|---|---|
-| 13.11.2026 | 0.8 | Recorded independent/child conversation lifecycle decisions, implementation status, and documentation synchronization policy | Project implementer |
-
-## 14. Bilingual Technical Documentation Maintenance Rule
+## 13. Bilingual Technical Documentation Maintenance Rule
 
 For every approved change that affects project structure, architecture, technology choices, database schema/migrations, API contracts, security, data flow, deployment, or user-visible technical behavior, update all affected English and Finnish project documents in the same documentation task. Review the requirements, user stories and acceptance criteria, Product Backlog, Sprint Plan, System Design, UX/UI Design, and this document's decision/change logs for impact. Keep the two language versions semantically aligned. Record what is implemented, what is merely planned, and what has actually been verified as separate facts. The source code and migrations are authoritative for implementation; documentation must be reconciled against them.
 
