@@ -1,7 +1,4 @@
 # AI HelpDesk
-
-AI HelpDesk is a bilingual (Finnish/English) technical-support web application. Users can ask an AI assistant about IT and software-development issues, manage their own support tickets, and review saved conversations.
-
 ## Suomeksi
 
 AI HelpDesk on suomen- ja englanninkielinen teknisen tuen verkkosovellus. Käyttäjä voi kysyä tekoälyltä IT- ja ohjelmistokehitysongelmista, hallita omia tukipyyntöjään ja tarkastella tallennettuja keskustelujaan.

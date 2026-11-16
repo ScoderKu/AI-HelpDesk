@@ -1,10 +1,8 @@
-AI HelpDesk is a bilingual (Finnish/English) technical-support web application. Users can ask an AI assistant about IT and software-development issues, manage their own support tickets, and review saved conversations.
-
 # AI HelpDesk – Project Documentation
 
-This directory contains the maintained project documentation in English and Finnish. The two language editions are organized separately below. Each document uses the same ID in both languages and covers the same agreed scope.
-
 ## English documentation
+
+This directory contains the maintained project documentation in English and Finnish. The two language editions are organized separately below. Each document uses the same ID in both languages and covers the same agreed scope.
 
 | ID | Document | Purpose |
 |---|---|---|
@@ -21,6 +19,14 @@ This directory contains the maintained project documentation in English and Finn
 **Additional English material**
 - [AI agent description](en/agents/agent-description.md)
 - [Project Acceptance and Verification Report](../reports/PROJECT_ACCEPTANCE_REPORT.md) – dated test evidence, limitations and outstanding verification
+
+## Documentation authority and maintenance
+
+- Source code, database migrations, configuration and automated tests define the implemented behavior. Documents describe the agreed product and must be reconciled against the implementation.
+- Requirements and acceptance criteria define expected behavior. System Design and UX/UI Design explain the solution. Backlog and Sprint Plan organize the work.
+- Test results and verification status have one canonical location: the Project Acceptance and Verification Report. Do not copy detailed test logs into every document.
+- When a technical or structural change affects the agreed behavior, update all affected English and Finnish documents together in the same change.
+
 
 ## Suomenkielinen dokumentaatio
 
@@ -41,13 +47,6 @@ Tämä hakemisto sisältää projektin ylläpidettävän suomenkielisen dokument
 **Suomenkielinen lisämateriaali**
 - [Tekoälyavustajan kuvaus](fi/agents/agentin-kuvaus.md)
 - [Projektin hyväksyntä- ja testausraportti](../reports/PROJECT_ACCEPTANCE_REPORT.md) – päivätty testausnäyttö, rajoitteet ja avoimet varmennukset
-
-## Documentation authority and maintenance
-
-- Source code, database migrations, configuration and automated tests define the implemented behavior. Documents describe the agreed product and must be reconciled against the implementation.
-- Requirements and acceptance criteria define expected behavior. System Design and UX/UI Design explain the solution. Backlog and Sprint Plan organize the work.
-- Test results and verification status have one canonical location: the Project Acceptance and Verification Report. Do not copy detailed test logs into every document.
-- When a technical or structural change affects the agreed behavior, update all affected English and Finnish documents together in the same change.
 
 ## Dokumentaation auktoriteetti ja ylläpito
 
