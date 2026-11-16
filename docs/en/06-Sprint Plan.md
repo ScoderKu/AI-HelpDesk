@@ -138,7 +138,7 @@ Implement the key AI feature of the AI HelpDesk application. Users must be able 
 
 ## 5.3 Key Development Tasks
 
-1. Configure Ollama in Docker Compose and automatically create the `poro-helpdesk` model from the `Modelfile` and selected GGUF file.
+1. Configure Ollama in Docker Compose and initialize the configured `poro` model from the `Modelfile` and selected GGUF file.
 2. Implement the integration between the backend and the Ollama service over the Compose network.
 3. Implement the conversation view and message submission.
 4. Display AI responses in the user interface.
@@ -151,7 +151,7 @@ Implement the key AI feature of the AI HelpDesk application. Users must be able 
 
 ## 5.4 Expected Outcomes
 
-1. On the first Docker Compose startup, a missing `poro-helpdesk` model is created in the Ollama container from the `Modelfile` and local GGUF file; the model persists in the Ollama volume and the backend preloads it at startup.
+1. On the first Docker Compose startup, a missing configured `poro` model is initialized in the Ollama container from the `Modelfile` and local GGUF file; the model persists in the Ollama volume and the backend preloads it at startup.
 2. Users can send a message about a technical problem to the Ollama service running in Docker.
 3. The AI response is displayed in the conversation view.
 4. The conversation can continue based on previous context.
