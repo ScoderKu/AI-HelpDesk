@@ -124,7 +124,7 @@ Tietokannan viite-eheys varmistetaan pää- ja viiteavaimilla. Käyttäjäkohtai
 
 ### 2.5 Tekoälyintegraatio
 
-AI Service välittää käyttäjän viestin Compose-ympäristössä toimivalle Ollama-palvelulle ja käsittelee saadun vastauksen. Oletusmalli on `poro-helpdesk`, joka luodaan GGUF-tiedostosta `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf` [Modelfile](../../ollama/Modelfile)-tiedoston avulla. Mallin nimi ja alustuslähde määritetään asetuksilla `OLLAMA_MODEL` ja `OLLAMA_MODEL_SOURCE`: `registry` hakee mallin Ollama-rekisteristä, kun taas `modelfile` luo mallin paikallisesta Modelfile-tiedostosta. Nykyinen oletus-Modelfile asettaa kontekstipituudeksi 8192 ja lämpötilaksi 0.2.
+AI Service välittää backendin pyynnöt Compose-verkossa toimivalle Ollama-palvelulle. Mallin nimi ja alustuslähde määritetään `OLLAMA_MODEL`- ja `OLLAMA_MODEL_SOURCE`-asetuksilla. Versionhallinnassa oleva `.env.example` asettaa arvot `OLLAMA_MODEL=poro` ja `OLLAMA_MODEL_SOURCE=modelfile`; kun mallin nimi on määritetty, alustuspalvelu luo mallin [Modelfile](../../ollama/Modelfile)-tiedostosta tai hakee sen Ollama-rekisteristä. Kopioi `.env.example` ja pidä sama mallinimi määritettynä sekä backendille että mallin alustuspalvelulle: niiden Compose-oletusarvot eroavat, jos `OLLAMA_MODEL` jätetään pois. Nykyinen Modelfile käyttää tiedostoa `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`, asetusta `num_ctx 8192` ja lämpötilaa `0.3`.
 
 #### Tekoälyintegraation tulee
 
@@ -146,11 +146,11 @@ Tekoälyn tuottamat vastaukset ovat ehdotuksia. Niiden oikeellisuutta ei voida t
 
 ### 2.6 RAG MVP ja tietolähteet
 
-Knowledge Service käsittelee ennen toteutusta ryhmän rajaamaa, käyttöön hyväksyttyä Markdown- ja TXT-dokumenttikokoelmaa. Tarkka lähdekokoelma ja sen ylläpitopaikka vahvistetaan ennen toteutusta; dokumentteja ei haeta ennalta määrittelemättömistä tai ulkoisista lähteistä.
+Knowledge Service lataa hyväksytyn paikallisen Markdown/TXT-lähdekokoelman repositorion `knowledge/`-hakemistosta (Compose liittää sen vain luku -tilassa polkuun `/knowledge`). Dokumentti otetaan hakuun vain, jos sen metatiedoissa on `RAG Scope: project-specific`; yleistä viitemateriaalia ei indeksoida. Nykyinen kokoelma on tarkoitettu AI HelpDeskin projektikohtaiseen tekniseen neuvontaan.
 
-MVP:n hakutapa on avainsanahaku. Palvelu hakee kysymykseen sopivia dokumenttikohtia, välittää löydetyt tekstikatkelmat ja lähdetiedot Chat Servicen kautta AI Servicelle sekä palauttaa lähdetiedot käyttöliittymän näytettäväksi. Hakutuloksen lähdetieto perustuu todelliseen tiedostoon ja löydettyyn kohtaan. Jos sopivaa kohtaa ei löydy, mallille ei anneta keksittyä lähdettä eikä vastausta esitetä dokumentaation vahvistamana.
+Toteutettu MVP käyttää kevyttä kaksikielistä avainsana- ja token-etuliitehakua, ei semanttista hakua, vektoriupotuksia eikä suomen kielen morfologista analyysia. Dokumentit jaetaan osioihin, osumat pisteytetään ja palvelu palauttaa rajatun määrän tekstikatkelmia sekä lähdetunnisteita. Chat-generointi saa löydetyt katkelmat epäluotettuna viitemateriaalina. Backend tarkistaa lähdetunnisteet todellisia hakutuloksia vasten ennen lähteiden näyttämistä; mallin itse keksimiä lähdeluetteloita ei hyväksytä. Jos sopivaa katkelmaa ei löydy, vastausta ei esitetä dokumentaation vahvistamana.
 
-Avainsanahaun laatua arvioidaan ennen toteutusta määritellyillä kysymyksillä ja dokumenteilla, mukaan lukien relevantin osuman ja osumattoman kyselyn testit. Semanttinen haku tai vektoritietokanta lisätään vasta, jos testitulokset osoittavat avainsanahaun riittämättömäksi ja muutos hyväksytään. RAG MVP:n dokumenttikokoelma ja hakutapa eivät edellytä ER-kaavion tai MySQL-skeeman muuttamista. Jos myöhemmin syntyy todellinen pysyvän uuden datan tarve, tietomalli ja ER-kaavio päivitetään erikseen muutoksenhallinnassa.
+Autentikoitu `POST /api/v1/knowledge/search` -endpoint tarjoaa hakutulokset tarkasteltaviksi. RAG-haku on integroitu stream-chat-, tavalliseen ei-streamaavaan chat- ja uudelleenyrityspolkuun. Haku voi ohittaa olennaisen kohdan tai palauttaa heikon osuman; US-15:n käytännön hyväksyntä ilmoitettiin 05.11.2026, mutta se ei takaa haun tai vastauksen oikeellisuutta. Lähdekokoelma ja hakutapa eivät edellytä erillistä RAG-taulua tai ER-kaavion muutosta.
 
 Malli, Ollama, Docker-kuvat ja muut työkalut sekä kirjastot tarkistetaan maksuttomuuden, lisenssien ja käyttöehtojen osalta ennen toimitusta. Mahdollisia lisenssiehtoja ei oleteta täytetyiksi ilman tarkistusta.
 
@@ -359,7 +359,7 @@ REST API toimii frontendin ja backendin välisenä rajapintana.
 
 ## 5.2 Endpointit
 
-Autentikointi-, profiili-, tukipyyntö- ja keskustelureitit on toteutettu. RAG-hakureitti on suunniteltu, eikä sitä pidä merkitä valmiiksi ennen Sprint 5:n toteutusta.
+Autentikointi-, profiili-, tukipyyntö-, keskustelu- ja tietopohjaisen haun reitit on toteutettu. Alla oleva endpoint-luettelo kuvaa nykyistä API-pintaa; tarkat pyyntö- ja vastausskeemat määritellään backendissä.
 
 ### Autentikointi ja käyttäjätili
 
@@ -427,6 +427,7 @@ Staattinen `/summary`-reitti määritellään ennen dynaamista `{id}`-reittiä, 
 | GET | `/api/v1/conversations/{id}/messages` | Hakee keskustelun viestit | Kyllä |
 | POST | `/api/v1/conversations/{id}/messages` | Tallentaa käyttäjäviestin ja pyytää tekoälyvastausta; chat-pyynnön `Origin` tarkistetaan allowlististä | Kyllä |
 | POST | `/api/v1/conversations/{id}/messages/{message_id}/retry` | Yrittää luoda vastauksen jo tallennetulle vastaamattomalle käyttäjäviestille | Kyllä |
+| POST | `/api/v1/conversations/{id}/messages/stop` | Pysäyttää omistetun keskustelun aktiivisen streamin ja odottaa sen päättymistä | Kyllä |
 
 ### Tietopohjainen tekoälyneuvonta
 
@@ -625,4 +626,4 @@ Backend lukee valitun keskustelun context_summary-arvon ja välittää sen teko�
 
 ## 7. Generoinnin keskeyttäminen ja operatiiviset rajoitteet
 
-Chat-toiminnossa aktiivinen generointi voidaan pysäyttää. Tavoiteltu toiminta on keskeneräisen tekoälyvastauksen hylkääminen siten, että käyttäjän lähettämät viestit säilyvät; keskeytetty osittainen vastaus ei saa päätyä myöhempään keskustelukontekstiin. Backend sulkee aktiivisen Ollama HTTP -vastauksen ja odottaa generointityön päättymistä ennen Redis-pohjaisten generointi- ja keskustelulukkojen vapauttamista. Toimintaa testattiin kehityksen aikana, mutta keskeytys on tarkistettava täsmälleen sillä Ollama-kuvalla, jota käyttöönotossa käytetään, koska Compose käyttää muuttuvaa image-tagia. Keskeytysrekisteri on prosessikohtainen; ennen usean backend-työntekijän tai replikan käyttöönottoa se on korvattava hajautetulla keskeytyssignaalilla. Tätä huomautusta ei pidä tulkita näytöksi monen työntekijän tai tuotantoympäristön varmennuksesta.
+Stream-chat tallentaa käyttäjän viestin ennen generointia ja tallentaa assistant-viestin vasta, kun generointi valmistuu onnistuneesti. Pysäytys käyttää endpointia `POST /api/v1/conversations/{conversation_id}/messages/stop`; backend tarkistaa keskustelun omistajuuden, lähettää keskeytyssignaalin prosessikohtaiselle generointiohjaimelle, sulkee aktiivisen Ollama HTTP -vastauksen ja odottaa stream-työn päättymistä ennen vastauksen palauttamista. Keskeytettyä osittaista assistant-vastausta ei tallenneta tietokantaan; käyttäjän lähettämä viesti säilyy. Frontend hylkää keskeneräisen stream-tulosteen. Keskeytysrekisteri on prosessikohtainen, joten useita backend-työntekijöitä tai replikoita ei tueta tällä mekanismilla ilman hajautettua keskeytyssignaalia. Compose käyttää tällä hetkellä muuttuvaa Ollama-image-tagia; varmista toiminta käyttöönotossa käytettävällä täsmällisellä imagella. Kehityksen aikana ilmoitettiin manuaalisesta toimintatestauksesta; monen työntekijän ja tuotannon keskeytystä ei ole varmennettu.
