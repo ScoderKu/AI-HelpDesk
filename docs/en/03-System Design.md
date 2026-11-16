@@ -619,9 +619,6 @@ The backend reads context_summary from the selected conversation and supplies it
 - The child action is shown only for an active conversation when both context capacity and last_context_tokens are valid and the exact usage ratio is greater than 70%. Exactly 70% does not qualify. Missing or invalid measurements hide the action.
 - Usage is based on the latest completed generation, not a live estimate of the unsent draft. The displayed action threshold uses the raw ratio rather than a rounded display percentage.
 
-### 6.5 Verification status
-
-As of 2026-11-13, the developer reported successful manual functional testing of independent and child conversation flows. Frontend production build passed on Windows and Oxlint passed inside Docker. Do not mark the exact 70% boundary or every failure-path scenario as tested unless separately executed and recorded.
 
 
 
