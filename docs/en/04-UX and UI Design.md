@@ -528,6 +528,8 @@ If a conflict is found between this document and the requirements specification,
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | 26.10.2026 | First UX/UI design specification |
+| 1.1 | 13.11.2026 | Added independent/child conversation actions, editable continuation preview, strict greater-than-70% visibility rule, and hierarchical history behavior |
+| 1.2 | 16.11.2026 | Reconciled document status and metadata; consolidated change history |
 
 ## 16. Conversation Lifecycle UI Update (2026-11-13)
 
@@ -548,10 +550,3 @@ Show the child action only when a conversation is active and the latest complete
 The conversation history visually distinguishes child conversations through indentation/tree hierarchy. Parent and child relationships are derived from the stored parent reference. Multiple children can belong to one parent; the list is arranged chronologically while preserving the hierarchy.
 
 **Verification note:** the developer reported successful manual functional tests of the independent and child flows on 2026-11-13. Boundary and error-path checks remain separate unless explicitly recorded.
-
-### Change History addition
-
-| Version | Date | Change |
-|---|---|---|
-| 1.1 | 13.11.2026 | Added independent/child conversation actions, editable continuation preview, strict greater-than-70% visibility rule, and hierarchical history behavior |
-
