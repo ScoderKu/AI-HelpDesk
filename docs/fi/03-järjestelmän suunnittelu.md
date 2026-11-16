@@ -273,8 +273,12 @@ Sallitut arvot validoidaan backendissä ja tarvittaessa tietokannan rajoitteilla
 | title | VARCHAR(200) | NULL | Keskustelun otsikko |
 | created_at | DATETIME | NOT NULL | Luontiaika |
 | updated_at | DATETIME | NOT NULL | Viimeisin päivitysaika |
+| parent_conversation_id | BIGINT | FK, NULL | Emokeskustelu; NULL itsenäiselle/juurikeskustelulle |
+| context_summary | TEXT | NULL | Käyttäjän vahvistama lapsikeskustelun peritty kontekstivedos |
+| last_context_tokens | INTEGER | NULL | Viimeisimmän valmistuneen generoinnin kontekstikäyttö |
+| response_language | VARCHAR(100) | NULL | Keskusteluun tallennettu nimenomainen vastauskielivalinta |
 
-Keskustelun otsikko voidaan määritellä käyttäjän ensimmäisen viestin perusteella tai antaa käyttäjän muokattavaksi myöhemmässä versiossa.
+Uusi keskustelu saa alkuotsikon käyttäjän ensimmäisestä viestistä. Lapsikeskustelun jatkamisen esikatselu-endpoint muodostaa ehdotetun otsikon ja kontekstiyhteenvedon; käyttäjä voi muokata molempia ennen luomisen vahvistamista.
 
 ## 4.5 Taulu: messages
 
