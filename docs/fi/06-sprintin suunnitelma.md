@@ -4,7 +4,7 @@
 
 Tämä dokumentti määrittelee AI HelpDesk -sovelluksen alustavan sprinttisuunnitelman. Suunnitelmassa kuvataan sprinttien tavoitteet, toteutettavat käyttäjätarinat, työmääräarviot, keskeiset tehtävät ja odotetut tulokset.
 
-Käyttäjätarinoiden yksityiskohtaiset kuvaukset ja hyväksymiskriteerit löytyvät dokumentista `02-käyttäjätarinat ja hyväksymiskriteerit.md`. Prioriteetit ja alkuperäiset Story Point -arviot määritellään dokumentissa `03-product backlog.md`.
+Käyttäjätarinoiden yksityiskohtaiset kuvaukset ja hyväksymiskriteerit löytyvät dokumentista `02-käyttäjätarinat ja hyväksymiskriteerit.md`. Prioriteetit ja alkuperäiset Story Point -arviot määritellään dokumentissa `05-product backlog.md`.
 
 ---
 

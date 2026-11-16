@@ -4,7 +4,7 @@
 
 AI HelpDesk on kehitteillä oleva verkkopohjainen tukipalvelusovellus. Käyttäjä voi keskustella tekoälyn kanssa tietotekniikkaan ja ohjelmistokehitykseen liittyvistä ongelmista sekä hallita omia tukipyyntöjään.
 
-> **Projektin tila 05.11.2026:** Projektin toteuttaja on vahvistanut käyttäjätarinoiden US-01–US-17 käytännön hyväksymiskriteerit suoritetuiksi. US-07:n ja US-15:n testauksessa havaittuja tekoälymallin ja RAG:n laatuhavaintoja on kirjattu projektinhallintadokumenttiin. Backendin 86 testistä 85 läpäisi ja yksi valinnainen MySQL-integraatiotesti ohitettiin normaalissa ajossa; erikseen ajettu rekisteröitymisen ja kahdeksan rinnakkaisen kirjautumisen integraatiotesti läpäisi. Frontendin lint, TypeScript-tarkistus ja tuotantobuild onnistuivat. Tarkempi tilanne on [projektinhallintadokumentissa](docs.suomi/docs/00-projektinhallinta.md).
+> **Projektin tila 05.11.2026:** Projektin toteuttaja on vahvistanut käyttäjätarinoiden US-01–US-17 käytännön hyväksymiskriteerit suoritetuiksi. US-07:n ja US-15:n testauksessa havaittuja tekoälymallin ja RAG:n laatuhavaintoja on kirjattu projektinhallintadokumenttiin. Backendin 86 testistä 85 läpäisi ja yksi valinnainen MySQL-integraatiotesti ohitettiin normaalissa ajossa; erikseen ajettu rekisteröitymisen ja kahdeksan rinnakkaisen kirjautumisen integraatiotesti läpäisi. Frontendin lint, TypeScript-tarkistus ja tuotantobuild onnistuivat. Tarkempi tilanne on [projektinhallintadokumentissa](docs/fi/00-projektinhallinta.md).
 
 ### Keskeiset ominaisuudet
 
@@ -28,7 +28,7 @@ AI HelpDesk on kehitteillä oleva verkkopohjainen tukipalvelusovellus. Käyttäj
 - Oletusmalli: `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`; käyttäjä voi valita toisen Ollama-mallin `.env`-asetuksilla.
 - Kontitus: Docker Compose
 
-Kolmansien osapuolten lisensseistä ja käyttöehdoista on tehty alustava inventointi ([raportti](docs.suomi/docs/07-kolmansien%20osapuolten%20lisenssiselvitys.md)). Projektin oma lisenssi ja raportissa luetellut jakeluun liittyvät ehdot ovat vielä avoinna.
+Kolmansien osapuolten lisensseistä ja käyttöehdoista on tehty alustava inventointi ([raportti](docs/fi/07-kolmansien%20osapuolten%20lisenssiselvitys.md)). Projektin oma lisenssi ja raportissa luetellut jakeluun liittyvät ehdot ovat vielä avoinna.
 
 Ollama-ympäristö testataan projektissa NVIDIA-GPU:lla. Muiden GPU-valmistajien tai -tyyppien yhteensopivuutta ei varmenneta tässä projektissa; niiden käyttöä haluava käyttäjä testaa yhteensopivuuden itse.
 
@@ -50,16 +50,16 @@ flowchart LR
 
 ### Projektidokumentaatio
 
-- [Projektinhallinta](docs.suomi/docs/00-projektinhallinta.md)
-- [Vaatimusmäärittely](docs.suomi/docs/01-vaatimusmaarittely.md)
-- [Käyttäjätarinat ja hyväksymiskriteerit](<docs.suomi/docs/02-k%C3%A4ytt%C3%A4j%C3%A4tarinat%20ja%20hyv%C3%A4ksymiskriteerit.md>)
-- [Product Backlog](<docs.suomi/docs/03-product%20backlog.md>)
-- [Sprint-suunnitelma](<docs.suomi/docs/04-sprintin%20suunnitelma.md>)
-- [Järjestelmän suunnittelu](<docs.suomi/docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>)
-- [UX/UI-suunnittelu](docs.suomi/docs/06-ux-ui-suunnittelu.md)
-- [Tietoturva ja käyttöönoton huomioitavat asiat (suomeksi)](docs.suomi/docs/08-tietoturva-ja-kayttoonotto.md)
-- [Security and deployment considerations (English)](docs.english/docs/08-security-deployment-considerations.md)
-- [Projektin loppuraportti ja kokonaisarviointi](PROJECT_ACCEPTANCE_REPORT.md)
+- [Projektinhallinta](docs/fi/00-projektinhallinta.md)
+- [Vaatimusmäärittely](docs/fi/01-vaatimusmaarittely.md)
+- [Käyttäjätarinat ja hyväksymiskriteerit](<docs/fi/02-käyttäjätarinat%20ja%20hyväksymiskriteerit.md>)
+- [Product Backlog](<docs/fi/05-product%20backlog.md>)
+- [Sprint-suunnitelma](<docs/fi/06-sprintin%20suunnitelma.md>)
+- [Järjestelmän suunnittelu](<docs/fi/03-järjestelmän%20suunnittelu.md>)
+- [UX/UI-suunnittelu](docs/fi/04-ux-ui-suunnittelu.md)
+- [Tietoturva ja käyttöönoton huomioitavat asiat (suomeksi)](docs/fi/08-tietoturva-ja-kayttoonotto.md)
+- [Security and deployment considerations (English)](docs/en/08-security-deployment-considerations.md)
+- [Projektin loppuraportti ja kokonaisarviointi](reports/PROJECT_ACCEPTANCE_REPORT.md)
 - [Ollama-mallin Modelfile](ollama/Modelfile)
 
 ### Edellytykset
@@ -158,11 +158,11 @@ Toteuttaja vahvisti 05.11.2026 koko Compose-pinon käynnistyksen tyhjillä MySQL
 
 ### Kuvat
 
-Arkkitehtuuri- ja käyttöliittymäsuunnitelmat löytyvät [järjestelmän suunnittelusta](<docs.suomi/docs/05-j%C3%A4rjestelm%C3%A4n%20suunnittelu.md>) ja [UX/UI-suunnittelusta](docs.suomi/docs/06-ux-ui-suunnittelu.md). Kuvakaappauksia ei tällä hetkellä ylläpidetä projektissa.
+Arkkitehtuuri- ja käyttöliittymäsuunnitelmat löytyvät [järjestelmän suunnittelusta](<docs/fi/03-järjestelmän%20suunnittelu.md>) ja [UX/UI-suunnittelusta](docs/fi/04-ux-ui-suunnittelu.md). Kuvakaappauksia ei tällä hetkellä ylläpidetä projektissa.
 
 ### Lisenssi
 
-Projektin omaa lisenssiä ei ole vielä määritelty. Kolmansien osapuolten lisensseistä ja käyttöehdoista on tehty alustava inventointi: [lisenssiselvitys suomeksi](docs.suomi/docs/07-kolmansien%20osapuolten%20lisenssiselvitys.md) ja [englanniksi](<docs.eng/docs/07-Third-Party%20License%20Review.md>). Ennen jakelua on vielä ratkaistava selvityksessä luetellut avoimet toimet, kuten projektin lisenssi, mallin lähdetiedot ja Redis 7.4:n ehdot.
+Projektin omaa lisenssiä ei ole vielä määritelty. Kolmansien osapuolten lisensseistä ja käyttöehdoista on tehty alustava inventointi: [lisenssiselvitys suomeksi](docs/fi/07-kolmansien%20osapuolten%20lisenssiselvitys.md) ja [englanniksi](<docs/en/07-Third-Party%20License%20Review.md>). Ennen jakelua on vielä ratkaistava selvityksessä luetellut avoimet toimet, kuten projektin lisenssi, mallin lähdetiedot ja Redis 7.4:n ehdot.
 
 ---
 
@@ -170,7 +170,7 @@ Projektin omaa lisenssiä ei ole vielä määritelty. Kolmansien osapuolten lise
 
 AI HelpDesk is a web-based support application under development. Users can discuss IT and software development issues with an AI assistant and manage their own support tickets.
 
-> **Project status on 05.11.2026:** The project implementer has confirmed practical acceptance for US-01 through US-17. AI model and RAG quality limitations observed while testing US-07 and US-15 are recorded in the project management document. Of 86 backend tests, 85 passed and one opt-in MySQL integration test was skipped in the standard run; the separate registration/eight-concurrent-sign-in integration test passed. Frontend lint, TypeScript checks, and production build passed. See the [project management document](docs.eng/docs/00-Project%20Management.md) for details.
+> **Project status on 05.11.2026:** The project implementer has confirmed practical acceptance for US-01 through US-17. AI model and RAG quality limitations observed while testing US-07 and US-15 are recorded in the project management document. Of 86 backend tests, 85 passed and one opt-in MySQL integration test was skipped in the standard run; the separate registration/eight-concurrent-sign-in integration test passed. Frontend lint, TypeScript checks, and production build passed. See the [project management document](docs/en/00-Project%20Management.md) for details.
 
 ### Main features
 
@@ -194,7 +194,7 @@ AI HelpDesk is a web-based support application under development. Users can disc
 - Default model: `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`; users can select another Ollama model in `.env`.
 - Containerization: Docker Compose
 
-An initial third-party license and terms inventory is available in the [English review](<docs.eng/docs/07-Third-Party%20License%20Review.md>). The project's own license and the distribution actions listed in that review remain open.
+An initial third-party license and terms inventory is available in the [English review](<docs/en/07-Third-Party%20License%20Review.md>). The project's own license and the distribution actions listed in that review remain open.
 
 The Ollama environment is tested on NVIDIA GPUs. Compatibility with GPUs from other vendors or of other types is not verified by this project; users who want to use them are responsible for testing compatibility.
 
@@ -216,13 +216,13 @@ flowchart LR
 
 ### Project documentation
 
-- [Project management](<docs.eng/docs/00-Project%20Management.md>)
-- [Requirements specification](<docs.eng/docs/01-Requirement%20Specification.md>)
-- [User stories and acceptance criteria](<docs.eng/docs/02-User%20Stories%20and%20Acceptance%20Criteria.md>)
-- [Product Backlog](<docs.eng/docs/03-product%20backlog.md>)
-- [Sprint plan](<docs.eng/docs/04-Sprint%20Plan.md>)
-- [System design](<docs.eng/docs/05-System%20Design.md>)
-- [UX/UI design](<docs.eng/docs/06-UX%20and%20UI%20Design.md>)
+- [Project management](<docs/en/00-Project%20Management.md>)
+- [Requirements specification](<docs/en/01-Requirement%20Specification.md>)
+- [User stories and acceptance criteria](<docs/en/02-User%20Stories%20and%20Acceptance%20Criteria.md>)
+- [Product Backlog](<docs/en/05-product%20backlog.md>)
+- [Sprint plan](<docs/en/06-Sprint%20Plan.md>)
+- [System design](<docs/en/03-System%20Design.md>)
+- [UX/UI design](<docs/en/04-UX%20and%20UI%20Design.md>)
 - [Ollama model Modelfile](ollama/Modelfile)
 
 ### Prerequisites
@@ -319,11 +319,11 @@ In the 05.11.2026 check, 85 of 86 backend tests passed and one opt-in MySQL inte
 
 ### License
 
-The project's own license has not yet been selected. A preliminary third-party license and terms inventory is available in the [English review](<docs.eng/docs/07-Third-Party%20License%20Review.md>) and [Finnish review](docs.suomi/docs/07-kolmansien%20osapuolten%20lisenssiselvitys.md). Open distribution actions include choosing the project license, recording the model source and checksum and required Llama notices, confirming Redis 7.4 terms, and completing dependency and image inventories.
+The project's own license has not yet been selected. A preliminary third-party license and terms inventory is available in the [English review](<docs/en/07-Third-Party%20License%20Review.md>) and [Finnish review](docs/fi/07-kolmansien%20osapuolten%20lisenssiselvitys.md). Open distribution actions include choosing the project license, recording the model source and checksum and required Llama notices, confirming Redis 7.4 terms, and completing dependency and image inventories.
 
 ### Screenshots
 
-Architecture and interface design materials are available in the [system design](<docs.eng/docs/05-System%20Design.md>) and [UX/UI design](<docs.eng/docs/06-UX%20and%20UI%20Design.md>) documents. 
+Architecture and interface design materials are available in the [system design](<docs/en/03-System%20Design.md>) and [UX/UI design](<docs/en/04-UX%20and%20UI%20Design.md>) documents. 
 
 Etusivu/ Homepage
 ![homepage](./images/homepage.png)

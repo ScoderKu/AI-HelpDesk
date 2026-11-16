@@ -4,7 +4,7 @@
 
 This document defines the preliminary Sprint Plan for the AI HelpDesk application. It describes Sprint goals, user stories to be implemented, workload estimates, key tasks, and expected outcomes.
 
-Detailed descriptions and acceptance criteria for the user stories are in the document `02-käyttäjätarinat ja hyväksymiskriteerit.md`. Priorities and original Story Point estimates are defined in the document `03-product backlog.md`.
+Detailed descriptions and acceptance criteria for the user stories are in the document `02-käyttäjätarinat ja hyväksymiskriteerit.md`. Priorities and original Story Point estimates are defined in the document `05-product backlog.md`.
 
 ---
 

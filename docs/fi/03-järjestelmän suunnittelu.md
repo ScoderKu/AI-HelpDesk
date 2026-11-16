@@ -621,3 +621,8 @@ Backend lukee valitun keskustelun context_summary-arvon ja välittää sen teko�
 
 13.11.2026 kehittäjä ilmoitti itsenäisen keskustelun ja jatkokeskustelun työnkulkujen manuaalisen toimintatestauksen onnistuneen. Frontendin tuotantobuild onnistui Windowsissa ja Oxlint Docker-kontissa. Täsmälleen 70 prosentin raja-arvoa tai kaikkia virhetilanteita ei pidä merkitä testatuiksi, ellei niitä ole erikseen suoritettu ja kirjattu.
 
+
+
+## 7. Generoinnin keskeyttäminen ja operatiiviset rajoitteet
+
+Chat-toiminnossa aktiivinen generointi voidaan pysäyttää. Tavoiteltu toiminta on keskeneräisen tekoälyvastauksen hylkääminen siten, että käyttäjän lähettämät viestit säilyvät; keskeytetty osittainen vastaus ei saa päätyä myöhempään keskustelukontekstiin. Backend sulkee aktiivisen Ollama HTTP -vastauksen ja odottaa generointityön päättymistä ennen Redis-pohjaisten generointi- ja keskustelulukkojen vapauttamista. Toimintaa testattiin kehityksen aikana, mutta keskeytys on tarkistettava täsmälleen sillä Ollama-kuvalla, jota käyttöönotossa käytetään, koska Compose käyttää muuttuvaa image-tagia. Keskeytysrekisteri on prosessikohtainen; ennen usean backend-työntekijän tai replikan käyttöönottoa se on korvattava hajautetulla keskeytyssignaalilla. Tätä huomautusta ei pidä tulkita näytöksi monen työntekijän tai tuotantoympäristön varmennuksesta.

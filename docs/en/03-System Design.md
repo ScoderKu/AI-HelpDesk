@@ -622,3 +622,8 @@ The backend reads context_summary from the selected conversation and supplies it
 
 As of 2026-11-13, the developer reported successful manual functional testing of independent and child conversation flows. Frontend production build passed on Windows and Oxlint passed inside Docker. Do not mark the exact 70% boundary or every failure-path scenario as tested unless separately executed and recorded.
 
+
+
+## 7. Generation cancellation and operational limits
+
+The chat workflow supports stopping an active generation. The intended behavior is to discard the unfinished assistant response while retaining the user's submitted messages; cancelled partial output must not become future conversation context. The backend closes the active Ollama HTTP response and waits for the generation worker to finish before releasing the Redis-backed generation/conversation locks. This behavior was exercised during development, but cancellation must still be checked against the exact Ollama image used for a deployment because the Compose configuration uses a floating image tag. The cancellation registry is process-local; before running multiple backend workers or replicas, replace it with a distributed cancellation signal. Do not treat this note as evidence of multi-worker or production cancellation validation.
