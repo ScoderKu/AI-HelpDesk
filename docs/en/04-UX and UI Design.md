@@ -137,7 +137,7 @@ Logged-in user views use a common application frame:
 
 Example layout:
 
-![UI_pc](../../photos/UI_pc.png)
+![UI_pc](../../images/UI_pc.png)
 
 ### 5.2 Responsiveness
 
@@ -242,7 +242,7 @@ The home page is kept simple, and the US-14 summary is a mandatory part of the a
 
 **Recommended Layout**
 
-![AIchat](../../photos/AIchat.png)
+![AIchat](../../images/AIchat.png)
 
 On mobile, conversation history can be opened from a separate button so that the main conversation area remains sufficiently wide.
 
