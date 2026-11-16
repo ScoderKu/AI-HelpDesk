@@ -4,7 +4,7 @@
 
 This document defines the preliminary Sprint Plan for the AI HelpDesk application. It describes Sprint goals, user stories to be implemented, workload estimates, key tasks, and expected outcomes.
 
-Detailed descriptions and acceptance criteria for the user stories are in the document `02-käyttäjätarinat ja hyväksymiskriteerit.md`. Priorities and original Story Point estimates are defined in the document `03-product backlog.md`.
+Detailed descriptions and acceptance criteria for the user stories are in the document `02-käyttäjätarinat ja hyväksymiskriteerit.md`. Priorities and original Story Point estimates are defined in the document `05-product backlog.md`.
 
 ---
 
@@ -138,7 +138,7 @@ Implement the key AI feature of the AI HelpDesk application. Users must be able 
 
 ## 5.3 Key Development Tasks
 
-1. Configure Ollama in Docker Compose and automatically create the `poro-helpdesk` model from the `Modelfile` and selected GGUF file.
+1. Configure Ollama in Docker Compose and initialize the configured `poro` model from the `Modelfile` and selected GGUF file.
 2. Implement the integration between the backend and the Ollama service over the Compose network.
 3. Implement the conversation view and message submission.
 4. Display AI responses in the user interface.
@@ -151,7 +151,7 @@ Implement the key AI feature of the AI HelpDesk application. Users must be able 
 
 ## 5.4 Expected Outcomes
 
-1. On the first Docker Compose startup, a missing `poro-helpdesk` model is created in the Ollama container from the `Modelfile` and local GGUF file; the model persists in the Ollama volume and the backend preloads it at startup.
+1. On the first Docker Compose startup, a missing configured `poro` model is initialized in the Ollama container from the `Modelfile` and local GGUF file; the model persists in the Ollama volume and the backend preloads it at startup.
 2. Users can send a message about a technical problem to the Ollama service running in Docker.
 3. The AI response is displayed in the conversation view.
 4. The conversation can continue based on previous context.
@@ -336,7 +336,6 @@ The preliminary Sprint Plan for the AI HelpDesk application consists of five Spr
 
 The plan is preliminary. The exact contents, duration, and workload of the Sprints will be confirmed based on developer capacity, technical dependencies, and project requirements.
 
-## 12. Implementation Status Update — Conversation Lifecycle (2026-11-13)
+## 12. Post-plan implementation changes
 
-The independent/child conversation workflow was implemented on the integration branch after the original Sprint plan was drafted. It extends the existing US-06 and US-08 scope rather than adding a separately estimated user story. The developer reported successful manual functional testing of both flows. Frontend build passed on Windows and lint passed in Docker. Exact threshold-boundary and all failure-path checks are not claimed as complete. This implementation update does not retroactively change the original 88 Story Point estimate or the five-Sprint planning baseline.
-
+The independent/child conversation workflow was added after the original five-Sprint plan and extends US-06/US-08 without changing the original 88 Story Point planning baseline. The current requirements, implementation design and test evidence are maintained in their respective canonical documents; see the [documentation index](../README.md) and [Acceptance Report](../../reports/PROJECT_ACCEPTANCE_REPORT.md).

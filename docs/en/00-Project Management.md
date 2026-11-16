@@ -203,33 +203,15 @@ Progress is described primarily through verifiable outcomes, not merely a percen
 - the frontend, backend, database, and Ollama start with the documented Docker Compose command, and the backend receives a response from Ollama
 - the README, API documentation, and ER diagram reflect the implemented system.
 
-**Status on 31.10.2026:** Proxy handling for the login IP rate limit and session cleanup during login have been updated. The frontend has the fixed address `172.30.0.2` on a dedicated Docker proxy network and uses the backend alias `backend-proxy` at `172.30.0.3`, without sharing the backend's default network. The containers were recreated, and the frontend's `/api/health` request to the backend returned HTTP 200. Expired sessions are cleaned by a separate hourly background task in primary-key batches, not as part of the login transaction. Seven backend unit tests and Compose configuration validation passed. Forwarding between two actual LAN devices and concurrent sign-ins against MySQL have not yet been verified. The current Compose port binding remains `127.0.0.1`, so this configuration is not accessible from other LAN devices.
+**Milestone 27.10.2026 – technical foundation:** The initial React/TypeScript frontend, FastAPI backend, Docker configuration, MySQL/phpMyAdmin and Ollama services were established. This was a setup milestone, not evidence that the complete application was working.
 
-**Status on 01.11.2026 – Sprint 1:** Implementations for all six Sprint stories are present in the current branch. The backend `unittest` suite passed 31/31 tests. The frontend TypeScript check and production build succeeded, and lint is clean. Alembic migrations were tested twice against a separate empty MySQL database; the active database is at `0002_conversations_and_tickets (head)`. Ticket API ORM paths were exercised against MySQL inside a transaction that was rolled back. First-time Ollama model initialization was tested with an empty temporary model volume: `poro-helpdesk` was created from the `Modelfile`, and the temporary Docker resources were removed. The entire Compose stack has not yet been started at once with both MySQL and Ollama volumes empty. Remaining checks are registration/sign-in API integration tests, a manual UI acceptance review, concurrent sign-ins against MySQL, and LAN forwarding. LAN access and frontend production deployment remain deferred as previously agreed.
+**Milestone 31.10.2026 – proxy and session handling:** The frontend was moved to a dedicated proxy network (172.30.0.2) and routes API requests to the backend alias backend-proxy (172.30.0.3). The backend trusts forwarded client IP information only from configured proxy networks. Expired sessions are cleaned by a separate hourly task in batches rather than during login. The local health route returned HTTP 200 after container recreation. Real-device LAN forwarding remained unverified; published ports were still bound to loopback.
 
-**Status on 04.11.2026 – Sprints 1–4 and demo preparation:** Core functionality for Sprints 1–3 is implemented in the current local working tree. Sprint 4 stories US-09, US-13, and US-14 are also implemented at code level: users can create a ticket from a conversation, switch between Finnish and English, and view a summary of their own tickets. Sprint 5 RAG assistance and final integrated acceptance testing remain in progress.
+**Milestone 01–04.11.2026 – core application:** The Sprint 1–4 implementation progressed to include authentication, tickets, profile handling, AI chat, conversation history, ticket creation from chat, bilingual UI, dashboard summary, Redis coordination and data-retention cleanup. The 04.11 status and its local test snapshot are historical; current test evidence is consolidated in the [Acceptance and Verification Report](../../reports/PROJECT_ACCEPTANCE_REPORT.md).
 
-Recent technical changes: Redis locks serialize AI requests within a conversation; the database transaction and connection are released before waiting for Ollama, and the assistant response is saved in a separate short-lived database session. A saved user message can have its response retried without saving the same user message twice. Malformed Ollama response shapes are handled as service failures, and chat POST requests validate their `Origin` against the allowed frontend origins. A daily cleanup job permanently deletes closed tickets and inactive conversations older than three calendar months in batches; conversations linked to an open ticket or a ticket still within its retention period are preserved.
+**Acceptance milestone 05.11.2026:** The implementer reported practical acceptance of US-01–US-17, a clean Compose startup with empty MySQL/Ollama volumes, and a successful registration/eight-concurrent-login MySQL integration test. The third-party license inventory was preliminary; project licensing and distribution actions remained open. LAN forwarding was not part of local acceptance.
 
-The UI now uses wider workspace layouts, visually distinct LOW/MEDIUM/HIGH ticket priorities, read-only first and last names and email on the profile page, and a two-panel sign-in/sign-up card consistent with the forced-password-change screen. The profile API accepts only username changes.
-
-Verification on 04.11.2026: all 65 backend `unittest` tests passed; frontend `npm run lint`, TypeScript checks, and `npm run build` succeeded. Remaining acceptance checks include starting the full Compose stack with empty database and model volumes, forwarding from real LAN devices, and manually testing the complete application. Sprint 4 is implemented at code level; its final demo/environment acceptance is pending. This status describes the local working tree as of 04.11.2026.
-
-**Acceptance update on 05.11.2026:** The project implementer has confirmed that the real-world acceptance criteria for **US-01 through US-17** have been completed. This includes US-07 and US-15, which had been awaiting the demo acceptance pass. Story-level acceptance does not by itself record completion of every project delivery item, such as documentation and licensing review.
-
-The reported acceptance includes a full Compose startup from empty MySQL and Ollama volumes (US-16), confirmed by the project implementer on 05.11.2026. LAN forwarding remains a separate deployment check: the current Compose ports are bound to `127.0.0.1`, and LAN exposure is not part of that local startup acceptance.
-
-**Delivery checks (05.11.2026):** A preliminary third-party license and terms inventory is documented in [Third-Party License Review](07-Third-Party%20License%20Review.md). The inventory is complete at a preliminary level; distribution actions remain open, including selecting the project license, recording the default GGUF source/revision and checksum and required Llama notices, confirming Redis 7.4 terms, and inventorying transitive dependencies and image digests.
-
-Registration and sign-in integration with MySQL, including eight simultaneous sign-ins, passed against the local Compose stack on 05.11.2026. A repeatable opt-in test is available at `backend/tests/test_auth_mysql_integration.py`. Local API/database verification is complete; the standard backend test run skips this opt-in test unless explicitly enabled. IP forwarding between real LAN devices remains unverified and cannot be checked in the personal development environment. These are delivery/environment checks, not unaccepted user stories; LAN access remains out of scope unless the delivery target requires it.
-
-**Verification update (05.11.2026):** Of 86 backend tests, 85 passed and the opt-in MySQL integration test was skipped in the standard run. The separate integration test passed registration followed by eight concurrent MySQL sign-ins against the local Compose stack. Frontend lint, TypeScript checks, and production build passed. Compose supports selecting either a model pulled from the Ollama registry or one built from a local Modelfile; the default remains the project Poro model. Customer setup instructions are in the README.
-
-**US-15 test finding and retest (05.11.2026):** An initial Finnish retention question returned weakly related Knowledge Base sections. The assistant answered with incorrect 7-day/30-day periods and cited `knowledge/05-data-model.md`, which is absent from the current corpus. After the project knowledge and response handling were updated, the implementer repeated the practical US-15 acceptance and confirmed the criteria met. The initial failure remains a recorded model/RAG limitation and informs the follow-up improvements below.
-
-**Observed AI limitations (US-07 and US-15, 05.11.2026):** During practical testing, the model sometimes answered in the wrong language, especially Finnish questions receiving English answers. It also invented a self-service “Forgot Password”/email-link flow that the application does not provide. Earlier RAG testing produced unsupported retention periods and a citation to a nonexistent corpus file. The password guidance was subsequently made deterministic, language selection was strengthened, and missing-source behavior was tightened. These mitigations reduce known failures but cannot guarantee that a generative model will always follow instructions.
-
-The selected model is an 8B-parameter quantized local model. Its limited capacity can contribute to weaker instruction following, multilingual consistency, and faithful use of retrieved evidence; this is a plausible contributing factor, not proof that model size caused every observed error. US-15 also uses keyword and token-prefix retrieval rather than semantic search or Finnish morphological analysis, so it can miss relevant passages or retrieve weak matches. A larger model may improve language and instruction-following quality, but it will not by itself fix retrieval misses, incomplete documentation, or fabricated claims. Any model replacement should be evaluated with the same Finnish/English acceptance questions and actual resource, latency, license, and citation checks.
+**AI/RAG quality findings:** Practical testing identified occasional response-language errors, unsupported password-reset guidance and weak keyword retrieval. The knowledge corpus and response handling were adjusted, and US-15 practical retesting was reported accepted. These mitigations do not guarantee factual or language accuracy. Detailed historical test evidence, limitations and remaining verification tasks are maintained only in the [Acceptance and Verification Report](../../reports/PROJECT_ACCEPTANCE_REPORT.md).
 
 ### 8.4 Definition of Done
 
@@ -282,6 +264,9 @@ Significant technical and project management decisions are recorded in this tabl
 | D-08 | 31.10.2026 | The backend trusts only the frontend proxy defined on the Compose network and uses the first untrusted hop in the trusted proxy's forwarded address chain as the login IP-rate-limit key | Prevent shared-proxy IPs from cross-limiting users and prevent misuse of forwarded headers | The frontend address is `172.30.0.2`, the trusted network is configured through `TRUSTED_PROXY_IPS`, and the logic is tested automatically; actual LAN forwarding will be verified later |
 | D-11 | 03.11.2026 | Closed support tickets and inactive conversations are permanently deleted after three calendar months | Limit database growth under the agreed retention policy | A daily batch task uses `closed_at` and `updated_at`; conversations linked to an open or not-yet-expired ticket are retained |
 | D-12 | 03.11.2026 | Users cannot change their first or last name from their profile; username is the only editable profile field | User-confirmed profile and access policy | Names are displayed as read-only, and the backend PATCH schema rejects name updates |
+| D-13 | 13.11.2026 | Sidebar New Conversation always creates an independent conversation; continuation is a separate child-conversation action | Avoid implicit context inheritance | Implemented and merged to main in PR #30 (commit `f4b7478`) |
+| D-14 | 13.11.2026 | Child conversation requires a user-confirmed title and non-empty context summary; it stores a parent reference and summary snapshot | Preserve user control and bounded inherited context without copying the parent transcript | Implemented; migration `0008_conversation_tree.py` |
+| D-15 | 13.11.2026 | Show New Child Conversation only when the latest completed-generation usage is valid and strictly greater than 70% of context capacity | Offer continuation near context capacity without treating an unsent draft estimate as measured usage | Implemented in frontend; exact threshold boundary evidence remains incomplete |
 
 ## 11. Change Log
 
@@ -294,35 +279,20 @@ Significant technical and project management decisions are recorded in this tabl
 | 31.10.2026 | 0.5 | Routed frontend traffic through the trusted proxy network and moved expired-session cleanup outside the login transaction | Project implementer |
 | 01.11.2026 | 0.6 | Fixed Compose handling for Ollama model initialization; verified empty model-volume initialization, Sprint 1 test results, and remaining checks; corrected Modelfile paths and HomePage focus handling | Project implementer |
 | 03.11.2026 | 0.7 | Updated Sprint 1–5 status, backend chat and retention design, profile editing policy, and remaining verification items | Project implementer |
+| 16.11.2026 | 0.8 | Consolidated conversation lifecycle decisions into the Decision Log and synchronized the current documentation structure | Project implementer |
 
 ## 12. Links to Other Project Documents
 
 - [Requirements Specification](<01-Requirement%20Specification.md>)
 - [User Stories and Acceptance Criteria](<02-User%20Stories%20and%20Acceptance%20Criteria.md>)
-- [Product Backlog](<03-product%20backlog.md>)
-- [Sprint Plan](<04-Sprint%20Plan.md>)
-- [System Design](<05-System%20Design.md>)
+- [Product Backlog](<05-product%20backlog.md>)
+- [Sprint Plan](<06-Sprint%20Plan.md>)
+- [System Design](<03-System%20Design.md>)
 - [README](../../README.md)
 
 > **Maintenance practice:** update this document as the project progresses, especially regarding the schedule, risks, significant decisions, and scope changes. Do not copy detailed requirements or user stories from other documents here; link to their sources.
 
-## 13. Conversation Lifecycle Change Record (2026-11-13)
-
-| ID | Date | Decision / Change | Rationale | Implementation / Status |
-|---|---|---|---|---|
-| D-13 | 13.11.2026 | Sidebar New Conversation always creates an independent conversation; continuation is a separate child-conversation action | Avoid implicitly turning a user's request for a new chat into a continuation | Implemented on feature/conversation-lifecycle |
-| D-14 | 13.11.2026 | Child conversation requires a user-reviewed title and non-empty context summary; it stores a parent reference and summary snapshot | Preserve explicit user control and bounded inherited context without copying the parent transcript | Implemented; migration 0008_conversation_tree.py |
-| D-15 | 13.11.2026 | Show New Child Conversation only when last completed-generation context usage is strictly greater than 70% | Make continuation available near context capacity without treating an unsent draft estimate as measured usage | Implemented in frontend; exact threshold boundary still requires separate test evidence |
-
-The developer reported that the independent and child conversation flows work in manual functional testing. Frontend build and Docker lint passed. The documentation records this report and does not claim unperformed boundary or failure-path tests.
-
-### Change Log addition
-
-| Date | Version | Change | Author |
-|---|---|---|---|
-| 13.11.2026 | 0.8 | Recorded independent/child conversation lifecycle decisions, implementation status, and documentation synchronization policy | Project implementer |
-
-## 14. Bilingual Technical Documentation Maintenance Rule
+## 13. Bilingual Technical Documentation Maintenance Rule
 
 For every approved change that affects project structure, architecture, technology choices, database schema/migrations, API contracts, security, data flow, deployment, or user-visible technical behavior, update all affected English and Finnish project documents in the same documentation task. Review the requirements, user stories and acceptance criteria, Product Backlog, Sprint Plan, System Design, UX/UI Design, and this document's decision/change logs for impact. Keep the two language versions semantically aligned. Record what is implemented, what is merely planned, and what has actually been verified as separate facts. The source code and migrations are authoritative for implementation; documentation must be reconciled against them.
 

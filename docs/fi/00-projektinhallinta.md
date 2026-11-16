@@ -203,39 +203,15 @@ Edistymistä kuvataan ensisijaisesti todennettavilla tuloksilla, ei pelkällä p
 - frontend, backend, tietokanta ja Ollama käynnistyvät dokumentoidulla Docker Compose -komennolla ja backend saa vastauksen Ollamalta
 - README, API-dokumentaatio ja ER-kaavio vastaavat toteutunutta järjestelmää.
 
-**Tilanne 27.10.2026:** Projektin tekninen perusrakenne ja Docker-ympäristö on aloitettu. Frontendille on luotu React- ja TypeScript-pohja, backendille FastAPI-perusrakenne ja riippuvuudet. Frontendille ja backendille on lisätty Docker-konfiguraatiot. Docker Composeen on määritelty frontend-, backend-, MySQL-, phpMyAdmin- ja Ollama-palvelut sekä Ollama-mallin alustava käyttöönotto. GGUF-mallin `Modelfile` ja sen sijainti `ollama`-hakemistossa on päivitetty.
+**Välitavoite 27.10.2026 – tekninen perusta:** React/TypeScript-frontendin, FastAPI-backendin, Docker-määritysten, MySQL/phpMyAdmin- ja Ollama-palvelujen ensimmäiset rakenteet luotiin. Kyse oli käyttöönottopohjasta, ei näytöstä koko sovelluksen toimivuudesta.
 
-**Rajaus 27.10.2026:** Tuolloin kyseessä oli tekninen runko ja käyttöönottopohja; varsinaisten sovellustoimintojen valmistumista tai koko palvelukokonaisuuden toimivuutta ei ollut vielä vahvistettu.
+**Välitavoite 31.10.2026 – proxy ja istunnot:** Frontend siirrettiin erilliseen proxy-verkkoon (172.30.0.2), ja se reitittää API-pyynnöt backendin verkkoaliakselle backend-proxy (172.30.0.3). Backend hyväksyy välitetyn asiakas-IP-tiedon vain määritetyiltä luotetuilta proxy-verkoilta. Vanhentuneet istunnot siivotaan erillisessä tunnin välein ajettavassa tehtävässä erissä, ei kirjautumisen yhteydessä. Konttien uudelleenluonnin jälkeen paikallinen health-reitti palautti HTTP 200. Todellisten LAN-laitteiden välistä välitystä ei ollut varmennettu; julkaistut portit oli edelleen sidottu loopback-osoitteeseen.
 
-**Tilanne 31.10.2026:** Kirjautumisyritysten IP-kohtaisen käyttörajan proxy-käsittelyä ja kirjautumisen istuntosiivousta on korjattu. Frontendille on määritetty osoite `172.30.0.2` Dockerin erillisessä proxy-verkossa; se käyttää backendin verkkoaliasta `backend-proxy` osoitteessa `172.30.0.3` eikä liity backendin kanssa jaettuun oletusverkkoon. Kontit luotiin uudelleen ja frontendin `/api/health`-pyyntö backendille palautti HTTP 200. Vanhentuneet istunnot siivotaan erillisessä taustatehtävässä tunnin välein ja poistetaan erissä ensisijaisavaimen kautta, ei kirjautumistransaktion yhteydessä. Seitsemän backendin yksikkötestiä sekä Compose-konfiguraation tarkistus läpäistiin. Kahden LAN-laitteen välistä IP-välitystä tai rinnakkaisia kirjautumisia todellisella MySQL-palvelulla ei ole vielä varmennettu. Nykyinen Compose-porttisidonta on edelleen `127.0.0.1`, joten palvelu ei tällä asetuksella ole muiden LAN-laitteiden käytettävissä.
+**Välitavoite 01.–04.11.2026 – sovelluksen ydintoiminnot:** Sprinttien 1–4 toteutus eteni kattamaan käyttäjien tunnistamisen, tukipyynnöt, profiilin, AI-chatin, keskusteluhistorian, tukipyynnön luonnin chatista, kaksikielisen käyttöliittymän, etusivun yhteenvedon, Redis-koordinoinnin ja tietojen säilytyssiivouksen. 04.11. tilanne ja sen paikallinen testausotos ovat historiallisia; nykyinen testausnäyttö on koottu [hyväksyntä- ja testausraporttiin](../../reports/PROJECT_ACCEPTANCE_REPORT.md).
 
-**Tilanne 01.11.2026 – Sprint 1:** Sprintin kuuden käyttäjätarinan toteutukset ovat nykyisessä branchissa. Backendin `unittest`-testisarja läpäisi 31/31 testiä. Frontendin TypeScript-tarkistus ja tuotantobuild onnistuivat; lint-tarkistus on puhdas. Alembic-migraatiot testattiin erillisessä tyhjässä MySQL-tietokannassa kahdesti, ja käytössä oleva tietokanta on versiossa `0002_conversations_and_tickets (head)`. Ticket API:n ORM-polut testattiin MySQL:llä transaktion rollbackilla. Ollaman mallin ensimmäinen käyttöönotto testattiin tyhjällä väliaikaisella mallivolyymilla: `poro-helpdesk` muodostui `Modelfile`-tiedostosta ja väliaikaiset Docker-resurssit poistettiin. Koko Compose-pinoa ei ole vielä käynnistetty kerralla täysin tyhjillä MySQL- ja Ollama-volyymeilla. Avoinna ovat rekisteröitymisen ja kirjautumisen API-integraatiotestit, käyttöliittymän manuaalinen hyväksymistarkastus, MySQL:n rinnakkaiskirjautumistesti sekä LAN-välitystesti. LAN-käyttö ja frontendin production-käyttöönotto pysyvät aiemmin sovitusti myöhempään vaiheeseen.
+**Hyväksyntävälitavoite 05.11.2026:** Toteuttaja ilmoitti US-01–US-17-käyttäjätarinoiden käytännön hyväksynnästä, koko Compose-pinon käynnistyksestä tyhjillä MySQL- ja Ollama-volyymeilla sekä rekisteröitymisen ja kahdeksan samanaikaisen kirjautumisen MySQL-integraatiotestin onnistumisesta. Kolmansien osapuolten lisenssi-inventointi oli alustava; projektin lisenssi ja jakeluun liittyvät toimet jäivät avoimiksi. LAN-välitys ei kuulunut paikalliseen hyväksyntään.
 
-**Tilanne 04.11.2026 – Sprintit 1–4 ja demo-valmistelu:** Sprinttien 1–3 ydintoiminnot ovat toteutettuina nykyisessä paikallisessa työkopiossa, ja Sprint 4:n US-09, US-13 ja US-14 ovat myös toteutettu kooditasolla. Käyttöliittymässä on nyt AI-keskustelusta luotava tukipyyntö, kielivalinta FI/EN sekä kirjautuneen käyttäjän tukipyyntöjen yhteenveto. Sprintin 5 RAG-neuvonta sekä jäljellä oleva integraatio- ja hyväksymistestaus ovat edelleen kesken.
-
-Viimeisimmät tekniset muutokset: AI-pyynnöt saman keskustelun sisällä sarjoitetaan Redis-lukolla; tietokantatransaktio ja yhteys vapautetaan ennen Ollaman odotusta, ja assistant-vastaus tallennetaan lyhyessä erillisessä tietokantaistunnossa. Tallennetun käyttäjäviestin vastausta voi yrittää uudelleen ilman viestin kaksoistallennusta. Ollaman virheelliset vastausrakenteet käsitellään palveluvirheinä, ja chat POST tarkistaa pyynnön `Origin`-otsakkeen sallitusta frontend-alkuperästä. Lisäksi päivittäinen siivous poistaa erissä yli kolme kalenterikuukautta vanhat suljetut tukipyynnöt ja passiiviset keskustelut; keskustelu säilytetään, jos siihen liittyy avoin tai säilytysajan piirissä oleva tukipyyntö. Tämä on pysyvä poisto.
-
-Käyttöliittymää on levennetty työtilanäkymissä, tukipyyntöjen LOW/MEDIUM/HIGH-prioriteetit erottuvat väreillä, käyttäjän etu- ja sukunimi sekä sähköpostiosoite ovat profiilissa vain luettavina, ja kirjautumis-/rekisteröitymisnäkymät käyttävät pakotetun salasananvaihdon kanssa yhtenäistä kaksiosaista korttirakennetta. Profiilin API hyväksyy muutettavaksi vain käyttäjänimen. Sprint 4:n mukana lisättiin ticket-draft -tyyppinen AI-haku keskustelusta, kielivalinta ja yhteenveto omista tukipyynnöistä.
-
-04.11.2026 varmennus: backendin 65 `unittest`-testiä läpäisivät; frontendin `npm run lint` sekä TypeScript-tarkistus ja `npm run build` onnistuivat. Tämä on vahvistettu kooditasolla ja ajantasainen nykyiselle branchille. Jäljellä olevat hyväksymistestit koskevat pääasiassa luotettavaa clean Compose -käynnistystä, oikeaa LAN-välitystä kahdella laitteella ja manuaalista whole-app acceptance testia.
-
-Tämä tilanne kuvaa paikallista työkopiota 04.11.2026. Sprint 4:n status on koodin tasolla vahvistettu, mutta demo- ja tuotantotason hyväksymistestaus on vielä ajoitettu ennen virallista demoa.
-
-**Hyväksyntäpäivitys 05.11.2026:** Projektin toteuttaja on vahvistanut käyttäjätarinoiden **US-01–US-17** käytännön hyväksymiskriteerit suoritetuiksi. Tämä sisältää myös US-07:n ja US-15:n, jotka odottivat aiemmin demokierroksen hyväksyntää. Tarinakohtainen hyväksyntä ei yksin vahvista kaikkien toimituskokonaisuuden tehtävien, kuten dokumentaation ja lisenssien tarkistuksen, valmistumista.
-
-Vahvistus sisältää koko Compose-pinon käynnistyksen tyhjillä MySQL- ja Ollama-volyymeilla (US-16); projektin toteuttaja vahvisti tämän 05.11.2026. LAN-välitystesti on erillinen käyttöympäristön tarkistus: nykyisen Compose-tiedoston portit on sidottu `127.0.0.1`-osoitteeseen, eikä LAN-käytettävyys sisälly paikalliseen käynnistyshyväksyntään.
-
-**Toimitustarkistukset (05.11.2026):** Kolmansien osapuolten lisensseistä ja käyttöehdoista on tehty alustava inventointi [lisenssiselvitykseen](07-kolmansien%20osapuolten%20lisenssiselvitys.md). Inventointi on alustavalla tasolla valmis; jakelua koskevia toimia on vielä avoinna: projektin oman lisenssin valinta, oletus-GGUF-mallin lähteen/revision ja tarkistussumman sekä vaadittujen Llama-ilmoitusten kirjaaminen, Redis 7.4:n ehtojen vahvistaminen ja transitiivisten riippuvuuksien sekä kuvadigestien inventointi.
-
-Rekisteröitymisen ja kirjautumisen MySQL-integraatio, mukaan lukien kahdeksan samanaikaista kirjautumista, läpäisi paikallisessa Compose-ympäristössä 05.11.2026. Toistettava valinnainen testi on tiedostossa `backend/tests/test_auth_mysql_integration.py`; tavallinen backend-testiajo ohittaa tämän testin, ellei sitä erikseen oteta käyttöön. Paikallinen API-/tietokantavarmennus on tehty. Todellisten LAN-laitteiden välinen IP-välitys jää ympäristötarkistukseksi, jota ei voi varmentaa henkilökohtaisessa kehitysympäristössä. Nämä ovat toimitus- ja ympäristötarkistuksia, eivät hyväksymättömiä käyttäjätarinoita; LAN-käyttö pysyy laajuuden ulkopuolella, ellei toimituskohde sitä edellytä.
-
-**Varmennuspäivitys (05.11.2026):** Backendin 86 testistä 85 läpäisi ja valinnainen MySQL-integraatiotesti ohitettiin normaalissa testiajossa. Erillinen integraatiotesti läpäisi rekisteröitymisen ja kahdeksan samanaikaista MySQL-kirjautumista paikallisessa Compose-ympäristössä. Frontendin lint, TypeScript-tarkistus ja tuotantobuild onnistuivat. Compose tukee Ollama-rekisteristä haettavan mallin tai paikallisesta Modelfile-tiedostosta luotavan mallin valintaa; oletuksena käytetään projektin Poro-mallia. Asiakkaan käyttöönotto-ohje on README-tiedostossa.
-
-**US-15-testihavainto ja uusintatesti (05.11.2026):** Ensimmäinen suomenkielinen säilytysaikakysymys palautti heikosti aiheeseen liittyviä Knowledge Base -osumia. Avustaja vastasi virheellisesti 7 ja 30 päivän säilytysajoilla ja viittasi tiedostoon `knowledge/05-data-model.md`, jota nykyisessä korpuksessa ei ole. Tietopohjan ja vastauskäsittelyn päivityksen jälkeen toteuttaja uusi US-15:n käytännön hyväksyntätestin ja vahvisti kriteerien täyttyvän. Alkuperäinen virhe kirjataan silti mallin ja RAG:n rajoitteeksi ja se ohjaa jatkokehitystä.
-
-**Tekoälyn testauksessa havaitut rajoitteet (US-07 ja US-15, 05.11.2026):** Käytännön testauksessa malli vastasi toisinaan väärällä kielellä; erityisesti suomenkieliseen kysymykseen tuli englanninkielinen vastaus. Malli myös keksi sovellukseen itsepalveluna toimivan “Forgot Password” -sivun ja sähköpostilinkkipalautuksen, joita toteutuksessa ei ole. Aiemmassa RAG-testissä se keksi säilytysajat ja viittasi korpuksesta puuttuvaan tiedostoon. Salasanan palautus ohjataan nyt kiinteällä, projektin mukaiseen tietoon perustuvalla vastauksella, kielentunnistusta on vahvistettu ja lähteettömien projektivastausten ohjeistusta tiukennettu. Korjaukset vähentävät havaittuja virheitä, mutta eivät takaa, että generatiivinen malli noudattaa ohjeita aina.
-
-Käytössä on 8 miljardin parametrin kvantisoitu paikallinen malli. Sen rajallinen kapasiteetti voi osaltaan heikentää ohjeiden noudattamista, kielten välistä johdonmukaisuutta ja haettujen lähteiden täsmällistä käyttöä; tämä on uskottava vaikuttava tekijä, ei todiste siitä, että mallin koko yksin aiheutti jokaisen virheen. US-15 käyttää lisäksi avainsana- ja token-etuliitehakua, ei semanttista hakua tai suomen kielen taivutusmuotoja ymmärtävää analyysiä. Se voi siksi ohittaa olennaisen kohdan tai palauttaa heikon osuman. Suurempi malli voi parantaa kieli- ja ohjeiden noudattamisen laatua, mutta se ei yksin korjaa hakujen puutteita, keskeneräisiä lähdeasiakirjoja tai virheellisiä väitteitä. Mahdollinen mallinvaihto arvioidaan samoilla suomen- ja englanninkielisillä hyväksymiskysymyksillä sekä resurssi-, viive-, lisenssi- ja lähdeviitetarkistuksilla.
+**AI/RAG-laatuhavainnot:** Käytännön testauksessa havaittiin ajoittaisia vastauskielen virheitä, perusteetonta salasanan palautusohjeistusta ja avainsanahaun heikkoja osumia. Tietopohjaa ja vastauskäsittelyä parannettiin, ja US-15:n käytännön uusintatesti ilmoitettiin hyväksytyksi. Muutokset eivät takaa vastausten oikeellisuutta tai kielivalinnan onnistumista. Yksityiskohtainen testihistoria, rajoitteet ja avoimet varmennustehtävät ylläpidetään [hyväksyntä- ja testausraportissa](../../reports/PROJECT_ACCEPTANCE_REPORT.md).
 
 ### 8.4 Definition of Done
 
@@ -288,6 +264,9 @@ Merkittävät tekniset ja projektinhallinnalliset päätökset kirjataan tähän
 | D-10 | 31.10.2026 | Vanhentuneiden istuntojen siivous suoritetaan kirjautumisesta riippumattomassa tunnin välein ajettavassa tehtävässä; poisto tehdään erissä tunnisteiden perusteella | Vältetään MySQL:n `expires_at`-aluepoiston gap lock -lukkojen ja kirjautumisen sessionlisäyksen välinen deadlock | Kirjautumistransaktio luo vain uuden session; siivoustehtävä kirjaa tietokantavirheet ja jatkaa seuraavalla jaksolla |
 | D-11 | 03.11.2026 | Suljetut tukipyynnöt ja käyttämättömät keskustelut poistetaan pysyvästi kolmen kalenterikuukauden jälkeen | Rajataan tietokannan kasvua sovitulla säilytyskäytännöllä | Päivittäinen erissä suoritettava taustatehtävä käyttää `closed_at`- ja `updated_at`-aikoja; avoimeen tai säilytysaikaiseen pyyntöön liittyvää keskustelua ei poisteta |
 | D-12 | 03.11.2026 | Käyttäjä ei voi muuttaa etu- tai sukunimeään profiilista; käyttäjänimi on ainoa muokattava profiilikenttä | Käyttäjän vahvistama käyttöoikeus- ja profiilikäytäntö | Etu- ja sukunimi näytetään lukittuina, ja backendin PATCH-skeema hylkää muut nimet |
+| D-13 | 13.11.2026 | Sivupalkin Uusi keskustelu luo aina itsenäisen keskustelun; jatkaminen on erillinen lapsikeskustelutoiminto | Estetään kontekstin periytyminen huomaamatta | Toteutettu ja yhdistetty main-haaraan PR #30:ssa (commit `f4b7478`) |
+| D-14 | 13.11.2026 | Lapsikeskustelu edellyttää käyttäjän vahvistamaa otsikkoa ja ei-tyhjää kontekstiyhteenvetoa; siihen tallennetaan emokeskusteluviittaus ja yhteenvetovedos | Säilytetään käyttäjän päätösvalta ja rajattu peritty konteksti kopioimatta emokeskustelun viestejä | Toteutettu; migraatio `0008_conversation_tree.py` |
+| D-15 | 13.11.2026 | Aloita jatkokeskustelu näytetään vain, kun viimeisimmän valmistuneen generoinnin käyttöaste on kelvollinen ja ylittää tiukasti kontekstikapasiteetin 70 % | Jatkokeskustelu tarjotaan kapasiteetin lähestyessä ilman keskeneräisen luonnoksen käsittelyä mitattuna käyttöasteena | Toteutettu frontendissä; tarkan raja-arvon testinäyttö on edelleen puutteellinen |
 
 ## 11. Muutosloki
 
@@ -300,35 +279,20 @@ Merkittävät tekniset ja projektinhallinnalliset päätökset kirjataan tähän
 | 31.10.2026 | 0.5 | Pakotettu frontendin backend-reititys luotetun proxy-verkon kautta ja siirretty vanhentuneiden istuntojen siivous kirjautumistransaktion ulkopuolelle | Projektin toteuttaja |
 | 01.11.2026 | 0.6 | Korjattu Ollaman mallin alustuskomennon Compose-käsittely; varmennettu tyhjän mallivolyymin alustus, Sprint 1:n testitulokset ja avoimet tarkistukset; korjattu Modelfile-polut ja HomePage-focus-käsittely | Projektin toteuttaja |
 | 03.11.2026 | 0.7 | Päivitetty Sprinttien 1–5 tilanne, backendin chat- ja retention-ratkaisut, profiilin muokkausrajaus sekä testauksen ja käyttöönoton avoimet tarkistukset | Projektin toteuttaja |
+| 16.11.2026 | 0.8 | Yhdistetty keskustelun elinkaaren päätökset päätöslokiin ja yhtenäistetty dokumentaation rakenne | Projektin toteuttaja |
 
 ## 12. Linkit projektin muihin dokumentteihin
 
 - [Vaatimusmäärittely](01-vaatimusmaarittely.md)
 - [Käyttäjätarinat ja hyväksymiskriteerit](02-käyttäjätarinat%20ja%20hyväksymiskriteerit.md)
-- [Product Backlog](03-product%20backlog.md)
-- [Sprint-suunnitelma](04-sprintin%20suunnitelma.md)
-- [Järjestelmän suunnittelu](05-järjestelmän%20suunnittelu.md)
+- [Product Backlog](05-product%20backlog.md)
+- [Sprint-suunnitelma](06-sprintin%20suunnitelma.md)
+- [Järjestelmän suunnittelu](03-järjestelmän%20suunnittelu.md)
 - [README](../../README.md)
 
 > **Ylläpitokäytäntö:** päivitä tätä dokumenttia projektin edetessä, erityisesti aikataulun, riskien, merkittävien päätösten ja laajuusmuutosten osalta. Älä kopioi tänne muiden dokumenttien yksityiskohtaisia vaatimuksia tai käyttäjätarinoita; linkitä niiden lähteisiin.
 
-## 13. Keskustelun elinkaaren päätösloki (2026-11-13)
-
-| ID | Päiväys | Päätös / muutos | Perustelu | Toteutus / tila |
-|---|---|---|---|---|
-| D-13 | 13.11.2026 | Sivupalkin Uusi keskustelu luo aina itsenäisen keskustelun; jatkaminen on erillinen lapsikeskustelutoiminto | Uuden keskustelun aloittaminen ei saa huomaamatta muuttua jatkamiseksi | Toteutettu branchissa feature/conversation-lifecycle |
-| D-14 | 13.11.2026 | Lapsikeskustelu edellyttää käyttäjän tarkistamaa otsikkoa ja ei-tyhjää kontekstiyhteenvetoa; siihen tallennetaan emokeskusteluviittaus ja yhteenvetovedos | Säilytetään käyttäjän päätösvalta ja rajattu peritty konteksti kopioimatta emokeskustelun viestihistoriaa | Toteutettu; migraatio 0008_conversation_tree.py |
-| D-15 | 13.11.2026 | Aloita jatkokeskustelu näytetään vain, kun viimeisimmän valmistuneen generoinnin kontekstikäyttö ylittää tiukasti 70 % | Jatkokeskustelu tarjotaan kontekstin lähestyessä kapasiteettia ilman, että keskeneräisen luonnoksen arviota käsitellään mitattuna arvona | Toteutettu frontendissä; tarkan raja-arvon erillinen testinäyttö vielä tarvitaan |
-
-Kehittäjä ilmoitti itsenäisen keskustelun ja jatkokeskustelun toimintojen toimivan manuaalisessa toimintatestauksessa. Frontendin build ja Dockerissa suoritettu lint onnistuivat. Dokumentaatio kirjaa tämän ilmoituksen eikä väitä suorittamattomia raja-arvo- tai virhetilannetestejä tehdyiksi.
-
-### Lisäys muutoslokiin
-
-| Päivämäärä | Versio | Muutos | Tekijä |
-|---|---|---|---|
-| 13.11.2026 | 0.8 | Kirjattu itsenäisen ja jatkokeskustelun päätökset, toteutustila ja dokumentaation synkronointikäytäntö | Projektin toteuttaja |
-
-## 14. Kaksikielisen teknisen dokumentaation ylläpitosääntö
+## 13. Kaksikielisen teknisen dokumentaation ylläpitosääntö
 
 Jokaisen hyväksytyn muutoksen yhteydessä, joka vaikuttaa projektin rakenteeseen, arkkitehtuuriin, teknologiavalintoihin, tietokantaskeemaan/migraatioihin, API-sopimuksiin, tietoturvaan, tietovirtaan, käyttöönottoon tai käyttäjälle näkyvään tekniseen toimintaan, päivitetään kaikki muutoksen vaikutuspiirissä olevat englannin- ja suomenkieliset projektidokumentit saman dokumentaatiotehtävän aikana. Tarkista vaatimusten, käyttäjätarinoiden ja hyväksymiskriteerien, Product Backlogin, Sprint-suunnitelman, järjestelmän suunnittelun, UX/UI-suunnittelun sekä tämän dokumentin päätös- ja muutoslokien päivitystarve. Pidä kieliversiot sisällöllisesti yhdenmukaisina. Kirjaa toteutettu, vasta suunniteltu ja tosiasiallisesti varmennettu erillisinä tietoina. Lähdekoodi ja migraatiot ovat toteutuksen auktoriteetti; dokumentaatio täsmäytetään niitä vasten.
 

@@ -121,7 +121,7 @@ Database referential integrity is ensured with primary and foreign keys. User-sp
 
 ### 2.5 AI Integration
 
-AI Service forwards the user's message to the Ollama service running in the Compose environment and processes the response. The default model is `poro-helpdesk`, created from `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf` by the [Modelfile](../../ollama/Modelfile). The model name and initialization source are configurable with `OLLAMA_MODEL` and `OLLAMA_MODEL_SOURCE`; `registry` pulls a model from Ollama, while `modelfile` creates it from the local Modelfile. The current default Modelfile sets context length 8192 and temperature 0.2.
+AI Service forwards requests from the backend to the Ollama service on the Compose network. The model name and initialization source are controlled by `OLLAMA_MODEL` and `OLLAMA_MODEL_SOURCE`. The committed `.env.example` sets `OLLAMA_MODEL=poro` and `OLLAMA_MODEL_SOURCE=modelfile`; when the model name is explicitly configured, the initialization service creates it from [Modelfile](../../ollama/Modelfile) or pulls it from the Ollama registry. Copy `.env.example` and keep the same explicit model name for the backend and model-initialization service: their Compose fallback values differ if `OLLAMA_MODEL` is omitted. The current Modelfile uses `Llama-Poro-2-8B-Instruct.Q4_K_M.gguf`, `num_ctx 8192`, and `temperature 0.3`.
 
 #### The AI Integration Must
 
@@ -143,11 +143,11 @@ AI-generated responses are suggestions. Their accuracy cannot be guaranteed in a
 
 ### 2.6 RAG MVP and Data Sources
 
-Knowledge Service processes a collection of Markdown and TXT documents that the group has limited and approved for use before implementation. The exact source collection and its storage location will be confirmed before implementation; documents will not be retrieved from unspecified or external sources.
+Knowledge Service loads the approved local Markdown/TXT corpus from the repository's `knowledge/` directory (mounted read-only at `/knowledge` in Compose). A document is eligible for retrieval only when its metadata declares `RAG Scope: project-specific`; general reference material is not indexed. The current corpus is intended to provide project-specific AI HelpDesk technical guidance.
 
-The MVP search method is keyword search. The service retrieves document passages relevant to the question, forwards the found text excerpts and source information through Chat Service to AI Service, and returns the source information for display in the user interface. The source information for a search result is based on the actual file and the passage found. If no suitable passage is found, no fabricated source is provided to the model, and the response is not presented as being supported by documentation.
+The implemented MVP uses lightweight bilingual keyword and token-prefix matching, not semantic search, vector embeddings, or a Finnish morphological analyzer. It splits documents into sections, ranks matches, and returns a bounded number of excerpts and source identifiers. Chat generation receives retrieved excerpts as untrusted reference context. The backend validates source identifiers against the retrieved results before rendering source references; it does not rely on source lists invented by the model. If no suitable passage is retrieved, the answer must not be presented as documentation-supported.
 
-The quality of keyword search will be assessed using questions and documents defined before implementation, including tests for a relevant match and a query with no match. Semantic search or a vector database will be added only if test results show keyword search to be insufficient and the change is approved. The RAG MVP document collection and search method do not require changes to the ER diagram or MySQL schema. If a genuine need for new persistent data arises later, the data model and ER diagram will be updated separately through change management.
+The authenticated `POST /api/v1/knowledge/search` endpoint exposes the retrieval results. RAG retrieval is integrated into streaming chat, ordinary non-streaming chat, and retry. Retrieval can miss relevant passages or return weak matches; practical acceptance of US-15 was reported on 05.11.2026, but this does not guarantee retrieval or answer accuracy. The corpus and search method do not require a separate RAG table or ER change.
 
 The model, Ollama, Docker images, and other tools and libraries will be checked for cost, licenses, and terms of use before delivery. Compliance with any license terms will not be assumed without verification.
 
@@ -269,8 +269,10 @@ Allowed values are validated in the backend and, where necessary, with database 
 | title | VARCHAR(200) | NULL | Conversation title |
 | created_at | DATETIME | NOT NULL | Creation time |
 | updated_at | DATETIME | NOT NULL | Last update time |
-
-The conversation title can be defined based on the user's first message or made editable by the user in a later version.
+| parent_conversation_id | BIGINT | FK, NULL | Parent conversation; NULL for independent/root conversations |
+| context_summary | TEXT | NULL | User-confirmed inherited context snapshot for a child conversation |
+| last_context_tokens | INTEGER | NULL | Context usage measured for the latest completed generation |
+| response_language | VARCHAR(100) | NULL | Explicit response-language preference saved for the conversation | receive an initial title from the first user message. For a child conversation, the continuation-preview endpoint generates a proposed title and context summary; the user can edit both before confirming creation.
 
 ## 4.5 Table: messages
 
@@ -387,7 +389,7 @@ The REST API serves as the interface between the frontend and backend.
 
 ## 5.2 Endpoints
 
-Authentication, profile, support ticket, and conversation routes are implemented. The RAG search route is designed but must not be marked complete before Sprint 5 implementation.
+Authentication, profile, support-ticket, conversation, and knowledge-search routes are implemented. The endpoint list below describes the current API surface; detailed request/response schemas remain defined in the backend.
 
 ### Authentication and User Account
 
@@ -429,6 +431,7 @@ The static `/summary` route is defined before the dynamic `{id}` route so that t
 | GET | `/api/v1/conversations/{id}/messages` | Retrieves the conversation's messages | Yes |
 | POST | `/api/v1/conversations/{id}/messages` | Saves a user message and requests an AI response; the chat request `Origin` is checked against the allowlist | Yes |
 | POST | `/api/v1/conversations/{id}/messages/{message_id}/retry` | Retries a response for an already-saved unanswered user message | Yes |
+| POST | `/api/v1/conversations/{id}/messages/stop` | Stops the active stream for an owned conversation and waits for shutdown | Yes |
 
 ### Knowledge-Based AI Assistance
 
@@ -618,7 +621,9 @@ The backend reads context_summary from the selected conversation and supplies it
 - The child action is shown only for an active conversation when both context capacity and last_context_tokens are valid and the exact usage ratio is greater than 70%. Exactly 70% does not qualify. Missing or invalid measurements hide the action.
 - Usage is based on the latest completed generation, not a live estimate of the unsent draft. The displayed action threshold uses the raw ratio rather than a rounded display percentage.
 
-### 6.5 Verification status
 
-As of 2026-11-13, the developer reported successful manual functional testing of independent and child conversation flows. Frontend production build passed on Windows and Oxlint passed inside Docker. Do not mark the exact 70% boundary or every failure-path scenario as tested unless separately executed and recorded.
 
+
+## 7. Generation cancellation and operational limits
+
+The streaming chat endpoint persists the user message before inference and persists the assistant message only after generation completes successfully. The Stop action calls `POST /api/v1/conversations/{conversation_id}/messages/stop`; the backend validates conversation ownership, signals the process-local generation controller, closes the active Ollama HTTP response, and waits for the stream worker to finish before returning. A cancelled partial assistant response is not saved to the database; the submitted user message remains saved. The frontend discards the unfinished stream output. The cancellation registry is process-local, so multiple backend workers/replicas are not supported by this mechanism without a distributed cancellation signal. Compose currently uses a floating Ollama image tag; verify cancellation against the exact image used for any deployment. Manual functional testing was reported during development; multi-worker and production cancellation have not been validated.

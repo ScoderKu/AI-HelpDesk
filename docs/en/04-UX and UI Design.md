@@ -2,9 +2,9 @@
 
 **Project:** AI HelpDesk – Student Project  
 **Document:** UX/UI Design Specification  
-**Version:** 1.0  
-**Updated:** 26.10.2026  
-**Status:** Design document – implementation and usability testing will be refined during the project
+**Version:** 1.2  
+**Updated:** 16.11.2026  
+**Status:** Living UX/UI specification – describes the implemented user flows and identifies usability items that have not been formally evaluated
 
 ---
 
@@ -137,7 +137,7 @@ Logged-in user views use a common application frame:
 
 Example layout:
 
-![UI_pc](../../photos/UI_pc.png)
+![UI_pc](../../images/UI_pc.png)
 
 ### 5.2 Responsiveness
 
@@ -242,7 +242,7 @@ The home page is kept simple, and the US-14 summary is a mandatory part of the a
 
 **Recommended Layout**
 
-![AIchat](../../photos/AIchat.png)
+![AIchat](../../images/AIchat.png)
 
 On mobile, conversation history can be opened from a separate button so that the main conversation area remains sufficiently wide.
 
@@ -528,6 +528,8 @@ If a conflict is found between this document and the requirements specification,
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | 26.10.2026 | First UX/UI design specification |
+| 1.1 | 13.11.2026 | Added independent/child conversation actions, editable continuation preview, strict greater-than-70% visibility rule, and hierarchical history behavior |
+| 1.2 | 16.11.2026 | Reconciled document status and metadata; consolidated change history |
 
 ## 16. Conversation Lifecycle UI Update (2026-11-13)
 
@@ -548,10 +550,3 @@ Show the child action only when a conversation is active and the latest complete
 The conversation history visually distinguishes child conversations through indentation/tree hierarchy. Parent and child relationships are derived from the stored parent reference. Multiple children can belong to one parent; the list is arranged chronologically while preserving the hierarchy.
 
 **Verification note:** the developer reported successful manual functional tests of the independent and child flows on 2026-11-13. Boundary and error-path checks remain separate unless explicitly recorded.
-
-### Change History addition
-
-| Version | Date | Change |
-|---|---|---|
-| 1.1 | 13.11.2026 | Added independent/child conversation actions, editable continuation preview, strict greater-than-70% visibility rule, and hierarchical history behavior |
-

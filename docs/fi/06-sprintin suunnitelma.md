@@ -4,7 +4,7 @@
 
 Tämä dokumentti määrittelee AI HelpDesk -sovelluksen alustavan sprinttisuunnitelman. Suunnitelmassa kuvataan sprinttien tavoitteet, toteutettavat käyttäjätarinat, työmääräarviot, keskeiset tehtävät ja odotetut tulokset.
 
-Käyttäjätarinoiden yksityiskohtaiset kuvaukset ja hyväksymiskriteerit löytyvät dokumentista `02-käyttäjätarinat ja hyväksymiskriteerit.md`. Prioriteetit ja alkuperäiset Story Point -arviot määritellään dokumentissa `03-product backlog.md`.
+Käyttäjätarinoiden yksityiskohtaiset kuvaukset ja hyväksymiskriteerit löytyvät dokumentista `02-käyttäjätarinat ja hyväksymiskriteerit.md`. Prioriteetit ja alkuperäiset Story Point -arviot määritellään dokumentissa `05-product backlog.md`.
 
 ---
 
@@ -147,7 +147,7 @@ Toteuttaa AI HelpDesk -sovelluksen keskeinen tekoälyominaisuus. Käyttäjän on
 
 ## 5.3 Keskeiset kehitystehtävät
 
-1. Konfiguroidaan Docker Compose -ympäristössä toimiva Ollama sekä `Modelfile`-tiedostosta automaattisesti luotava `poro-helpdesk`-malli valitulla GGUF-mallitiedostolla.
+1. Konfiguroidaan Docker Compose -ympäristössä toimiva Ollama sekä `Modelfile`-tiedostosta alustusasetuksilla luotava `poro`-malli valitulla GGUF-mallitiedostolla.
 2. Toteutetaan backendin ja Ollama-palvelun välinen integraatio Compose-verkon kautta.
 3. Toteutetaan keskustelunäkymä ja viestin lähettäminen.
 4. Näytetään tekoälyn vastaukset käyttöliittymässä.
@@ -160,7 +160,7 @@ Toteuttaa AI HelpDesk -sovelluksen keskeinen tekoälyominaisuus. Käyttäjän on
 
 ## 5.4 Odotetut tulokset
 
-1. Ensimmäisellä Docker Compose -käynnistyksellä puuttuva `poro-helpdesk`-malli luodaan Ollama-konttiin `Modelfile`-tiedostosta ja paikallisesta GGUF-tiedostosta; malli säilyy pysyvässä Ollama-volyymissa ja backend lataa sen käyttövalmiiksi käynnistyessään.
+1. Ensimmäisellä Docker Compose -käynnistyksellä puuttuva `poro`-malli luodaan Ollama-konttiin `Modelfile`-tiedostosta ja paikallisesta GGUF-tiedostosta; malli säilyy pysyvässä Ollama-volyymissa ja backend lataa sen käyttövalmiiksi käynnistyessään.
 2. Käyttäjä voi lähettää teknistä ongelmaa koskevan viestin Dockerissa toimivalle Ollama-palvelulle.
 3. Tekoälyn vastaus näytetään keskustelunäkymässä.
 4. Keskustelua voidaan jatkaa aiemman kontekstin perusteella.
@@ -210,20 +210,9 @@ Laajentaa sovelluksen toiminnallisuuksia ja parantaa käyttökokemusta. Käyttä
 
 Sprintti voidaan hyväksyä, kun lisäominaisuudet täyttävät niille määritellyt hyväksymiskriteerit ja toimivat yhdessä aiemmin toteutettujen toimintojen kanssa.
 
-### Hyväksyntäpäivitys (05.11.2026)
+### Sprint 4:n ja toimituksen hyväksyntätilanne (05.11.2026)
 
-Projektin toteuttaja on vahvistanut Sprint 4:n käyttäjätarinoiden ja myöhemmin kaikkien käyttäjätarinoiden US-01–US-17 käytännön hyväksymisen, mukaan lukien US-07 ja US-15. Toteuttaja vahvisti myös koko Compose-pinon käynnistyksen tyhjillä MySQL- ja Ollama-volyymeilla. Rekisteröityminen ja kahdeksan samanaikaista MySQL-kirjautumista läpäisivät paikallisessa Compose-ympäristössä 05.11.2026. Kolmansien osapuolten lisensseistä on tehty alustava inventointi; projektin oman lisenssin valinta ja jakelukohtaiset lisenssitoimet ovat yhä avoinna. Todellista LAN-välitystä ei ole voitu tarkistaa henkilökohtaisessa kehitysympäristössä. Nämä ovat toimitus-/ympäristötarkistuksia, eivät avoimia käyttäjätarinoiden hyväksymiskriteerejä. Mallin ja RAG:n tunnetut laatuhavainnot on kirjattu projektinhallintaan.
-
-Aiempi Sprint 4:n regressio- ja demotarkistuslista kuvaa 04.11.2026 vallinnutta tilannetta, ja tämän päivityksen myöhemmät varmennukset korvaavat sen avoimina olleet hyväksymistestit.
-- regressiotestaus demo-ympäristössä ennen virallista esittelyä
-
-Tämä arvio kuvaa aiempaa 04.11.2026 tilannetta; 05.11.2026 hyväksyntäpäivitys edellä korvaa sen.
-
----
-
-### Hyväksyntäpäivitys (05.11.2026)
-
-Projektin toteuttaja on vahvistanut Sprint 4:n kaikkien tarinoiden käytännön hyväksynnän ja myöhemmin US-01–US-17:n hyväksynnän, mukaan lukien US-07 ja US-15. Toteuttaja vahvisti myös koko Compose-pinon käynnistyksen tyhjillä MySQL- ja Ollama-volyymeilla. Rekisteröityminen ja kahdeksan rinnakkaista MySQL-kirjautumista testattiin paikallisessa Compose-ympäristössä 05.11.2026, ja testi läpäisi. Kolmansien osapuolten lisensseistä on tehty alustava inventointi; projektin oman lisenssin valinta ja jakelukohtaiset lisenssitoimet ovat yhä avoinna. Todellisen LAN-välityksen tarkistus vaatii kohdeympäristön, eikä sitä voitu tehdä henkilökohtaisessa kehitysympäristössä. Nämä ovat toimitus-/ympäristötarkistuksia, eivät avoimia käyttäjätarinoiden hyväksymiskriteerejä. Mallin ja RAG:n tunnetut laatuhavainnot on kirjattu projektinhallintaan.
+Projektin toteuttaja vahvisti Sprint 4:n käyttäjätarinoiden ja myöhemmin kaikkien käyttäjätarinoiden US-01–US-17 käytännön hyväksymisen, mukaan lukien US-07 ja US-15. Koko Compose-pino käynnistyi tyhjillä MySQL- ja Ollama-volyymeilla. Rekisteröitymisen ja kahdeksan samanaikaisen MySQL-kirjautumisen integraatiotesti läpäisi paikallisessa Compose-ympäristössä 05.11.2026. Kolmansien osapuolten lisensseistä on tehty alustava inventointi, mutta projektin oma lisenssi ja jakeluun liittyvät toimet ovat avoinna. Todellista LAN-välitystä ei ole varmennettu. Testinäyttö ja myöhemmät keskustelun elinkaaren testit on koottu [hyväksyntä- ja testausraporttiin](../../reports/PROJECT_ACCEPTANCE_REPORT.md).
 
 # 7. Sprint 5 – Tietopohjainen tekoälyneuvonta (RAG)
 
@@ -348,7 +337,6 @@ AI HelpDesk -sovelluksen alustava Sprint Plan koostuu viidestä Sprintistä ja 1
 
 Suunnitelma on alustava. Sprinttien tarkka sisältö, kesto ja työmäärä vahvistetaan kehittäjän kapasiteetin, teknisten riippuvuuksien ja projektin vaatimusten perusteella.
 
-## 12. Toteutustilan päivitys – keskustelun elinkaari (2026-11-13)
+## 12. Alkuperäisen suunnitelman jälkeiset muutokset
 
-Itsenäisen keskustelun ja jatkokeskustelun työnkulku toteutettiin integraatiohaarassa alkuperäisen Sprint-suunnitelman laatimisen jälkeen. Se täydentää olemassa olevien US-06- ja US-08-käyttäjätarinoiden laajuutta eikä lisää erikseen arvioitua käyttäjätarinaa. Kehittäjä ilmoitti molempien työnkulkujen manuaalisen toimintatestauksen onnistuneen. Frontendin build onnistui Windowsissa ja lint Dockerissa. Tarkan raja-arvon ja kaikkien virhetilanteiden testauksen ei väitetä olevan valmis. Tämä toteutuspäivitys ei muuta jälkikäteen alkuperäistä 88 Story Pointin arviota eikä viiden Sprintin suunnittelun lähtökohtaa.
-
+Itsenäisen keskustelun ja jatkokeskustelun työnkulku lisättiin alkuperäisen viiden Sprintin suunnitelman laatimisen jälkeen. Se täydentää US-06- ja US-08-tarinoita muuttamatta alkuperäistä 88 Story Pointin suunnittelupohjaa. Nykyiset vaatimukset, toteutuksen tekniset tiedot ja testausnäyttö ylläpidetään niitä vastaavissa ensisijaisissa dokumenteissa; katso [dokumentaatiohakemisto](../README.md) ja [hyväksyntäraportti](../../reports/PROJECT_ACCEPTANCE_REPORT.md).
