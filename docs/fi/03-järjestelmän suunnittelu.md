@@ -618,9 +618,6 @@ Backend lukee valitun keskustelun context_summary-arvon ja välittää sen teko�
 - Jatkokeskustelutoiminto näytetään vain aktiivisessa keskustelussa, kun sekä kontekstikapasiteetti että last_context_tokens ovat kelvollisia ja tarkka käyttöastesuhde ylittää 70 %. Täsmälleen 70 % ei riitä. Puuttuva tai virheellinen mittaustieto piilottaa toiminnon.
 - Käyttöaste perustuu viimeisimpään valmistuneeseen generointiin, ei keskeneräisen viestiluonnoksen reaaliaikaiseen arvioon. Näyttämisehto käyttää pyöristämätöntä suhdetta.
 
-### 6.5 Varmennuksen tila
-
-13.11.2026 kehittäjä ilmoitti itsenäisen keskustelun ja jatkokeskustelun työnkulkujen manuaalisen toimintatestauksen onnistuneen. Frontendin tuotantobuild onnistui Windowsissa ja Oxlint Docker-kontissa. Täsmälleen 70 prosentin raja-arvoa tai kaikkia virhetilanteita ei pidä merkitä testatuiksi, ellei niitä ole erikseen suoritettu ja kirjattu.
 
 
 
