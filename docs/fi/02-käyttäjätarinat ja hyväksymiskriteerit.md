@@ -611,5 +611,5 @@ Seuraavat kriteerit täydentävät käyttäjätarinoita US-06 (Tekoälypohjainen
 - Kun käyttäjä avaa sen myöhemmin tai lähettää uuden viestin.
 - Niin tallennettu kontekstiyhteenveto on edelleen käytettävissä ja sisällytetään jatkokeskustelun tekoälykontekstiin; emokeskustelun koko viestihistoriaa ei toisteta jatkokeskustelun historiana.
 
-**Varmennushuomautus:** Kehittäjä on testannut itsenäisen keskustelun ja jatkokeskustelun työnkulut manuaalisesti ja ilmoittanut niiden toimivan odotetusti. Frontendin build onnistui Windowsissa ja lint Dockerissa. Raja-arvotestit (mukaan lukien täsmälleen 70 %) kirjataan erikseen, jos ja kun ne suoritetaan.
+**Testausnäyttö:** katso [projektin hyväksyntä- ja testausraportti](../../reports/PROJECT_ACCEPTANCE_REPORT.md).
 
