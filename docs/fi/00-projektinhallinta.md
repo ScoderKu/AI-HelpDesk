@@ -288,6 +288,9 @@ Merkittävät tekniset ja projektinhallinnalliset päätökset kirjataan tähän
 | D-10 | 31.10.2026 | Vanhentuneiden istuntojen siivous suoritetaan kirjautumisesta riippumattomassa tunnin välein ajettavassa tehtävässä; poisto tehdään erissä tunnisteiden perusteella | Vältetään MySQL:n `expires_at`-aluepoiston gap lock -lukkojen ja kirjautumisen sessionlisäyksen välinen deadlock | Kirjautumistransaktio luo vain uuden session; siivoustehtävä kirjaa tietokantavirheet ja jatkaa seuraavalla jaksolla |
 | D-11 | 03.11.2026 | Suljetut tukipyynnöt ja käyttämättömät keskustelut poistetaan pysyvästi kolmen kalenterikuukauden jälkeen | Rajataan tietokannan kasvua sovitulla säilytyskäytännöllä | Päivittäinen erissä suoritettava taustatehtävä käyttää `closed_at`- ja `updated_at`-aikoja; avoimeen tai säilytysaikaiseen pyyntöön liittyvää keskustelua ei poisteta |
 | D-12 | 03.11.2026 | Käyttäjä ei voi muuttaa etu- tai sukunimeään profiilista; käyttäjänimi on ainoa muokattava profiilikenttä | Käyttäjän vahvistama käyttöoikeus- ja profiilikäytäntö | Etu- ja sukunimi näytetään lukittuina, ja backendin PATCH-skeema hylkää muut nimet |
+| D-13 | 13.11.2026 | Sivupalkin Uusi keskustelu luo aina itsenäisen keskustelun; jatkaminen on erillinen lapsikeskustelutoiminto | Estetään kontekstin periytyminen huomaamatta | Toteutettu ja yhdistetty main-haaraan PR #30:ssa (commit `f4b7478`) |
+| D-14 | 13.11.2026 | Lapsikeskustelu edellyttää käyttäjän vahvistamaa otsikkoa ja ei-tyhjää kontekstiyhteenvetoa; siihen tallennetaan emokeskusteluviittaus ja yhteenvetovedos | Säilytetään käyttäjän päätösvalta ja rajattu peritty konteksti kopioimatta emokeskustelun viestejä | Toteutettu; migraatio `0008_conversation_tree.py` |
+| D-15 | 13.11.2026 | Aloita jatkokeskustelu näytetään vain, kun viimeisimmän valmistuneen generoinnin käyttöaste on kelvollinen ja ylittää tiukasti kontekstikapasiteetin 70 % | Jatkokeskustelu tarjotaan kapasiteetin lähestyessä ilman keskeneräisen luonnoksen käsittelyä mitattuna käyttöasteena | Toteutettu frontendissä; tarkan raja-arvon testinäyttö on edelleen puutteellinen |
 
 ## 11. Muutosloki
 
@@ -301,34 +304,20 @@ Merkittävät tekniset ja projektinhallinnalliset päätökset kirjataan tähän
 | 01.11.2026 | 0.6 | Korjattu Ollaman mallin alustuskomennon Compose-käsittely; varmennettu tyhjän mallivolyymin alustus, Sprint 1:n testitulokset ja avoimet tarkistukset; korjattu Modelfile-polut ja HomePage-focus-käsittely | Projektin toteuttaja |
 | 03.11.2026 | 0.7 | Päivitetty Sprinttien 1–5 tilanne, backendin chat- ja retention-ratkaisut, profiilin muokkausrajaus sekä testauksen ja käyttöönoton avoimet tarkistukset | Projektin toteuttaja |
 
+| 16.11.2026 | 0.9 | Yhdistetty keskustelun elinkaaren päätökset päätöslokiin ja yhtenäistetty dokumentaation rakenne | Projektin toteuttaja |
+
 ## 12. Linkit projektin muihin dokumentteihin
 
 - [Vaatimusmäärittely](01-vaatimusmaarittely.md)
 - [Käyttäjätarinat ja hyväksymiskriteerit](02-käyttäjätarinat%20ja%20hyväksymiskriteerit.md)
-- [Product Backlog](03-product%20backlog.md)
+- [Product Backlog](05-product%20backlog.md)
 - [Sprint-suunnitelma](04-sprintin%20suunnitelma.md)
-- [Järjestelmän suunnittelu](05-järjestelmän%20suunnittelu.md)
+- [Järjestelmän suunnittelu](03-järjestelmän%20suunnittelu.md)
 - [README](../../README.md)
 
 > **Ylläpitokäytäntö:** päivitä tätä dokumenttia projektin edetessä, erityisesti aikataulun, riskien, merkittävien päätösten ja laajuusmuutosten osalta. Älä kopioi tänne muiden dokumenttien yksityiskohtaisia vaatimuksia tai käyttäjätarinoita; linkitä niiden lähteisiin.
 
-## 13. Keskustelun elinkaaren päätösloki (2026-11-13)
-
-| ID | Päiväys | Päätös / muutos | Perustelu | Toteutus / tila |
-|---|---|---|---|---|
-| D-13 | 13.11.2026 | Sivupalkin Uusi keskustelu luo aina itsenäisen keskustelun; jatkaminen on erillinen lapsikeskustelutoiminto | Uuden keskustelun aloittaminen ei saa huomaamatta muuttua jatkamiseksi | Toteutettu branchissa feature/conversation-lifecycle |
-| D-14 | 13.11.2026 | Lapsikeskustelu edellyttää käyttäjän tarkistamaa otsikkoa ja ei-tyhjää kontekstiyhteenvetoa; siihen tallennetaan emokeskusteluviittaus ja yhteenvetovedos | Säilytetään käyttäjän päätösvalta ja rajattu peritty konteksti kopioimatta emokeskustelun viestihistoriaa | Toteutettu; migraatio 0008_conversation_tree.py |
-| D-15 | 13.11.2026 | Aloita jatkokeskustelu näytetään vain, kun viimeisimmän valmistuneen generoinnin kontekstikäyttö ylittää tiukasti 70 % | Jatkokeskustelu tarjotaan kontekstin lähestyessä kapasiteettia ilman, että keskeneräisen luonnoksen arviota käsitellään mitattuna arvona | Toteutettu frontendissä; tarkan raja-arvon erillinen testinäyttö vielä tarvitaan |
-
-Kehittäjä ilmoitti itsenäisen keskustelun ja jatkokeskustelun toimintojen toimivan manuaalisessa toimintatestauksessa. Frontendin build ja Dockerissa suoritettu lint onnistuivat. Dokumentaatio kirjaa tämän ilmoituksen eikä väitä suorittamattomia raja-arvo- tai virhetilannetestejä tehdyiksi.
-
-### Lisäys muutoslokiin
-
-| Päivämäärä | Versio | Muutos | Tekijä |
-|---|---|---|---|
-| 13.11.2026 | 0.8 | Kirjattu itsenäisen ja jatkokeskustelun päätökset, toteutustila ja dokumentaation synkronointikäytäntö | Projektin toteuttaja |
-
-## 14. Kaksikielisen teknisen dokumentaation ylläpitosääntö
+## 13. Kaksikielisen teknisen dokumentaation ylläpitosääntö
 
 Jokaisen hyväksytyn muutoksen yhteydessä, joka vaikuttaa projektin rakenteeseen, arkkitehtuuriin, teknologiavalintoihin, tietokantaskeemaan/migraatioihin, API-sopimuksiin, tietoturvaan, tietovirtaan, käyttöönottoon tai käyttäjälle näkyvään tekniseen toimintaan, päivitetään kaikki muutoksen vaikutuspiirissä olevat englannin- ja suomenkieliset projektidokumentit saman dokumentaatiotehtävän aikana. Tarkista vaatimusten, käyttäjätarinoiden ja hyväksymiskriteerien, Product Backlogin, Sprint-suunnitelman, järjestelmän suunnittelun, UX/UI-suunnittelun sekä tämän dokumentin päätös- ja muutoslokien päivitystarve. Pidä kieliversiot sisällöllisesti yhdenmukaisina. Kirjaa toteutettu, vasta suunniteltu ja tosiasiallisesti varmennettu erillisinä tietoina. Lähdekoodi ja migraatiot ovat toteutuksen auktoriteetti; dokumentaatio täsmäytetään niitä vasten.
 
