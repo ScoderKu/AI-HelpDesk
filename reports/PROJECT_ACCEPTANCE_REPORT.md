@@ -34,7 +34,7 @@ The repository and project records describe the following delivered areas:
 - Docker Compose startup for frontend, backend, MySQL, Redis and Ollama.
 - Independent conversations and child conversations. A child has a parent reference and a persisted context-summary snapshot; the user can edit the AI-proposed title and summary before confirming creation. Parent messages are not copied into the child transcript.
 - Context-usage indicator and child-conversation action based on the latest completed generation's usage measurement.
-- Stop Generation behavior intended to cancel actual backend inference and discard the unfinished assistant response while retaining user messages.
+- Stop Generation implementation: the authenticated stop endpoint checks conversation ownership, signals the active stream, closes the Ollama response and waits for the stream worker to finish. The backend persists the assistant message only after successful completion, so cancelled partial output is not saved; the submitted user message remains. This behavior is confirmed by source inspection, not by a fresh integration test in this report update.
 
 The child-conversation workflow was added after the original Sprint plan and documented as an extension of US-06/US-08, not as a retroactive change to the original Story Point estimate.
 
@@ -80,11 +80,14 @@ On 13.11.2026, the developer reported successful manual functional testing of:
 
 Frontend build passed on Windows and lint passed in Docker in that work session.
 
+The Stop Generation implementation was also inspected in the current source: the stop endpoint validates ownership, cancels the process-local generation controller, closes the active Ollama response and waits for the stream worker; the assistant message is persisted only after successful completion. No fresh Stop Generation integration test was run for this report update.
+
 The following were explicitly not claimed as fully verified:
 - exact 70% boundary behavior and all missing/invalid measurement cases;
 - every API error path and ownership edge case;
 - every migration upgrade/downgrade scenario;
 - multi-worker or multi-replica cancellation behavior;
+- Stop Generation behavior against a freshly pinned Ollama image and a full deployment-like integration environment;
 - production runtime behavior with every Ollama image/version.
 
 ### 3.5 AI and RAG quality checks
@@ -184,7 +187,7 @@ Repositorion ja projektin kirjaukset kuvaavat seuraavat toimitetut kokonaisuudet
 - Docker Compose -käynnistys frontendille, backendille, MySQL:lle, Redisille ja Ollamalle.
 - Itsenäiset keskustelut ja lapsikeskustelut. Lapsikeskusteluun tallennetaan emokeskusteluviittaus ja kontekstiyhteenvedon tilannekuva; käyttäjä voi muokata tekoälyn ehdottamaa otsikkoa ja yhteenvetoa ennen luonnin vahvistamista. Emokeskustelun viestejä ei kopioida lapsikeskustelun viestihistoriaan.
 - Kontekstin käyttöasteen ilmaisin ja viimeisimmän valmistuneen generoinnin käyttömittaukseen perustuva jatkokeskustelutoiminto.
-- Generoinnin pysäytystoiminto, jonka tarkoituksena on keskeyttää varsinainen backend-generointi ja hylätä keskeneräinen tekoälyvastaus käyttäjän viestien säilyessä.
+- Generoinnin pysäytys: autentikoitu pysäytysendpoint tarkistaa keskustelun omistajuuden, lähettää keskeytyksen aktiiviselle streamille, sulkee Ollama-vastauksen ja odottaa stream-työn päättymistä. Backend tallentaa assistant-viestin vasta onnistuneen generoinnin jälkeen, joten keskeytettyä osittaista vastausta ei tallenneta; käyttäjän lähettämä viesti säilyy. Toiminta on vahvistettu lähdekoodin tarkastelulla, ei tämän raporttipäivityksen yhteydessä suoritetulla uudella integraatiotestillä.
 
 Lapsikeskustelutoiminto lisättiin alkuperäisen Sprint-suunnitelman laatimisen jälkeen ja dokumentoitiin US-06/US-08-kokonaisuuden laajennuksena. Alkuperäistä Story Point -arviota ei muutettu jälkikäteen.
 
@@ -230,11 +233,14 @@ Nämä ovat aiemmin raportoitujen paikallisten kehitysympäristötestien tuloksi
 
 Frontendin build onnistui Windowsissa ja lint Dockerissa kyseisessä työskentelyvaiheessa.
 
+Myös generoinnin pysäytyksen toteutus tarkastettiin nykyisestä lähdekoodista: pysäytysendpoint tarkistaa omistajuuden, keskeyttää prosessikohtaisen generointiohjaimen, sulkee aktiivisen Ollama-vastauksen ja odottaa stream-työn päättymistä. Assistant-viesti tallennetaan vain onnistuneen generoinnin jälkeen. Tätä raporttia varten ei suoritettu uutta Stop Generation -integraatiotestiä.
+
 Seuraavia asioita ei nimenomaisesti väitetty kokonaan varmennetuiksi:
 - täsmälleen 70 prosentin raja sekä kaikki puuttuvan/virheellisen mittaustiedon tapaukset;
 - kaikki API-virhepolut ja omistajuuden reunatapaukset;
 - kaikki migraatioiden upgrade/downgrade-skenaariot;
 - usean backend-työntekijän tai replikan keskeytystoiminta;
+- Stop Generation -toiminta uudella lukitulla Ollama-imagella ja käyttöönottoa vastaavassa integraatioympäristössä;
 - tuotantoajon toiminta kaikilla Ollama-kuvaversioilla.
 
 ### 3.5 Tekoälyn ja RAG:n laatutarkistukset
