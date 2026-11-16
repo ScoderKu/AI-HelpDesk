@@ -137,7 +137,7 @@ Kirjautuneen käyttäjän näkymissä käytetään yhteistä sovelluskehystä:
 
 Esimerkkirunko:
 
-![UI_pc](../../photos/UI_pc.png)
+![UI_pc](../../images/UI_pc.png)
 
 ### 5.2 Responsiivisuus
 
@@ -240,7 +240,7 @@ Etusivu pidetään yksinkertaisena ja US-14:n yhteenveto on pakollinen osa sovit
 
 **Suositeltu asettelu**
 
-![AIchat](../../photos/AIchat.png)
+![AIchat](../../images/AIchat.png)
 
 Mobiilissa keskusteluhistoria voidaan avata erillisestä painikkeesta, jotta varsinainen keskustelualue säilyy riittävän leveänä.
 
