@@ -541,6 +541,8 @@ Jos tämän dokumentin ja vaatimusmäärittelyn välillä havaitaan ristiriita, 
 | Versio | Päiväys | Muutos |
 |---|---|---|
 | 1.0 | 26.10.2026 | Ensimmäinen UX/UI-suunnittelun määrittely |
+| 1.1 | 13.11.2026 | Lisätty itsenäisen ja jatkokeskustelun toiminnot, muokattava jatkamisen esikatselu, tiukka yli 70 %:n näyttämisehto ja keskusteluhistorian hierarkia |
+| 1.2 | 16.11.2026 | Yhtenäistetty dokumentin tila ja metatiedot sekä koottu muutoshistoria |
 
 ## 16. Keskustelun elinkaaren käyttöliittymäpäivitys (2026-11-13)
 
@@ -561,10 +563,3 @@ Jatkokeskustelutoiminto näytetään vain, kun keskustelu on aktiivinen ja viime
 Keskusteluhistoria erottaa lapsikeskustelut visuaalisesti sisennyksen/puurakenteen avulla. Emokeskustelun ja lapsikeskustelun suhde muodostetaan tallennetusta emokeskusteluviittauksesta. Yhdellä emokeskustelulla voi olla useita lapsikeskusteluja; lista järjestetään aikajärjestyksessä hierarkia säilyttäen.
 
 **Varmennushuomautus:** kehittäjä ilmoitti itsenäisen keskustelun ja jatkokeskustelun manuaalisten toimintatestien onnistuneen 13.11.2026. Raja-arvo- ja virhetilannetarkistukset ovat erillisiä, ellei niitä ole erikseen kirjattu.
-
-### Lisäys muutoshistoriaan
-
-| Versio | Päiväys | Muutos |
-|---|---|---|
-| 1.1 | 13.11.2026 | Lisätty itsenäisen ja jatkokeskustelun toiminnot, muokattava jatkamisen esikatselu, tiukka yli 70 %:n näyttämisehto ja keskusteluhistorian hierarkia |
-
