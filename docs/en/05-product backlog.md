@@ -134,14 +134,6 @@ The AI HelpDesk Product Backlog contains 17 user stories, with a total estimate 
 
 The Backlog's first objective is to build a working technical foundation, implement user authentication and support request management, and enable AI-powered conversation.
 
-## 9. Conversation Lifecycle Implementation Update (2026-11-13)
+## 9. Conversation Lifecycle Scope
 
-US-06 and US-08 now include the independent/child conversation lifecycle described in the acceptance-criteria document:
-
-- **Independent conversation:** the sidebar's **New Conversation** action starts a conversation without a parent reference or inherited summary.
-- **Child conversation:** the composer action **New Child Conversation** opens the continuation-preview workflow. The AI proposes a title and context summary; the user can edit both and must confirm creation.
-- **Persistence and lineage:** the child stores parent_conversation_id and context_summary; multiple children may refer to the same parent. The parent transcript is not copied into the child.
-- **Context threshold:** the child action is shown only when the latest completed-generation usage is valid and strictly greater than 70% of the configured context capacity.
-
-**Current verification:** the developer manually tested the independent and child conversation flows and reported successful behavior. Frontend build passed on Windows; frontend lint passed in Docker. Do not infer that every boundary or failure-path test has been completed from this report.
-
+The independent/child conversation workflow extends US-06 and US-08 without changing the original Story Point estimate. Its requirements and acceptance criteria are maintained in the [User Stories and Acceptance Criteria](02-User%20Stories%20and%20Acceptance%20Criteria.md) document; implementation details belong to [System Design](03-System%20Design.md), and test evidence belongs to the [Acceptance Report](../../reports/PROJECT_ACCEPTANCE_REPORT.md).
