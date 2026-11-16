@@ -2,9 +2,9 @@
 
 **Project:** AI HelpDesk – Student Project  
 **Document:** UX/UI Design Specification  
-**Version:** 1.0  
-**Updated:** 26.10.2026  
-**Status:** Design document – implementation and usability testing will be refined during the project
+**Version:** 1.2  
+**Updated:** 16.11.2026  
+**Status:** Living UX/UI specification – describes the implemented user flows and identifies usability items that have not been formally evaluated
 
 ---
 
