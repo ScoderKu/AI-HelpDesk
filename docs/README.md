@@ -1,7 +1,5 @@
 # AI HelpDesk – Project Documentation
 
-## English documentation
-
 This directory contains the maintained project documentation in English and Finnish. The two language editions are organized separately below. Each document uses the same ID in both languages and covers the same agreed scope.
 
 | ID | Document | Purpose |
@@ -28,7 +26,7 @@ This directory contains the maintained project documentation in English and Finn
 - When a technical or structural change affects the agreed behavior, update all affected English and Finnish documents together in the same change.
 
 
-## Suomenkielinen dokumentaatio
+# AI HelpDesk – Projektidokumentaatio
 
 Tämä hakemisto sisältää projektin ylläpidettävän suomenkielisen dokumentaation. Dokumenttien tunnisteet vastaavat englanninkielisiä versioita, ja molemmat kieliversiot kuvaavat samaa sovittua sisältöä.
 
