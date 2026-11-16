@@ -1,31 +1,3 @@
-# AI HelpDesk – Project Documentation
-
-This directory contains the maintained project documentation in English and Finnish. The two language editions are organized separately below. Each document uses the same ID in both languages and covers the same agreed scope.
-
-| ID | Document | Purpose |
-|---|---|---|
-| 00 | [Project Management](en/00-Project%20Management.md) | Project objectives, scope, schedule, responsibilities, risks, decisions and change history |
-| 01 | [Requirements Specification](en/01-Requirement%20Specification.md) | Functional and non-functional system requirements |
-| 02 | [User Stories & Acceptance Criteria](en/02-User%20Stories%20and%20Acceptance%20Criteria.md) | User needs and observable acceptance criteria |
-| 03 | [System Design](en/03-System%20Design.md) | Architecture, data model, APIs and technical behavior |
-| 04 | [UX/UI Design](en/04-UX%20and%20UI%20Design.md) | User journeys, navigation and interface behavior |
-| 05 | [Product Backlog](en/05-product%20backlog.md) | Priorities, estimates and delivery scope |
-| 06 | [Sprint Plan](en/06-Sprint%20Plan.md) | Planned implementation increments and sprint goals |
-| 07 | [Third-Party License Review](en/07-Third-Party%20License%20Review.md) | Dependency, model and distribution terms |
-| 08 | [Security & Deployment](en/08-security-deployment-considerations.md) | Implemented controls, deployment boundaries and remaining risks |
-
-**Additional English material**
-- [AI agent description](en/agents/agent-description.md)
-- [Project Acceptance and Verification Report](../reports/PROJECT_ACCEPTANCE_REPORT.md) – dated test evidence, limitations and outstanding verification
-
-## Documentation authority and maintenance
-
-- Source code, database migrations, configuration and automated tests define the implemented behavior. Documents describe the agreed product and must be reconciled against the implementation.
-- Requirements and acceptance criteria define expected behavior. System Design and UX/UI Design explain the solution. Backlog and Sprint Plan organize the work.
-- Test results and verification status have one canonical location: the Project Acceptance and Verification Report. Do not copy detailed test logs into every document.
-- When a technical or structural change affects the agreed behavior, update all affected English and Finnish documents together in the same change.
-
-
 # AI HelpDesk – Projektidokumentaatio
 
 Tämä hakemisto sisältää projektin ylläpidettävän suomenkielisen dokumentaation. Dokumenttien tunnisteet vastaavat englanninkielisiä versioita, ja molemmat kieliversiot kuvaavat samaa sovittua sisältöä.
@@ -52,3 +24,31 @@ Tämä hakemisto sisältää projektin ylläpidettävän suomenkielisen dokument
 - Vaatimukset ja hyväksymiskriteerit määrittävät odotetun toiminnan. Järjestelmän suunnittelu ja UX/UI-suunnittelu kuvaavat ratkaisun. Backlog ja Sprint-suunnitelma ohjaavat työn toteutusta.
 - Testituloksilla ja varmennuksen tilalla on yksi ensisijainen sijainti: projektin hyväksyntä- ja testausraportti. Yksityiskohtaisia testilokeja ei kopioida jokaiseen dokumenttiin.
 - Kun tekninen tai rakenteellinen muutos vaikuttaa sovittuun toimintaan, päivitä kaikki vaikutuksen alaiset suomen- ja englanninkieliset dokumentit samassa muutoksessa.
+
+
+# AI HelpDesk – Project Documentation
+
+This directory contains the maintained project documentation in English and Finnish. The two language editions are organized separately below. Each document uses the same ID in both languages and covers the same agreed scope.
+
+| ID | Document | Purpose |
+|---|---|---|
+| 00 | [Project Management](en/00-Project%20Management.md) | Project objectives, scope, schedule, responsibilities, risks, decisions and change history |
+| 01 | [Requirements Specification](en/01-Requirement%20Specification.md) | Functional and non-functional system requirements |
+| 02 | [User Stories & Acceptance Criteria](en/02-User%20Stories%20and%20Acceptance%20Criteria.md) | User needs and observable acceptance criteria |
+| 03 | [System Design](en/03-System%20Design.md) | Architecture, data model, APIs and technical behavior |
+| 04 | [UX/UI Design](en/04-UX%20and%20UI%20Design.md) | User journeys, navigation and interface behavior |
+| 05 | [Product Backlog](en/05-product%20backlog.md) | Priorities, estimates and delivery scope |
+| 06 | [Sprint Plan](en/06-Sprint%20Plan.md) | Planned implementation increments and sprint goals |
+| 07 | [Third-Party License Review](en/07-Third-Party%20License%20Review.md) | Dependency, model and distribution terms |
+| 08 | [Security & Deployment](en/08-security-deployment-considerations.md) | Implemented controls, deployment boundaries and remaining risks |
+
+**Additional English material**
+- [AI agent description](en/agents/agent-description.md)
+- [Project Acceptance and Verification Report](../reports/PROJECT_ACCEPTANCE_REPORT.md) – dated test evidence, limitations and outstanding verification
+
+## Documentation authority and maintenance
+
+- Source code, database migrations, configuration and automated tests define the implemented behavior. Documents describe the agreed product and must be reconciled against the implementation.
+- Requirements and acceptance criteria define expected behavior. System Design and UX/UI Design explain the solution. Backlog and Sprint Plan organize the work.
+- Test results and verification status have one canonical location: the Project Acceptance and Verification Report. Do not copy detailed test logs into every document.
+- When a technical or structural change affects the agreed behavior, update all affected English and Finnish documents together in the same change.
