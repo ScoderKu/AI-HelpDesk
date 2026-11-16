@@ -609,5 +609,5 @@ The following criteria extend US-06 (AI-Powered Conversation) and US-08 (Saving 
 - When the user opens it again or sends a later message.
 - Then its saved context summary remains available and is included in the child conversation's AI context; the parent transcript is not replayed as the child's full history.
 
-**Verification note:** The developer has manually exercised the independent-conversation and child-conversation flows and reported that they work as expected. Frontend build passed on Windows and frontend lint passed in Docker. Boundary-condition checks (including exactly 70%) should be recorded separately if/when executed.
+**Verification evidence:** see the [Project Acceptance and Verification Report](../../reports/PROJECT_ACCEPTANCE_REPORT.md).
 
