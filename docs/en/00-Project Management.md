@@ -279,7 +279,7 @@ Significant technical and project management decisions are recorded in this tabl
 | 31.10.2026 | 0.5 | Routed frontend traffic through the trusted proxy network and moved expired-session cleanup outside the login transaction | Project implementer |
 | 01.11.2026 | 0.6 | Fixed Compose handling for Ollama model initialization; verified empty model-volume initialization, Sprint 1 test results, and remaining checks; corrected Modelfile paths and HomePage focus handling | Project implementer |
 | 03.11.2026 | 0.7 | Updated Sprint 1–5 status, backend chat and retention design, profile editing policy, and remaining verification items | Project implementer |
-| 16.11.2026 | 0.9 | Consolidated conversation lifecycle decisions into the Decision Log and synchronized the current documentation structure | Project implementer |
+| 16.11.2026 | 0.8 | Consolidated conversation lifecycle decisions into the Decision Log and synchronized the current documentation structure | Project implementer |
 
 ## 12. Links to Other Project Documents
 
