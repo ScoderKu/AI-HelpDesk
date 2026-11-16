@@ -269,8 +269,10 @@ Allowed values are validated in the backend and, where necessary, with database 
 | title | VARCHAR(200) | NULL | Conversation title |
 | created_at | DATETIME | NOT NULL | Creation time |
 | updated_at | DATETIME | NOT NULL | Last update time |
-
-The conversation title can be defined based on the user's first message or made editable by the user in a later version.
+| parent_conversation_id | BIGINT | FK, NULL | Parent conversation; NULL for independent/root conversations |
+| context_summary | TEXT | NULL | User-confirmed inherited context snapshot for a child conversation |
+| last_context_tokens | INTEGER | NULL | Context usage measured for the latest completed generation |
+| response_language | VARCHAR(100) | NULL | Explicit response-language preference saved for the conversation | receive an initial title from the first user message. For a child conversation, the continuation-preview endpoint generates a proposed title and context summary; the user can edit both before confirming creation.
 
 ## 4.5 Table: messages
 
